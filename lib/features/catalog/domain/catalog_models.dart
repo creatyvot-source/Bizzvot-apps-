@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../core/utilities/json.dart';
 import '../../../core/utilities/validators.dart';
 import 'formatting.dart';
@@ -24,15 +26,18 @@ enum CatalogItemType {
   };
 }
 
-/// App-store payment classification (plan §12.6).
+/// App-store payment classification (plan §12.6, audit
+/// `docs/audit/12-store-a11y-masvs.md`, App Store 3.1.1 / Play Payments).
 ///
-/// TODO(policy): Apple App Store / Google Play rules differ by category and
-/// storefront. Before release, confirm with the backend + legal which items
-/// fall into each class. Items classed [inAppDigital] (digital features,
-/// content or subscriptions unlocked inside the app) must not be sold via an
-/// external checkout from inside the app; they are blocked until an approved
-/// in-app purchase flow exists. The backend should send `paymentPolicy` for
-/// every item; the per-type defaults below are a stop-gap only.
+/// * [physical] goods and [inPersonService]s may use the external (Razorpay)
+///   hosted checkout in-app.
+/// * [inAppDigital] — digital seats, plan subscriptions and renewals — are
+///   **status only** in v1: no buy/upgrade/renew button, no external payment
+///   link and no "buy on web" / "contact us to purchase" call to action
+///   (anti-steering). The server may enable a channel per platform with
+///   `purchaseChannels: {ios, android}`; absent means blocked.
+///
+/// TODO(policy): confirm with legal before each store release.
 enum PaymentPolicy {
   /// Physical goods (NFC cards, printed material).
   physical,
@@ -47,6 +52,11 @@ enum PaymentPolicy {
   inAppDigital;
 
   bool get blocksCheckout => this == PaymentPolicy.inAppDigital;
+
+  /// Whether this class may be bought in-app on [platform], honouring a
+  /// server [channels] override. Unknown/absent → policy default.
+  bool allowsCheckout(PurchaseChannels? channels, [TargetPlatform? platform]) =>
+      channels?.forPlatform(platform ?? defaultTargetPlatform) ?? !blocksCheckout;
 
   static PaymentPolicy? tryParse(Object? v) => switch (wireKey(str(v))) {
     'physical' || 'physical_goods' || 'physical_good' => PaymentPolicy.physical,
@@ -68,11 +78,42 @@ enum PaymentPolicy {
   static PaymentPolicy defaultFor(CatalogItemType type) => switch (type) {
     CatalogItemType.product => PaymentPolicy.physical,
     CatalogItemType.service => PaymentPolicy.inPersonService,
-    // TODO(policy): seat plans are org-management entitlements bought on
-    // the web as well; confirm classification before store release.
-    CatalogItemType.plan => PaymentPolicy.externalDigitalService,
-    CatalogItemType.unknown => PaymentPolicy.externalDigitalService,
+    // Digital seats / subscriptions: blocked in-app unless enabled.
+    CatalogItemType.plan => PaymentPolicy.inAppDigital,
+    CatalogItemType.unknown => PaymentPolicy.inAppDigital,
   };
+}
+
+/// Server-controlled in-app purchase availability per platform, e.g.
+/// `purchaseChannels: { ios: false, android: "external" }`.
+class PurchaseChannels {
+  const PurchaseChannels({this.ios, this.android});
+
+  final bool? ios;
+  final bool? android;
+
+  bool? forPlatform(TargetPlatform p) => switch (p) {
+    TargetPlatform.iOS || TargetPlatform.macOS => ios,
+    _ => android,
+  };
+
+  static bool? _flag(Object? v) {
+    if (v is bool) return v;
+    if (v is Map) return _flag(asJson(v)['enabled'] ?? asJson(v)['channel']);
+    return switch (wireKey(str(v))) {
+      'external' || 'razorpay' || 'hosted' || 'enabled' || 'true' ||
+      'in_app' || 'iap' => true,
+      'none' || 'blocked' || 'disabled' || 'false' || 'web_only' => false,
+      _ => null,
+    };
+  }
+
+  static PurchaseChannels? tryParse(Object? raw) {
+    if (raw is! Map) return null;
+    final j = asJson(raw);
+    final c = PurchaseChannels(ios: _flag(j['ios']), android: _flag(j['android']));
+    return c.ios == null && c.android == null ? null : c;
+  }
 }
 
 class CatalogCategory {
@@ -251,11 +292,13 @@ class CatalogItem {
     this.active = true,
     this.inStock = true,
     this.contactOnly = false,
-    this.paymentPolicy = PaymentPolicy.externalDigitalService,
+    this.paymentPolicy = PaymentPolicy.inAppDigital,
     this.policyDeclared = false,
     this.maxQuantity,
     this.personalization = PersonalizationSpec.none,
     this.requiresShipping = false,
+    this.purchaseChannels,
+    this.includesNote,
   });
 
   final String id;
@@ -299,8 +342,17 @@ class CatalogItem {
   /// Physical goods that need a delivery address.
   final bool requiresShipping;
 
+  /// Server per-platform override of the in-app purchase channel.
+  final PurchaseChannels? purchaseChannels;
+
+  /// Server text such as "Includes 1 year digital card".
+  final String? includesNote;
+
+  /// In-app checkout is permitted for this item on the current platform.
+  bool get checkoutAllowed => paymentPolicy.allowsCheckout(purchaseChannels);
+
   bool get purchasable =>
-      active && inStock && !contactOnly && !paymentPolicy.blocksCheckout;
+      active && inStock && !contactOnly && checkoutAllowed;
 
   factory CatalogItem.fromJson(Object? raw, {CatalogItemType? type}) {
     var j = asJson(raw);
@@ -382,6 +434,8 @@ class CatalogItem {
           ) ??
           (declared ?? PaymentPolicy.defaultFor(resolvedType)) ==
               PaymentPolicy.physical,
+      purchaseChannels: PurchaseChannels.tryParse(j['purchaseChannels']),
+      includesNote: str(j['includesNote'] ?? j['includes'] ?? j['bundleNote']),
     );
   }
 
@@ -398,6 +452,7 @@ class CatalogItem {
     contactOnly: p.price == null,
     paymentPolicy: p.paymentPolicy,
     policyDeclared: p.policyDeclared,
+    purchaseChannels: p.purchaseChannels,
   );
 }
 
@@ -417,8 +472,9 @@ class Plan {
     this.recommended = false,
     this.minQuantity = 1,
     this.maxQuantity,
-    this.paymentPolicy = PaymentPolicy.externalDigitalService,
+    this.paymentPolicy = PaymentPolicy.inAppDigital,
     this.policyDeclared = false,
+    this.purchaseChannels,
   });
 
   final String id;
@@ -438,6 +494,11 @@ class Plan {
   final int? maxQuantity;
   final PaymentPolicy paymentPolicy;
   final bool policyDeclared;
+  final PurchaseChannels? purchaseChannels;
+
+  /// Seats can be bought in-app on this platform (default: no — v1 is
+  /// status-only for digital seats).
+  bool get checkoutAllowed => paymentPolicy.allowsCheckout(purchaseChannels);
 
   factory Plan.fromJson(Object? raw) {
     final j = asJson(raw);
@@ -469,6 +530,7 @@ class Plan {
       maxQuantity: intOrNull(j['maxQuantity']),
       paymentPolicy: declared ?? PaymentPolicy.defaultFor(CatalogItemType.plan),
       policyDeclared: declared != null,
+      purchaseChannels: PurchaseChannels.tryParse(j['purchaseChannels']),
     );
   }
 }

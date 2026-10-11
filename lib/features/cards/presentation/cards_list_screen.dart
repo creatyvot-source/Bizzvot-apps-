@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/errors/app_exception.dart';
+import '../../../core/utilities/validators.dart';
 import '../../../shared/models/card.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
@@ -27,6 +29,40 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
   final _search = TextEditingController();
   CardStatusFilter _filter = CardStatusFilter.all;
   bool _exporting = false;
+  bool _creating = false;
+
+  Future<void> _createCard() async {
+    final input = await showDialog<({String title, String? designation})>(
+      context: context,
+      builder: (_) => const _NewCardDialog(),
+    );
+    if (input == null || !mounted) return;
+    setState(() => _creating = true);
+    try {
+      final card = await ref
+          .read(cardActionsProvider)
+          .create(title: input.title, designation: input.designation);
+      if (!mounted) return;
+      showMessage(context, 'Card created');
+      context.push(Routes.ownerCardEdit(card.id));
+    } on AppException catch (e) {
+      if (!mounted) return;
+      if (e.kind == AppErrorKind.forbidden) {
+        // e.g. "Card limit reached: max 3 card(s)".
+        final upgrade = await confirmAction(
+          context,
+          title: 'Card limit reached',
+          message: '${e.message}\n\nAdd seats to create more cards.',
+          confirmLabel: 'View seats',
+        );
+        if (upgrade && mounted) context.push(Routes.ownerSeats);
+      } else {
+        showError(context, e);
+      }
+    } finally {
+      if (mounted) setState(() => _creating = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -70,6 +106,11 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
   Widget build(BuildContext context) {
     final cards = ref.watch(cardsListProvider);
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _creating ? null : _createCard,
+        icon: const Icon(Icons.add),
+        label: const Text('New card'),
+      ),
       appBar: AppBar(
         title: const Text('Cards'),
         actions: [
@@ -111,12 +152,12 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
                             child: EmptyView(
                               icon: Icons.badge_outlined,
                               title: 'No cards yet',
-                              message: 'Each staff member gets a digital card. Add a staff member to create one.',
+                              message:
+                                  'Create a digital card, then assign it to a staff member.',
                               action: FilledButton.icon(
-                                onPressed: () =>
-                                    context.push(Routes.ownerStaffNew),
-                                icon: const Icon(Icons.person_add_alt),
-                                label: const Text('Add staff member'),
+                                onPressed: _creating ? null : _createCard,
+                                icon: const Icon(Icons.add_card),
+                                label: const Text('Create card'),
                               ),
                             ),
                           ),
@@ -165,7 +206,7 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
                             ),
                           ),
                         const SliverToBoxAdapter(
-                          child: SizedBox(height: AppSpacing.lg),
+                          child: SizedBox(height: 96), // clears the FAB
                         ),
                       ],
                     ),
@@ -294,4 +335,64 @@ class CardAvatar extends StatelessWidget {
   Widget build(BuildContext context) => ExcludeSemantics(
     child: InitialsAvatar(name: card.displayTitle, imageUrl: card.profilePhoto),
   );
+}
+
+class _NewCardDialog extends StatefulWidget {
+  const _NewCardDialog();
+
+  @override
+  State<_NewCardDialog> createState() => _NewCardDialogState();
+}
+
+class _NewCardDialogState extends State<_NewCardDialog> {
+  final _form = GlobalKey<FormState>();
+  final _title = TextEditingController();
+  final _designation = TextEditingController();
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _designation.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_form.currentState!.validate()) return;
+    final d = _designation.text.trim();
+    Navigator.of(context).pop((title: _title.text.trim(), designation: d.isEmpty ? null : d));
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('New card'),
+        scrollable: true,
+        content: Form(
+          key: _form,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _title,
+                autofocus: true,
+                maxLength: 200,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Name on card'),
+                validator: (v) => Validators.required(v, 'Name'),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextFormField(
+                controller: _designation,
+                maxLength: 200,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(labelText: 'Designation (optional)'),
+                onFieldSubmitted: (_) => _submit(),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          FilledButton(onPressed: _submit, child: const Text('Create')),
+        ],
+      );
 }

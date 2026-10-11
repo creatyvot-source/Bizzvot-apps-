@@ -50,12 +50,9 @@ class _ProfileForm extends ConsumerStatefulWidget {
 class _ProfileFormState extends ConsumerState<_ProfileForm> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
-  final _email = TextEditingController();
-  final _phone = TextEditingController();
-  final _website = TextEditingController();
   final _address = TextEditingController();
-  final _description = TextEditingController();
   final _industry = TextEditingController();
+  final _gst = TextEditingController();
   final _cooldown = Cooldown();
 
   late OrganizationProfile _baseline;
@@ -64,14 +61,14 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   String? _error;
   bool _saving = false;
 
+  /// The server accepted the save but ignored the directory setting.
+  bool _directoryUnsupported = false;
+
   List<TextEditingController> get _controllers => [
     _name,
-    _email,
-    _phone,
-    _website,
     _address,
-    _description,
     _industry,
+    _gst,
   ];
 
   @override
@@ -107,12 +104,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     _baseline = p;
     final v = ProfileFormValues.fromProfile(p);
     _name.text = v.name;
-    _email.text = v.email;
-    _phone.text = v.phone;
-    _website.text = v.website;
     _address.text = v.address;
-    _description.text = v.description;
     _industry.text = v.industry;
+    _gst.text = v.gstNumber;
     _visibility = v.directoryVisibility;
   }
 
@@ -120,12 +114,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
 
   ProfileFormValues get _values => ProfileFormValues(
     name: _name.text.trim(),
-    email: _email.text.trim(),
-    phone: _phone.text.trim(),
-    website: _website.text.trim(),
     address: _address.text.trim(),
-    description: _description.text.trim(),
     industry: _industry.text.trim(),
+    gstNumber: _gst.text.trim(),
     directoryVisibility: _visibility,
   );
 
@@ -147,8 +138,17 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           .read(organizationProfileProvider.notifier)
           .save(changes);
       if (!mounted) return;
-      setState(() => _reset(updated));
-      showMessage(context, 'Profile saved');
+      final dropped = directoryChangeDropped(changes, updated);
+      setState(() {
+        _reset(updated);
+        _directoryUnsupported = dropped;
+      });
+      showMessage(
+        context,
+        dropped
+            ? 'Profile saved, except the directory setting'
+            : 'Profile saved',
+      );
     } catch (error) {
       if (!mounted) return;
       final e = AppException.from(error);
@@ -291,47 +291,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                       ),
                       gap,
                       field(
-                        controller: _description,
-                        label: 'About',
-                        key: 'description',
-                        capitalization: TextCapitalization.sentences,
-                        maxLines: 6,
-                        helperText: 'A short description of what you do.',
-                      ),
-                      const SectionHeader('Contact'),
-                      gap,
-                      field(
-                        controller: _email,
-                        label: 'Business email',
-                        key: 'email',
-                        icon: Icons.mail_outline,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        validator: Validators.optionalEmail,
-                      ),
-                      gap,
-                      field(
-                        controller: _phone,
-                        label: 'Phone',
-                        key: 'phone',
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        autofillHints: const [AutofillHints.telephoneNumber],
-                        validator: Validators.optionalPhone,
-                      ),
-                      gap,
-                      field(
-                        controller: _website,
-                        label: 'Website',
-                        key: 'website',
-                        icon: Icons.language,
-                        keyboardType: TextInputType.url,
-                        autofillHints: const [AutofillHints.url],
-                        validator: Validators.optionalUrl,
-                        helperText: 'Include https://',
-                      ),
-                      gap,
-                      field(
                         controller: _address,
                         label: 'Address',
                         key: 'address',
@@ -341,8 +300,29 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                         capitalization: TextCapitalization.words,
                         maxLines: 3,
                       ),
+                      gap,
+                      field(
+                        controller: _gst,
+                        label: 'GST number (optional)',
+                        key: 'gstNumber',
+                        icon: Icons.receipt_long_outlined,
+                        capitalization: TextCapitalization.characters,
+                        helperText: 'Shown on your invoices.',
+                      ),
                       const SectionHeader('Public presence'),
-                      const SizedBox(height: AppSpacing.sm),
+                      if (_directoryUnsupported) ...[
+                        Callout(
+                          tone: CalloutTone.warning,
+                          title: 'Directory setting not saved',
+                          message:
+                              'The server doesn’t support the people directory '
+                              'setting yet, so this change wasn’t applied. Your '
+                              'other changes were saved.',
+                          onDismiss: () =>
+                              setState(() => _directoryUnsupported = false),
+                        ),
+                        gap,
+                      ],
                     ],
                   ),
                 ),

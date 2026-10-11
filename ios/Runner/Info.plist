@@ -12,8 +12,10 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Bizzvot needs photo access so you can add a profile photo, cover, logo or gallery images to your digital card.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Bizzvot needs camera access so you can take a photo for your digital card.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Bizzvot saves your card's QR code to your photo library when you choose Save Image.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

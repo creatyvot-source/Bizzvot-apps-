@@ -20,6 +20,7 @@ class CartLine {
     this.variantLabel,
     this.addOnIds = const [],
     this.paymentPolicy,
+    this.purchaseChannels,
     this.personalization,
     this.requiresShipping = false,
     this.lineId,
@@ -35,6 +36,13 @@ class CartLine {
 
   /// Classification captured when added; the quote's value wins if present.
   final PaymentPolicy? paymentPolicy;
+
+  /// Per-platform channel override captured when added.
+  final PurchaseChannels? purchaseChannels;
+
+  /// Whether in-app checkout is permitted for this line on this platform.
+  bool get checkoutAllowed =>
+      (paymentPolicy ?? PaymentPolicy.defaultFor(itemType)).allowsCheckout(purchaseChannels);
 
   /// NFC/print details for physical items (null = none needed).
   final LinePersonalization? personalization;
@@ -69,6 +77,7 @@ class CartLine {
       quantity: q,
       titleSnapshot: titleSnapshot,
       paymentPolicy: paymentPolicy,
+      purchaseChannels: purchaseChannels,
       personalization: (personalization ?? this.personalization)?.resized(q),
       requiresShipping: requiresShipping,
       lineId: lineId,
@@ -146,6 +155,7 @@ class QuoteLine {
     this.available = true,
     this.issue,
     this.paymentPolicy,
+    this.purchaseChannels,
   });
 
   final CatalogItemType itemType;
@@ -161,6 +171,7 @@ class QuoteLine {
   /// Server explanation when the line cannot be purchased.
   final String? issue;
   final PaymentPolicy? paymentPolicy;
+  final PurchaseChannels? purchaseChannels;
 
   factory QuoteLine.fromJson(Object? raw, {String? currency}) {
     final j = asJson(raw);
@@ -196,6 +207,9 @@ class QuoteLine {
       issue: issue,
       paymentPolicy: PaymentPolicy.tryParse(
         j['paymentPolicy'] ?? item['paymentPolicy'],
+      ),
+      purchaseChannels: PurchaseChannels.tryParse(
+        j['purchaseChannels'] ?? item['purchaseChannels'],
       ),
     );
   }
@@ -281,12 +295,18 @@ class Quote {
       total != null &&
       lines.isNotEmpty;
 
-  /// Policy classifications across lines (server value, else cart snapshot).
+  /// True when any line may not be bought in-app on this platform. The
+  /// server's classification/channels win; the cart snapshot fills gaps.
   bool blocksInApp(List<CartLine> cart) {
     for (final l in lines) {
-      if (l.paymentPolicy?.blocksCheckout ?? false) return true;
+      final c = cart
+          .where((c) => c.matches(itemId: l.itemId, itemType: l.itemType.name, variantId: l.variantId))
+          .firstOrNull;
+      final policy = l.paymentPolicy ?? c?.paymentPolicy ?? PaymentPolicy.defaultFor(l.itemType);
+      final channels = l.purchaseChannels ?? c?.purchaseChannels;
+      if (!policy.allowsCheckout(channels)) return true;
     }
-    return cart.any((c) => c.paymentPolicy?.blocksCheckout ?? false);
+    return cart.any((c) => !c.checkoutAllowed);
   }
 
   factory Quote.fromJson(Object? raw) {

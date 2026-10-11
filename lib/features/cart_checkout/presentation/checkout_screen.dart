@@ -105,7 +105,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen>
         (quote?.requiresShipping ?? false);
     final inAppBlocked =
         quote?.blocksInApp(lines) ??
-        lines.any((l) => l.paymentPolicy?.blocksCheckout ?? false);
+        lines.any((l) => !l.checkoutAllowed);
     final personalizationIssue = lines
         .map((l) => l.personalizationProblem)
         .whereType<String>()

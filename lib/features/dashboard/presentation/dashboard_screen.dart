@@ -10,6 +10,7 @@ import '../../../shared/models/organization.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/ui_kit.dart';
 import '../../auth/presentation/widgets/callout.dart';
+import '../domain/dashboard_overview.dart';
 import 'dashboard_providers.dart';
 import 'widgets/stat_tile.dart';
 
@@ -35,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
       ),
       body: summary.isLoading && !summary.hasValue
           ? const _DashboardSkeleton()
-          : AsyncValueView<DashboardSummary>(
+          : AsyncValueView<DashboardOverview>(
               value: summary,
               onRetry: () => ref.invalidate(dashboardSummaryProvider),
               data: (s) => RefreshIndicator(
@@ -50,7 +51,7 @@ class DashboardScreen extends ConsumerWidget {
 class _DashboardBody extends StatelessWidget {
   const _DashboardBody({required this.summary, required this.shopEnabled});
 
-  final DashboardSummary summary;
+  final DashboardOverview summary;
   final bool shopEnabled;
 
   @override
@@ -85,6 +86,18 @@ class _DashboardBody extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (s.cardSlotsFull && s.disabledByBilling == 0) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Callout(
+                    tone: CalloutTone.info,
+                    title: 'All card slots are in use',
+                    message: 'Purchase more seats to add cards for new team members.',
+                    action: FilledButton.tonal(
+                      onPressed: () => context.push(Routes.ownerSeats),
+                      child: const Text('Purchase seats'),
+                    ),
+                  ),
+                ],
                 if (trial != null && !trial.active) ...[
                   const SizedBox(height: AppSpacing.md),
                   _TrialEndedCallout(trial: trial),
@@ -108,7 +121,7 @@ String? _formatDate(DateTime? d) =>
 class _OrganizationHero extends StatelessWidget {
   const _OrganizationHero({required this.summary});
 
-  final DashboardSummary summary;
+  final DashboardOverview summary;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +142,11 @@ class _OrganizationHero extends StatelessWidget {
 
     return HeroHeader(
       title: summary.organizationName,
-      subtitle: trialLine ?? 'Here’s how your team is doing.',
+      subtitle:
+          trialLine ??
+          (summary.planExpiry != null
+              ? 'Plan renews or expires on ${_formatDate(summary.planExpiry)}'
+              : 'Here’s how your team is doing.'),
       trailing: status == null ? null : OrganizationStatusChip(status: status),
       child: Wrap(
         spacing: AppSpacing.sm,
@@ -252,42 +269,48 @@ class _TrialEndedCallout extends StatelessWidget {
 class _Stats extends StatelessWidget {
   const _Stats({required this.summary});
 
-  final DashboardSummary summary;
+  final DashboardOverview summary;
 
   @override
   Widget build(BuildContext context) {
     final s = summary;
-    final full =
-        !s.unlimitedSeats && s.paidSeats > 0 && s.activeCards >= s.paidSeats;
     final rating = s.totalReviews == 0
         ? '—'
         : s.averageRating.toStringAsFixed(1);
+    final cardsCaption = s.unlimitedCards
+        ? ((s.trial?.active ?? false)
+              ? 'Unlimited during trial'
+              : 'No card limit')
+        : s.cardSlotsFull
+        ? 'All card slots in use'
+        : '${s.cardsLimit! - s.totalCards} of ${s.cardsLimit} slots free';
+    final staffLimit = s.staffLimit;
     final tiles = [
       StatTile(
         icon: Icons.badge_outlined,
-        label: 'Active cards',
-        value: s.unlimitedSeats
-            ? '${s.activeCards}'
-            : '${s.activeCards} / ${s.paidSeats}',
-        caption: s.unlimitedSeats
-            ? 'Unlimited during trial'
-            : full
-            ? 'All paid seats in use'
-            : (s.paidSeats == 1
-                  ? 'of 1 paid seat'
-                  : 'of ${s.paidSeats} paid seats'),
-        color: full ? AppColors.warning : null,
+        label: 'Cards',
+        value: s.unlimitedCards
+            ? '${s.totalCards}'
+            : '${s.totalCards} / ${s.cardsLimit}',
+        caption: s.activeCards == null
+            ? cardsCaption
+            : '${s.activeCards} active · $cardsCaption',
+        color: s.cardSlotsFull ? AppColors.warning : null,
         onTap: () => context.go(Routes.ownerCards),
       ),
       StatTile(
-        icon: Icons.style_outlined,
-        label: 'Total cards',
-        value: '${s.totalCards}',
-        onTap: () => context.go(Routes.ownerCards),
+        icon: Icons.group_outlined,
+        label: 'Staff',
+        value: staffLimit == null
+            ? '${s.staffCount}'
+            : '${s.staffCount} / $staffLimit',
+        caption: s.staffSlotsFull ? 'Staff limit reached' : null,
+        color: s.staffSlotsFull ? AppColors.warning : null,
+        onTap: () => context.go(Routes.ownerStaff),
       ),
       StatTile(
         icon: Icons.reviews_outlined,
-        label: 'Total reviews',
+        label: 'Reviews',
         value: '${s.totalReviews}',
         color: AppColors.accent,
         onTap: () => context.go(Routes.ownerReviews),
@@ -297,7 +320,7 @@ class _Stats extends StatelessWidget {
         color: AppColors.star,
         label: 'Average rating',
         value: rating,
-        caption: s.totalReviews == 0 ? 'No reviews yet' : 'out of 5',
+        caption: s.totalReviews == 0 ? 'No reviews yet' : 'out of 5 (approved)',
       ),
     ];
     return ResponsiveGrid(minTileWidth: 150, children: tiles);

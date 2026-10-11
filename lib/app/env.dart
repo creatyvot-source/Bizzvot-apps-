@@ -24,8 +24,12 @@ class Env {
 
   bool get isProduction => flavor == AppFlavor.production;
 
-  static const _flavorName =
-      String.fromEnvironment('BIZZVOT_ENV', defaultValue: 'development');
+  /// Release builds default to production so a build without
+  /// `--dart-define=BIZZVOT_ENV` can never ship pointing at a dev server.
+  static const _flavorName = String.fromEnvironment(
+    'BIZZVOT_ENV',
+    defaultValue: bool.fromEnvironment('dart.vm.product') ? 'production' : 'development',
+  );
   static const _apiOverride = String.fromEnvironment('BIZZVOT_API_BASE');
   static const _webOverride = String.fromEnvironment('BIZZVOT_WEB_HOST');
 

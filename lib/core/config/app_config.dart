@@ -60,7 +60,17 @@ class AppConfig {
   /// key never hides a shipped feature.
   final Map<String, bool> features;
 
-  static const defaults = AppConfig();
+  /// Used when the server config is unreachable or omits a value, so legal
+  /// and deletion links always work (App Store 5.1.1, Play account deletion).
+  static const defaults = AppConfig(
+    privacyPolicyUrl: 'https://www.bizzvot.com/privacy',
+    termsUrl: 'https://www.bizzvot.com/terms',
+    supportEmail: 'support@bizzvot.com',
+  );
+
+  /// Web page where users can request account deletion without the app
+  /// (required by Google Play).
+  static const accountDeletionWebUrl = 'https://www.bizzvot.com/account/delete';
 
   bool isEnabled(String flag) => features[flag] ?? true;
 
@@ -80,11 +90,14 @@ class AppConfig {
       maintenanceMessage: maintenance is Map
           ? str(maintenance['message'])
           : str(j['maintenanceMessage']),
-      privacyPolicyUrl: str(links['privacyPolicy']) ?? str(j['privacyPolicyUrl']),
-      termsUrl: str(links['terms']) ?? str(j['termsUrl']),
+      privacyPolicyUrl: str(links['privacyPolicy']) ??
+          str(j['privacyPolicyUrl']) ??
+          defaults.privacyPolicyUrl,
+      termsUrl: str(links['terms']) ?? str(j['termsUrl']) ?? defaults.termsUrl,
       analyticsDisclosureUrl:
           str(links['analyticsDisclosure']) ?? str(j['analyticsDisclosureUrl']),
-      supportEmail: str(support['email']) ?? str(j['supportEmail']),
+      supportEmail:
+          str(support['email']) ?? str(j['supportEmail']) ?? defaults.supportEmail,
       supportPhone: str(support['phone']) ?? str(j['supportPhone']),
       androidStoreUrl: str(store['android']),
       iosStoreUrl: str(store['ios']),

@@ -13,6 +13,7 @@ import '../../../shared/widgets/ui_kit.dart';
 import '../../cards/presentation/cards_list_screen.dart' show CardAvatar;
 import '../../cards/presentation/cards_providers.dart';
 import '../../cards/presentation/widgets/card_chips.dart';
+import '../../cards/presentation/widgets/editor_widgets.dart' show ComingSoonNote;
 import '../domain/visibility_rules.dart';
 import 'directory_visibility_providers.dart';
 
@@ -166,6 +167,7 @@ class _DirectoryVisibilityScreenState
 
   @override
   Widget build(BuildContext context) {
+    if (!ref.watch(directoryAvailableProvider)) return const _UnavailableView();
     final profile = ref.watch(directoryProfileProvider);
     final cards = ref.watch(cardsListProvider);
     final directoryEnabled = ref
@@ -537,6 +539,44 @@ class _RulesCard extends StatelessWidget {
                   ],
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown while the backend has no `directoryVisibility` / card `visibility`
+/// fields: explains the rules without pretending to save anything.
+class _UnavailableView extends StatelessWidget {
+  const _UnavailableView();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Directory visibility')),
+      body: ContentWidth(
+        child: ListView(
+          padding: AppSpacing.page,
+          children: [
+            const ComingSoonNote(
+              message: 'Coming soon: a public people directory for your '
+                  'organization, with per-card visibility controls.',
+            ),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.qr_code_2),
+                title: const Text('Sharing works today'),
+                subtitle: Text(
+                  'Every active card can already be opened by its link or QR code. '
+                  'Share them from each card’s Share & QR screen.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const _RulesCard(),
           ],
         ),
       ),

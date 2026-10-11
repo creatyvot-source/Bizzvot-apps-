@@ -3,9 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../shared/models/card.dart';
 import '../../../shared/models/organization.dart';
+import '../../../core/config/app_config.dart';
+import '../../cards/domain/card_capabilities.dart';
 import '../../cards/presentation/cards_providers.dart';
 import '../data/directory_visibility_repository.dart';
 import '../domain/visibility_rules.dart';
+
+/// True only when the backend stores directory/card visibility (capability
+/// flag) and the directory feature is not switched off remotely.
+final directoryAvailableProvider = Provider<bool>(
+  (ref) =>
+      ref.watch(cardCapabilitiesProvider).visibility &&
+      ref.watch(currentConfigProvider).isEnabled(Flags.directory),
+);
 
 /// Organization profile (for `directoryVisibility` and `slug`).
 final directoryProfileProvider =

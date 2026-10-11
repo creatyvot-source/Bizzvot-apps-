@@ -33,11 +33,11 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
 
   static bool _matches(StaffEntry m, String q) {
     if (q.isEmpty) return true;
-    return [
+    return <String>[
       m.name,
       m.email,
-      m.designation ?? '',
       m.phone ?? '',
+      for (final c in m.cards) c.designation ?? '',
     ].any((f) => f.toLowerCase().contains(q));
   }
 

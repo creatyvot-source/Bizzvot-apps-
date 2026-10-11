@@ -81,10 +81,10 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
     final link = _link;
     final share = ref.read(shareServiceProvider);
     final actions = ref.read(cardActionsProvider);
-    final qr = ref.watch(cardQrProvider(card.id));
+    final qr = ref.watch(cardQrProvider(qrKeyOf(card)));
 
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(cardQrProvider(card.id).future),
+      onRefresh: () => ref.refresh(cardQrProvider(qrKeyOf(card)).future),
       child: ListView(
         padding: AppSpacing.page,
         children: [
@@ -134,7 +134,7 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (_, _) => _QrUnavailable(
-                    onRetry: () => ref.invalidate(cardQrProvider(card.id)),
+                    onRetry: () => ref.invalidate(cardQrProvider(qrKeyOf(card))),
                   ),
                 ),
               ),

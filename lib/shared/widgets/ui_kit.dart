@@ -132,9 +132,13 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Foregrounds chosen for >= 4.5:1 contrast on their tinted backgrounds.
+    final successFg = dark ? const Color(0xFF86EFAC) : const Color(0xFF166534);
+    final warningFg = dark ? const Color(0xFFFCD34D) : const Color(0xFF92400E);
     final (bg, fg) = switch (tone) {
-      StatusTone.success => (AppColors.success.withValues(alpha: 0.12), AppColors.success),
-      StatusTone.warning => (AppColors.warning.withValues(alpha: 0.14), AppColors.warning),
+      StatusTone.success => (AppColors.success.withValues(alpha: 0.14), successFg),
+      StatusTone.warning => (AppColors.warning.withValues(alpha: 0.16), warningFg),
       StatusTone.danger => (scheme.errorContainer, scheme.onErrorContainer),
       StatusTone.info => (scheme.primaryContainer, scheme.onPrimaryContainer),
       StatusTone.neutral => (scheme.surfaceContainerHighest, scheme.onSurfaceVariant),

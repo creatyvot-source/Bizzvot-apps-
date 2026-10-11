@@ -139,9 +139,9 @@ class MoreScreen extends ConsumerWidget {
               header('Account'),
               tile(Icons.lock_outline, 'Security & password', Routes.ownerSecurity),
               tile(Icons.policy_outlined, 'Privacy & legal', Routes.legal),
-              if (config.isEnabled(Flags.accountDeletion))
-                tile(Icons.person_remove_outlined, 'Delete account',
-                    Routes.ownerDeleteAccount),
+              // Always available: store policy forbids hiding deletion.
+              tile(Icons.person_remove_outlined, 'Delete account',
+                  Routes.ownerDeleteAccount),
             ] else ...[
               header('My card'),
               tile(Icons.qr_code_2, 'QR & sharing', Routes.staffCardShare),

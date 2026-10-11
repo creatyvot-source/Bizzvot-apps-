@@ -72,7 +72,8 @@ class _MyCardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final canEdit = permissions.editCard || permissions.manageLinks;
+    // The backend requires `editCard` for every staff card update.
+    final canEdit = permissions.editCard;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: AppSpacing.page,
@@ -106,7 +107,7 @@ class _MyCardBody extends StatelessWidget {
           FilledButton.icon(
             onPressed: () => context.push(Routes.staffCardEdit),
             icon: const Icon(Icons.edit_outlined),
-            label: Text(permissions.editCard ? 'Edit card' : 'Edit links'),
+            label: const Text('Edit card'),
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
