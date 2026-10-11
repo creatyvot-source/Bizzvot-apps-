@@ -11,4 +11,6 @@ final idempotencyKeyFactoryProvider = Provider<KeyFactory>((ref) => uuidV4);
 final pollSleepProvider = Provider<Sleep>((ref) => realSleep);
 
 /// Bounded polling schedule (≈2 minutes) for payment confirmation.
-final pollScheduleProvider = Provider<PollSchedule>((ref) => const PollSchedule());
+final pollScheduleProvider = Provider<PollSchedule>(
+  (ref) => const PollSchedule(),
+);

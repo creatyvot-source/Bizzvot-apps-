@@ -45,17 +45,21 @@ class PublicReview {
 
 /// Body for `POST /public/card/:slug/review`.
 class ReviewSubmission {
-  const ReviewSubmission({required this.rating, required this.name, this.comment});
+  const ReviewSubmission({
+    required this.rating,
+    required this.name,
+    this.comment,
+  });
 
   final int rating;
   final String name;
   final String? comment;
 
   Json toJson() => compact({
-        'rating': rating,
-        'name': name.trim(),
-        'comment': (comment?.trim().isEmpty ?? true) ? null : comment!.trim(),
-      });
+    'rating': rating,
+    'name': name.trim(),
+    'comment': (comment?.trim().isEmpty ?? true) ? null : comment!.trim(),
+  });
 }
 
 enum SubmittedReviewStatus { pending, approved }

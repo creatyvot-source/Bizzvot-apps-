@@ -25,31 +25,34 @@ class ReviewsRepository {
     ReviewScope scope, {
     ReviewStatus? status,
     int page = 1,
-  }) =>
-      _api.get(
-        scope == ReviewScope.owner ? Endpoints.orgReviews : Endpoints.staffReviews,
-        query: {'status': status?.name, 'page': page, 'limit': pageSize},
-        parse: (data) => Paged.parse(
-          data,
-          Review.fromJson,
-          listKeys: const ['reviews', 'items', 'docs', 'results', 'data'],
-        ),
-      );
+  }) => _api.get(
+    scope == ReviewScope.owner ? Endpoints.orgReviews : Endpoints.staffReviews,
+    query: {'status': status?.name, 'page': page, 'limit': pageSize},
+    parse: (data) => Paged.parse(
+      data,
+      Review.fromJson,
+      listKeys: const ['reviews', 'items', 'docs', 'results', 'data'],
+    ),
+  );
 
   /// `PATCH .../reviews/:id/status` `{status}`. Returns the updated review
   /// when the server echoes it, otherwise `null`.
-  Future<Review?> setStatus(ReviewScope scope, String id, ReviewStatus status) =>
-      _api.patch(
-        scope == ReviewScope.owner
-            ? Endpoints.orgReviewStatus(id)
-            : Endpoints.staffReviewStatus(id),
-        body: {'status': status.name},
-        parse: _reviewOrNull,
-      );
+  Future<Review?> setStatus(
+    ReviewScope scope,
+    String id,
+    ReviewStatus status,
+  ) => _api.patch(
+    scope == ReviewScope.owner
+        ? Endpoints.orgReviewStatus(id)
+        : Endpoints.staffReviewStatus(id),
+    body: {'status': status.name},
+    parse: _reviewOrNull,
+  );
 
   /// `POST .../reviews/:id/reply` `{text}`. Returns the stored reply when
   /// the server echoes it, otherwise `null`.
-  Future<ReviewReply?> reply(ReviewScope scope, String id, String text) => _api.post(
+  Future<ReviewReply?> reply(ReviewScope scope, String id, String text) =>
+      _api.post(
         scope == ReviewScope.owner
             ? Endpoints.orgReviewReply(id)
             : Endpoints.staffReviewReply(id),
@@ -58,7 +61,8 @@ class ReviewsRepository {
           final j = asJson(data);
           if (j['reply'] != null) return ReviewReply.fromJson(j['reply']);
           final review = asJson(j['review']);
-          if (review['reply'] != null) return ReviewReply.fromJson(review['reply']);
+          if (review['reply'] != null)
+            return ReviewReply.fromJson(review['reply']);
           return null;
         },
       );

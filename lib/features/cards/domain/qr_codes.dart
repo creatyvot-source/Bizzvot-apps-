@@ -6,7 +6,13 @@ import '../../../core/utilities/json.dart';
 /// One QR image in the `GET /organization/cards/qrcodes` JSON response.
 /// Assumed shape: `[{cardId, name?, slug?, url | dataUrl | qrCode}]`.
 class QrCodeEntry {
-  const QrCodeEntry({required this.cardId, this.name, this.slug, this.url, this.dataUrl});
+  const QrCodeEntry({
+    required this.cardId,
+    this.name,
+    this.slug,
+    this.url,
+    this.dataUrl,
+  });
 
   final String cardId;
   final String? name;
@@ -70,7 +76,11 @@ class QrEntryList extends QrBundle {
 }
 
 class QrArchive extends QrBundle {
-  const QrArchive(this.bytes, {required this.mimeType, required this.extension});
+  const QrArchive(
+    this.bytes, {
+    required this.mimeType,
+    required this.extension,
+  });
   final Uint8List bytes;
   final String mimeType;
   final String extension;
@@ -78,7 +88,11 @@ class QrArchive extends QrBundle {
 
 /// A ready-to-share file (QR PNG, vCard, archive).
 class ShareableFile {
-  const ShareableFile({required this.bytes, required this.name, required this.mimeType});
+  const ShareableFile({
+    required this.bytes,
+    required this.name,
+    required this.mimeType,
+  });
   final Uint8List bytes;
   final String name;
   final String mimeType;

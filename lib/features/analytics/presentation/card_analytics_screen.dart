@@ -136,7 +136,11 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = [
-      ('Views', _v(views, (v) => _number.format(v.total)), Icons.visibility_outlined),
+      (
+        'Views',
+        _v(views, (v) => _number.format(v.total)),
+        Icons.visibility_outlined,
+      ),
       (
         'Unique visitors',
         _v(views, (v) => v.unique == null ? '—' : _number.format(v.unique)),
@@ -144,10 +148,19 @@ class _KpiGrid extends StatelessWidget {
       ),
       (
         'Avg rating',
-        _v(reviews, (r) => r.average == null || r.total == 0 ? '—' : r.average!.toStringAsFixed(1)),
+        _v(
+          reviews,
+          (r) => r.average == null || r.total == 0
+              ? '—'
+              : r.average!.toStringAsFixed(1),
+        ),
         Icons.star_outline,
       ),
-      ('Total reviews', _v(reviews, (r) => _number.format(r.total)), Icons.reviews_outlined),
+      (
+        'Total reviews',
+        _v(reviews, (r) => _number.format(r.total)),
+        Icons.reviews_outlined,
+      ),
     ];
     return LayoutBuilder(
       builder: (context, c) {
@@ -158,7 +171,10 @@ class _KpiGrid extends StatelessWidget {
           runSpacing: AppSpacing.sm,
           children: [
             for (final t in tiles)
-              SizedBox(width: w, child: _KpiTile(label: t.$1, value: t.$2, icon: t.$3)),
+              SizedBox(
+                width: w,
+                child: _KpiTile(label: t.$1, value: t.$2, icon: t.$3),
+              ),
           ],
         );
       },
@@ -167,7 +183,11 @@ class _KpiGrid extends StatelessWidget {
 }
 
 class _KpiTile extends StatelessWidget {
-  const _KpiTile({required this.label, required this.value, required this.icon});
+  const _KpiTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   final String label;
   final String value;
@@ -176,7 +196,9 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final spoken = value == '…' ? 'loading' : (value == '—' ? 'not available' : value);
+    final spoken = value == '…'
+        ? 'loading'
+        : (value == '—' ? 'not available' : value);
     return Semantics(
       label: '$label: $spoken',
       excludeSemantics: true,
@@ -272,11 +294,15 @@ class ViewsChart extends StatelessWidget {
 
   String summary() {
     final s = stats.series;
-    final buf = StringBuffer('Views over the last ${range.days} days: ${stats.total} total');
+    final buf = StringBuffer(
+      'Views over the last ${range.days} days: ${stats.total} total',
+    );
     if (stats.unique != null) buf.write(', ${stats.unique} unique visitors');
     if (s.isNotEmpty) {
       final peak = s.reduce((a, b) => b.count > a.count ? b : a);
-      buf.write('. Busiest day ${DateFormat.yMMMd().format(peak.date)} with ${peak.count} views');
+      buf.write(
+        '. Busiest day ${DateFormat.yMMMd().format(peak.date)} with ${peak.count} views',
+      );
     }
     return '$buf.';
   }
@@ -322,7 +348,10 @@ class ViewsChart extends StatelessWidget {
                 reservedSize: 36,
                 getTitlesWidget: (v, meta) => SideTitleWidget(
                   meta: meta,
-                  child: Text(meta.formattedValue, style: theme.textTheme.labelSmall),
+                  child: Text(
+                    meta.formattedValue,
+                    style: theme.textTheme.labelSmall,
+                  ),
                 ),
               ),
             ),
@@ -358,7 +387,10 @@ class ViewsChart extends StatelessWidget {
               isCurved: true,
               preventCurveOverShooting: true,
               dotData: FlDotData(show: series.length <= 14),
-              belowBarData: BarAreaData(show: true, color: primary.withValues(alpha: 0.12)),
+              belowBarData: BarAreaData(
+                show: true,
+                color: primary.withValues(alpha: 0.12),
+              ),
             ),
             if (hasUnique)
               LineChartBarData(
@@ -393,7 +425,8 @@ class ViewsChart extends StatelessWidget {
             spacing: AppSpacing.md,
             children: [
               _Legend(color: primary, label: 'Views'),
-              if (hasUnique) _Legend(color: secondary, label: 'Unique visitors'),
+              if (hasUnique)
+                _Legend(color: secondary, label: 'Unique visitors'),
             ],
           ),
         ),
@@ -402,13 +435,20 @@ class ViewsChart extends StatelessWidget {
           title: const Text('View as table'),
           children: [
             Table(
-              columnWidths: const {0: FlexColumnWidth(2), 1: FlexColumnWidth(), 2: FlexColumnWidth()},
+              columnWidths: const {
+                0: FlexColumnWidth(2),
+                1: FlexColumnWidth(),
+                2: FlexColumnWidth(),
+              },
               children: [
                 TableRow(
                   children: [
                     _cell(context, 'Date', header: true),
                     _cell(context, 'Views', header: true, end: true),
-                    if (hasUnique) _cell(context, 'Unique', header: true, end: true) else const SizedBox(),
+                    if (hasUnique)
+                      _cell(context, 'Unique', header: true, end: true)
+                    else
+                      const SizedBox(),
                   ],
                 ),
                 for (final p in series.reversed)
@@ -417,7 +457,11 @@ class ViewsChart extends StatelessWidget {
                       _cell(context, DateFormat.yMMMd().format(p.date)),
                       _cell(context, _number.format(p.count), end: true),
                       if (hasUnique)
-                        _cell(context, p.unique == null ? '—' : _number.format(p.unique), end: true)
+                        _cell(
+                          context,
+                          p.unique == null ? '—' : _number.format(p.unique),
+                          end: true,
+                        )
                       else
                         const SizedBox(),
                     ],
@@ -430,17 +474,21 @@ class ViewsChart extends StatelessWidget {
     );
   }
 
-  Widget _cell(BuildContext context, String text, {bool header = false, bool end = false}) =>
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        child: Text(
-          text,
-          textAlign: end ? TextAlign.end : TextAlign.start,
-          style: header
-              ? Theme.of(context).textTheme.labelLarge
-              : Theme.of(context).textTheme.bodyMedium,
-        ),
-      );
+  Widget _cell(
+    BuildContext context,
+    String text, {
+    bool header = false,
+    bool end = false,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    child: Text(
+      text,
+      textAlign: end ? TextAlign.end : TextAlign.start,
+      style: header
+          ? Theme.of(context).textTheme.labelLarge
+          : Theme.of(context).textTheme.bodyMedium,
+    ),
+  );
 }
 
 class _Legend extends StatelessWidget {
@@ -451,13 +499,13 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(width: 12, height: 12, color: color),
-          const SizedBox(width: AppSpacing.xs),
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(width: 12, height: 12, color: color),
+      const SizedBox(width: AppSpacing.xs),
+      Text(label, style: Theme.of(context).textTheme.labelMedium),
+    ],
+  );
 }
 
 /// Horizontal bar row: label, proportional bar, count. Announced as text,
@@ -550,7 +598,8 @@ class LinkBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (clicks.counts.isEmpty) return const Text('No link clicks in this period.');
+    if (clicks.counts.isEmpty)
+      return const Text('No link clicks in this period.');
     final max = clicks.counts.first.$2;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

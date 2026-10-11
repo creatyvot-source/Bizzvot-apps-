@@ -9,6 +9,7 @@ import '../../../core/utilities/validators.dart';
 import '../../../shared/models/organization.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../../auth/presentation/widgets/callout.dart';
 import '../../auth/presentation/widgets/cooldown.dart';
 import '../domain/profile_form_values.dart';
@@ -63,8 +64,15 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   String? _error;
   bool _saving = false;
 
-  List<TextEditingController> get _controllers =>
-      [_name, _email, _phone, _website, _address, _description, _industry];
+  List<TextEditingController> get _controllers => [
+    _name,
+    _email,
+    _phone,
+    _website,
+    _address,
+    _description,
+    _industry,
+  ];
 
   @override
   void initState() {
@@ -79,7 +87,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   void didUpdateWidget(covariant _ProfileForm oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Adopt server data refreshed elsewhere, but never clobber edits.
-    if (!identical(widget.profile, oldWidget.profile) && !_saving && !_isDirty) {
+    if (!identical(widget.profile, oldWidget.profile) &&
+        !_saving &&
+        !_isDirty) {
       _reset(widget.profile);
     }
   }
@@ -109,15 +119,15 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   void _onChanged() => setState(() {});
 
   ProfileFormValues get _values => ProfileFormValues(
-        name: _name.text.trim(),
-        email: _email.text.trim(),
-        phone: _phone.text.trim(),
-        website: _website.text.trim(),
-        address: _address.text.trim(),
-        description: _description.text.trim(),
-        industry: _industry.text.trim(),
-        directoryVisibility: _visibility,
-      );
+    name: _name.text.trim(),
+    email: _email.text.trim(),
+    phone: _phone.text.trim(),
+    website: _website.text.trim(),
+    address: _address.text.trim(),
+    description: _description.text.trim(),
+    industry: _industry.text.trim(),
+    directoryVisibility: _visibility,
+  );
 
   bool get _isDirty => _values.changesFrom(_baseline).isNotEmpty;
 
@@ -133,8 +143,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     FocusScope.of(context).unfocus();
     _saving = true;
     try {
-      final updated =
-          await ref.read(organizationProfileProvider.notifier).save(changes);
+      final updated = await ref
+          .read(organizationProfileProvider.notifier)
+          .save(changes);
       if (!mounted) return;
       setState(() => _reset(updated));
       showMessage(context, 'Profile saved');
@@ -144,7 +155,8 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       setState(() {
         if (e.kind == AppErrorKind.rateLimited) {
           _cooldown.startFrom(e);
-        } else if (e.kind == AppErrorKind.validation && e.fieldErrors.isNotEmpty) {
+        } else if (e.kind == AppErrorKind.validation &&
+            e.fieldErrors.isNotEmpty) {
           _fieldErrors = e.fieldErrors;
           _error = 'Please fix the highlighted fields.';
         } else {
@@ -190,29 +202,30 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       TextCapitalization capitalization = TextCapitalization.none,
       int maxLines = 1,
       String? helperText,
-    }) =>
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType ??
-              (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
-          textInputAction:
-              maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
-          textCapitalization: capitalization,
-          autofillHints: autofillHints,
-          minLines: maxLines > 1 ? 2 : 1,
-          maxLines: maxLines,
-          validator: validator,
-          forceErrorText: _fieldErrors[key],
-          onChanged: (_) => _clearFieldError(key),
-          decoration: InputDecoration(
-            labelText: label,
-            helperText: helperText,
-            helperMaxLines: 2,
-            errorMaxLines: 3,
-            prefixIcon: icon == null ? null : Icon(icon),
-            alignLabelWithHint: maxLines > 1,
-          ),
-        );
+    }) => TextFormField(
+      controller: controller,
+      keyboardType:
+          keyboardType ??
+          (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
+      textInputAction: maxLines > 1
+          ? TextInputAction.newline
+          : TextInputAction.next,
+      textCapitalization: capitalization,
+      autofillHints: autofillHints,
+      minLines: maxLines > 1 ? 2 : 1,
+      maxLines: maxLines,
+      validator: validator,
+      forceErrorText: _fieldErrors[key],
+      onChanged: (_) => _clearFieldError(key),
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helperText,
+        helperMaxLines: 2,
+        errorMaxLines: 3,
+        prefixIcon: icon == null ? null : Icon(icon),
+        alignLabelWithHint: maxLines > 1,
+      ),
+    );
 
     final slug = _baseline.slug;
     final directoryPublic = _visibility == DirectoryVisibility.public;
@@ -257,8 +270,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                         Callout(tone: CalloutTone.error, message: _error!),
                         gap,
                       ],
-                      _SectionHeader('Details'),
-                      gap,
+                      const SectionHeader('Details'),
                       field(
                         controller: _name,
                         label: 'Organization name',
@@ -286,8 +298,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                         maxLines: 6,
                         helperText: 'A short description of what you do.',
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      _SectionHeader('Contact'),
+                      const SectionHeader('Contact'),
                       gap,
                       field(
                         controller: _email,
@@ -330,8 +341,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                         capitalization: TextCapitalization.words,
                         maxLines: 3,
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      _SectionHeader('Public presence'),
+                      const SectionHeader('Public presence'),
                       const SizedBox(height: AppSpacing.sm),
                     ],
                   ),
@@ -352,9 +362,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                       subtitle: Text(
                         directoryPublic
                             ? 'Visitors can browse your team’s public cards on '
-                                'your directory page.'
+                                  'your directory page.'
                             : 'Your directory page is hidden. Cards can still '
-                                'be shared by direct link or QR code.',
+                                  'be shared by direct link or QR code.',
                       ),
                     ),
                     ListTile(
@@ -396,24 +406,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      header: true,
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
       ),
     );
   }

@@ -150,8 +150,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return AuthPage(
       title: 'Reset password',
       heading: 'Forgot your password?',
-      subheading:
-          'Enter the email you sign in with and we’ll send you a link to choose a new password.',
+      subheading: 'Enter the email you sign in with and we’ll send you a link to choose a new password.',
       child: Form(
         key: _formKey,
         child: Column(

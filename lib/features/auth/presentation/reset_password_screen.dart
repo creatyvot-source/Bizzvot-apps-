@@ -55,10 +55,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     try {
-      await ref.read(authFlowRepositoryProvider).resetPassword(
-            token: widget.token!.trim(),
-            password: _password.text,
-          );
+      await ref
+          .read(authFlowRepositoryProvider)
+          .resetPassword(token: widget.token!.trim(), password: _password.text);
       TextInput.finishAutofillContext();
       if (mounted) setState(() => _done = true);
     } catch (error) {
@@ -200,7 +199,11 @@ class _Outcome extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text(message, textAlign: TextAlign.center, style: theme.textTheme.bodyLarge),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge,
+        ),
         const SizedBox(height: AppSpacing.xl),
         FilledButton(onPressed: onPrimary, child: Text(primaryLabel)),
         if (secondaryLabel != null && onSecondary != null) ...[

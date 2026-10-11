@@ -22,10 +22,17 @@ class DirectoryEntry {
     final card = j['card'] is Map ? asJson(j['card']) : j;
     return DirectoryEntry(
       slug: strOr(card['slug'] ?? j['slug']),
-      name: str(card['title']) ?? str(card['name']) ?? str(j['name']) ?? 'Team member',
+      name:
+          str(card['title']) ??
+          str(card['name']) ??
+          str(j['name']) ??
+          'Team member',
       designation: str(card['designation']) ?? str(j['designation']),
       company: str(card['company']),
-      photo: str(card['profilePhoto']) ?? str(card['photo']) ?? str(j['profilePhoto']),
+      photo:
+          str(card['profilePhoto']) ??
+          str(card['photo']) ??
+          str(j['profilePhoto']),
     );
   }
 }
@@ -56,12 +63,23 @@ class PublicDirectoryPage {
     final paged = Paged.parse(
       data,
       DirectoryEntry.fromJson,
-      listKeys: const ['items', 'entries', 'people', 'members', 'cards', 'docs', 'results', 'data'],
+      listKeys: const [
+        'items',
+        'entries',
+        'people',
+        'members',
+        'cards',
+        'docs',
+        'results',
+        'data',
+      ],
     );
     return PublicDirectoryPage(
       organizationName: str(org['name']) ?? str(j['organizationName']),
       organizationLogo: str(org['logo']) ?? str(j['organizationLogo']),
-      entries: paged.items.where((e) => e.slug.isNotEmpty).toList(growable: false),
+      entries: paged.items
+          .where((e) => e.slug.isNotEmpty)
+          .toList(growable: false),
       page: paged.page,
       hasMore: paged.hasMore,
     );

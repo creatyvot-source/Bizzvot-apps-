@@ -23,7 +23,12 @@ enum LoginFailureKind {
 }
 
 class LoginFailure {
-  const LoginFailure(this.kind, this.message, {this.retryAfter, this.exception});
+  const LoginFailure(
+    this.kind,
+    this.message, {
+    this.retryAfter,
+    this.exception,
+  });
 
   final LoginFailureKind kind;
   final String message;
@@ -49,8 +54,10 @@ abstract final class AuthMessages {
 }
 
 final _staffHint = RegExp(r'\bstaff\b', caseSensitive: false);
-final _ownerHint =
-    RegExp(r'\b(owner|organi[sz]ation (sign[- ]?in|login))\b', caseSensitive: false);
+final _ownerHint = RegExp(
+  r'\b(owner|organi[sz]ation (sign[- ]?in|login))\b',
+  caseSensitive: false,
+);
 final _adminHint = RegExp(r'admin sign[- ]?in', caseSensitive: false);
 
 const _staffCodes = {
@@ -93,7 +100,8 @@ LoginFailure classifyLoginError(Object error, {required LoginPortal portal}) {
     return LoginFailure(LoginFailureKind.other, e.message, exception: e);
   }
 
-  if ((code != null && _adminCodes.contains(code)) || _adminHint.hasMatch(e.message)) {
+  if ((code != null && _adminCodes.contains(code)) ||
+      _adminHint.hasMatch(e.message)) {
     return LoginFailure(
       LoginFailureKind.adminAccount,
       AuthMessages.adminAccount,
@@ -101,10 +109,14 @@ LoginFailure classifyLoginError(Object error, {required LoginPortal portal}) {
     );
   }
 
-  final otherPortalCodes = portal == LoginPortal.owner ? _staffCodes : _ownerCodes;
+  final otherPortalCodes = portal == LoginPortal.owner
+      ? _staffCodes
+      : _ownerCodes;
   final hint = portal == LoginPortal.owner ? _staffHint : _ownerHint;
-  final wrongPortal = (code != null &&
-          (otherPortalCodes.contains(code) || _portalMismatchCodes.contains(code))) ||
+  final wrongPortal =
+      (code != null &&
+          (otherPortalCodes.contains(code) ||
+              _portalMismatchCodes.contains(code))) ||
       hint.hasMatch(e.message);
   if (wrongPortal) {
     return LoginFailure(
@@ -142,7 +154,10 @@ bool isInvalidResetToken(AppException e) {
       return code.contains('TOKEN') ||
           code.contains('EXPIRED') ||
           e.fieldErrors.containsKey('token') ||
-          RegExp(r'token|expired|link', caseSensitive: false).hasMatch(e.message);
+          RegExp(
+            r'token|expired|link',
+            caseSensitive: false,
+          ).hasMatch(e.message);
     default:
       return false;
   }

@@ -20,12 +20,14 @@ class MyCardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(staffCardProvider);
     final permissions =
-        ref.watch(currentUserProvider.select((u) => u?.permissions)) ?? StaffPermissions.none;
+        ref.watch(currentUserProvider.select((u) => u?.permissions)) ??
+        StaffPermissions.none;
 
     Future<void> refresh() async {
       // Permissions may have changed server-side as well.
       await ref.read(sessionControllerProvider.notifier).refreshUser();
-      await ref.refresh(staffCardProvider.future);
+      ref.invalidate(staffCardProvider);
+      await ref.read(staffCardProvider.future);
     }
 
     return Scaffold(
@@ -124,7 +126,9 @@ class _MyCardBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             'Editing is managed by your organization owner.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

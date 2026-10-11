@@ -43,15 +43,15 @@ enum CardEditSection {
   /// Sections a staff member may edit on their own card. The backend is the
   /// authority; this only decides what the editor shows and sends.
   static Set<CardEditSection> forStaff(StaffPermissions p) => {
-        if (p.editCard) ...{
-          CardEditSection.identity,
-          CardEditSection.images,
-          CardEditSection.contact,
-          CardEditSection.media,
-          CardEditSection.appearance,
-        },
-        if (p.manageLinks) CardEditSection.links,
-      };
+    if (p.editCard) ...{
+      CardEditSection.identity,
+      CardEditSection.images,
+      CardEditSection.contact,
+      CardEditSection.media,
+      CardEditSection.appearance,
+    },
+    if (p.manageLinks) CardEditSection.links,
+  };
 }
 
 /// Builds the minimal `PATCH` body: only fields that belong to [allowed]
@@ -75,9 +75,9 @@ Json buildCardPatch(
 }
 
 Json _normalized(Json j) => j.map((k, v) {
-      if (v is String) {
-        final t = v.trim();
-        return MapEntry(k, t.isEmpty ? null : t);
-      }
-      return MapEntry(k, v);
-    });
+  if (v is String) {
+    final t = v.trim();
+    return MapEntry(k, t.isEmpty ? null : t);
+  }
+  return MapEntry(k, v);
+});

@@ -11,10 +11,11 @@ import '../domain/public_review.dart';
 /// Errors are surfaced immediately; the user retries explicitly.
 Duration? _noRetry(int _, Object _) => null;
 
-final publicCardProvider = FutureProvider.autoDispose.family<PublicCard, String>(
-  (ref, slug) => ref.watch(publicCardRepositoryProvider).fetchCard(slug),
-  retry: _noRetry,
-);
+final publicCardProvider = FutureProvider.autoDispose
+    .family<PublicCard, String>(
+      (ref, slug) => ref.watch(publicCardRepositoryProvider).fetchCard(slug),
+      retry: _noRetry,
+    );
 
 /// Accumulated pages of a public list.
 class PagedList<T> {
@@ -38,14 +39,13 @@ class PagedList<T> {
     bool? hasMore,
     int? total,
     bool? loadingMore,
-  }) =>
-      PagedList(
-        items: items ?? this.items,
-        page: page ?? this.page,
-        hasMore: hasMore ?? this.hasMore,
-        total: total ?? this.total,
-        loadingMore: loadingMore ?? this.loadingMore,
-      );
+  }) => PagedList(
+    items: items ?? this.items,
+    page: page ?? this.page,
+    hasMore: hasMore ?? this.hasMore,
+    total: total ?? this.total,
+    loadingMore: loadingMore ?? this.loadingMore,
+  );
 }
 
 class PublicReviewsController extends AsyncNotifier<PagedList<PublicReview>> {
@@ -55,7 +55,9 @@ class PublicReviewsController extends AsyncNotifier<PagedList<PublicReview>> {
 
   @override
   Future<PagedList<PublicReview>> build() async {
-    final page = await ref.watch(publicCardRepositoryProvider).fetchReviews(slug);
+    final page = await ref
+        .watch(publicCardRepositoryProvider)
+        .fetchReviews(slug);
     return PagedList(
       items: page.items,
       page: page.page,
@@ -96,12 +98,16 @@ class PublicReviewsController extends AsyncNotifier<PagedList<PublicReview>> {
 
 final publicReviewsProvider = AsyncNotifierProvider.autoDispose
     .family<PublicReviewsController, PagedList<PublicReview>, String>(
-  PublicReviewsController.new,
-  retry: _noRetry,
-);
+      PublicReviewsController.new,
+      retry: _noRetry,
+    );
 
 class PublicDirectoryState {
-  const PublicDirectoryState({this.organizationName, this.organizationLogo, required this.list});
+  const PublicDirectoryState({
+    this.organizationName,
+    this.organizationLogo,
+    required this.list,
+  });
 
   final String? organizationName;
   final String? organizationLogo;
@@ -115,18 +121,26 @@ class PublicDirectoryController extends AsyncNotifier<PublicDirectoryState> {
 
   @override
   Future<PublicDirectoryState> build() async {
-    final page = await ref.watch(publicCardRepositoryProvider).fetchDirectory(orgSlug);
+    final page = await ref
+        .watch(publicCardRepositoryProvider)
+        .fetchDirectory(orgSlug);
     return PublicDirectoryState(
       organizationName: page.organizationName,
       organizationLogo: page.organizationLogo,
-      list: PagedList(items: page.entries, page: page.page, hasMore: page.hasMore),
+      list: PagedList(
+        items: page.entries,
+        page: page.page,
+        hasMore: page.hasMore,
+      ),
     );
   }
 
   Future<void> loadMore() async {
     final current = state.value;
-    if (current == null || current.list.loadingMore || !current.list.hasMore) return;
-    PublicDirectoryState withList(PagedList<DirectoryEntry> l) => PublicDirectoryState(
+    if (current == null || current.list.loadingMore || !current.list.hasMore)
+      return;
+    PublicDirectoryState withList(PagedList<DirectoryEntry> l) =>
+        PublicDirectoryState(
           organizationName: current.organizationName,
           organizationLogo: current.organizationLogo,
           list: l,
@@ -145,14 +159,17 @@ class PublicDirectoryController extends AsyncNotifier<PublicDirectoryState> {
               ...current.list.items,
               ...next.entries.where((e) => !seen.contains(e.slug)),
             ],
-            page: next.page <= current.list.page ? current.list.page + 1 : next.page,
+            page: next.page <= current.list.page
+                ? current.list.page + 1
+                : next.page,
             hasMore: next.hasMore,
             loadingMore: false,
           ),
         ),
       );
     } catch (_) {
-      if (ref.mounted) state = AsyncData(withList(current.list.copyWith(loadingMore: false)));
+      if (ref.mounted)
+        state = AsyncData(withList(current.list.copyWith(loadingMore: false)));
       rethrow;
     }
   }
@@ -160,6 +177,6 @@ class PublicDirectoryController extends AsyncNotifier<PublicDirectoryState> {
 
 final publicDirectoryProvider = AsyncNotifierProvider.autoDispose
     .family<PublicDirectoryController, PublicDirectoryState, String>(
-  PublicDirectoryController.new,
-  retry: _noRetry,
-);
+      PublicDirectoryController.new,
+      retry: _noRetry,
+    );

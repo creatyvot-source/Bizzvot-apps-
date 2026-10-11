@@ -25,7 +25,8 @@ class ProfileFormValues {
   final String industry;
   final DirectoryVisibility directoryVisibility;
 
-  factory ProfileFormValues.fromProfile(OrganizationProfile p) => ProfileFormValues(
+  factory ProfileFormValues.fromProfile(OrganizationProfile p) =>
+      ProfileFormValues(
         name: p.name.trim(),
         email: p.email?.trim() ?? '',
         phone: p.phone?.trim() ?? '',
@@ -48,7 +49,9 @@ class ProfileFormValues {
     // Keep the backend's own key for the description field.
     final raw = original.raw;
     final descriptionKey =
-        !raw.containsKey('description') && raw.containsKey('about') ? 'about' : 'description';
+        !raw.containsKey('description') && raw.containsKey('about')
+        ? 'about'
+        : 'description';
 
     put('name', name, before.name);
     put('email', email.toLowerCase(), before.email.toLowerCase());

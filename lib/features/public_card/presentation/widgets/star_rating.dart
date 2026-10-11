@@ -13,7 +13,9 @@ class StarRating extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = rating.clamp(0, 5).toDouble();
-    final label = r == r.roundToDouble() ? r.toInt().toString() : r.toStringAsFixed(1);
+    final label = r == r.roundToDouble()
+        ? r.toInt().toString()
+        : r.toStringAsFixed(1);
     return Semantics(
       label: 'Rated $label out of 5',
       excludeSemantics: true,
@@ -24,7 +26,9 @@ class StarRating extends StatelessWidget {
             Icon(
               r >= i
                   ? Icons.star_rounded
-                  : (r >= i - 0.5 ? Icons.star_half_rounded : Icons.star_outline_rounded),
+                  : (r >= i - 0.5
+                        ? Icons.star_half_rounded
+                        : Icons.star_outline_rounded),
               size: size,
               color: AppColors.star,
             ),
@@ -52,13 +56,13 @@ class StarRatingInput extends StatelessWidget {
   final String? errorText;
 
   static String describe(int v) => switch (v) {
-        1 => 'Poor',
-        2 => 'Fair',
-        3 => 'Good',
-        4 => 'Very good',
-        5 => 'Excellent',
-        _ => 'Not rated',
-      };
+    1 => 'Poor',
+    2 => 'Fair',
+    3 => 'Good',
+    4 => 'Very good',
+    5 => 'Excellent',
+    _ => 'Not rated',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +73,9 @@ class StarRatingInput extends StatelessWidget {
         Semantics(
           container: true,
           label: 'Rating',
-          value: value == 0 ? 'Not rated' : '$value of 5 stars, ${describe(value)}',
+          value: value == 0
+              ? 'Not rated'
+              : '$value of 5 stars, ${describe(value)}',
           increasedValue: value < 5 ? '${value + 1} of 5 stars' : null,
           decreasedValue: value > 1 ? '${value - 1} of 5 stars' : null,
           onIncrease: enabled && value < 5 ? () => onChanged(value + 1) : null,
@@ -89,13 +95,19 @@ class StarRatingInput extends StatelessWidget {
                   ),
                   onPressed: enabled ? () => onChanged(i) : null,
                   icon: const Icon(Icons.star_outline_rounded),
-                  selectedIcon: const Icon(Icons.star_rounded, color: AppColors.star),
+                  selectedIcon: const Icon(
+                    Icons.star_rounded,
+                    color: AppColors.star,
+                  ),
                 ),
               if (value > 0)
                 Padding(
                   padding: const EdgeInsets.only(left: AppSpacing.sm),
                   child: ExcludeSemantics(
-                    child: Text(describe(value), style: theme.textTheme.bodyMedium),
+                    child: Text(
+                      describe(value),
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   ),
                 ),
             ],
@@ -103,10 +115,15 @@ class StarRatingInput extends StatelessWidget {
         ),
         if (errorText != null)
           Padding(
-            padding: const EdgeInsets.only(left: AppSpacing.sm, top: AppSpacing.xs),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.sm,
+              top: AppSpacing.xs,
+            ),
             child: Text(
               errorText!,
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
             ),
           ),
       ],

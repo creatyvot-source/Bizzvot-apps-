@@ -27,5 +27,5 @@ class OrganizationProfileNotifier extends AsyncNotifier<OrganizationProfile> {
 
 final organizationProfileProvider =
     AsyncNotifierProvider<OrganizationProfileNotifier, OrganizationProfile>(
-  OrganizationProfileNotifier.new,
-);
+      OrganizationProfileNotifier.new,
+    );

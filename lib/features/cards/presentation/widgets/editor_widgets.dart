@@ -41,7 +41,9 @@ class EditorSection extends StatelessWidget {
                     Icon(icon, color: theme.colorScheme.primary),
                     const SizedBox(width: AppSpacing.sm),
                   ],
-                  Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
+                  Expanded(
+                    child: Text(title, style: theme.textTheme.titleMedium),
+                  ),
                 ],
               ),
             ),
@@ -49,7 +51,9 @@ class EditorSection extends StatelessWidget {
               const SizedBox(height: AppSpacing.xs),
               Text(
                 subtitle!,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
             const SizedBox(height: AppSpacing.md),
@@ -100,13 +104,18 @@ class ImageSlotTile extends StatelessWidget {
               child: ColoredBox(
                 color: theme.colorScheme.surfaceContainerHighest,
                 child: url == null
-                    ? Icon(Icons.image_outlined, color: theme.colorScheme.outline)
+                    ? Icon(
+                        Icons.image_outlined,
+                        color: theme.colorScheme.outline,
+                      )
                     : Image.network(
                         url!,
                         fit: BoxFit.cover,
                         semanticLabel: '$label preview',
-                        errorBuilder: (_, _, _) =>
-                            Icon(Icons.broken_image_outlined, color: theme.colorScheme.outline),
+                        errorBuilder: (_, _, _) => Icon(
+                          Icons.broken_image_outlined,
+                          color: theme.colorScheme.outline,
+                        ),
                       ),
               ),
             ),
@@ -127,7 +136,9 @@ class ImageSlotTile extends StatelessWidget {
                   )
                 else
                   Text(
-                    url == null ? 'Not set · JPG, PNG or WebP up to 5 MB' : 'Uploaded',
+                    url == null
+                        ? 'Not set · JPG, PNG or WebP up to 5 MB'
+                        : 'Uploaded',
                     style: theme.textTheme.bodySmall,
                   ),
               ],
@@ -167,7 +178,11 @@ class LinkListEditor extends StatelessWidget {
   /// Social links pick a platform; custom links need a label.
   final bool social;
 
-  Future<void> _edit(BuildContext context, {CardLink? existing, int? index}) async {
+  Future<void> _edit(
+    BuildContext context, {
+    CardLink? existing,
+    int? index,
+  }) async {
     final result = await showDialog<CardLink>(
       context: context,
       builder: (_) => LinkDialog(social: social, existing: existing),
@@ -221,7 +236,11 @@ class LinkListEditor extends StatelessWidget {
                   ),
                 ),
                 title: Text(l.label ?? SocialPlatforms.label(l.type)),
-                subtitle: Text(l.url, maxLines: 1, overflow: TextOverflow.ellipsis),
+                subtitle: Text(
+                  l.url,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -268,7 +287,8 @@ abstract final class SocialPlatforms {
     'other': 'Other',
   };
 
-  static String label(String type) => all[type] ?? (type == 'custom' ? 'Link' : type);
+  static String label(String type) =>
+      all[type] ?? (type == 'custom' ? 'Link' : type);
 }
 
 class LinkDialog extends StatefulWidget {
@@ -284,9 +304,13 @@ class LinkDialog extends StatefulWidget {
 class _LinkDialogState extends State<LinkDialog> {
   final _form = GlobalKey<FormState>();
   late final _label = TextEditingController(text: widget.existing?.label ?? '');
-  late final _url = TextEditingController(text: widget.existing?.url ?? 'https://');
+  late final _url = TextEditingController(
+    text: widget.existing?.url ?? 'https://',
+  );
   late String _type = widget.social
-      ? (SocialPlatforms.all.containsKey(widget.existing?.type) ? widget.existing!.type : 'linkedin')
+      ? (SocialPlatforms.all.containsKey(widget.existing?.type)
+            ? widget.existing!.type
+            : 'linkedin')
       : 'custom';
 
   @override
@@ -299,12 +323,14 @@ class _LinkDialogState extends State<LinkDialog> {
   void _submit() {
     if (!_form.currentState!.validate()) return;
     final label = _label.text.trim();
-    Navigator.of(context).pop(CardLink(
-      id: widget.existing?.id,
-      type: _type,
-      url: _url.text.trim(),
-      label: label.isEmpty ? null : label,
-    ));
+    Navigator.of(context).pop(
+      CardLink(
+        id: widget.existing?.id,
+        type: _type,
+        url: _url.text.trim(),
+        label: label.isEmpty ? null : label,
+      ),
+    );
   }
 
   @override
@@ -338,7 +364,9 @@ class _LinkDialogState extends State<LinkDialog> {
               ),
               validator: widget.social
                   ? null
-                  : (v) => (v == null || v.trim().isEmpty) ? 'Label is required' : null,
+                  : (v) => (v == null || v.trim().isEmpty)
+                        ? 'Label is required'
+                        : null,
             ),
             fieldGap,
             TextFormField(
@@ -353,7 +381,10 @@ class _LinkDialogState extends State<LinkDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Done')),
       ],
     );
@@ -362,9 +393,9 @@ class _LinkDialogState extends State<LinkDialog> {
 
 /// Asks for a YouTube URL and validates it.
 Future<String?> askYoutubeUrl(BuildContext context) => showDialog<String>(
-      context: context,
-      builder: (_) => const _YoutubeDialog(),
-    );
+  context: context,
+  builder: (_) => const _YoutubeDialog(),
+);
 
 class _YoutubeDialog extends StatefulWidget {
   const _YoutubeDialog();
@@ -384,38 +415,47 @@ class _YoutubeDialogState extends State<_YoutubeDialog> {
   }
 
   void _submit() {
-    if (_form.currentState!.validate()) Navigator.of(context).pop(_url.text.trim());
+    if (_form.currentState!.validate()) {
+      Navigator.of(context).pop(_url.text.trim());
+    }
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: const Text('Add YouTube video'),
-        scrollable: true,
-        content: Form(
-          key: _form,
-          child: TextFormField(
-            controller: _url,
-            autofocus: true,
-            keyboardType: TextInputType.url,
-            autocorrect: false,
-            decoration: const InputDecoration(
-              labelText: 'YouTube link',
-              hintText: 'https://www.youtube.com/watch?v=…',
-            ),
-            validator: MediaRules.validateYoutube,
-            onFieldSubmitted: (_) => _submit(),
-          ),
+    title: const Text('Add YouTube video'),
+    scrollable: true,
+    content: Form(
+      key: _form,
+      child: TextFormField(
+        controller: _url,
+        autofocus: true,
+        keyboardType: TextInputType.url,
+        autocorrect: false,
+        decoration: const InputDecoration(
+          labelText: 'YouTube link',
+          hintText: 'https://www.youtube.com/watch?v=…',
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          FilledButton(onPressed: _submit, child: const Text('Add')),
-        ],
-      );
+        validator: MediaRules.validateYoutube,
+        onFieldSubmitted: (_) => _submit(),
+      ),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(onPressed: _submit, child: const Text('Add')),
+    ],
+  );
 }
 
 /// Preset brand colors + free hex entry.
 class BrandColorPicker extends StatelessWidget {
-  const BrandColorPicker({super.key, required this.controller, required this.onChanged});
+  const BrandColorPicker({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+  });
 
   final TextEditingController controller;
   final VoidCallback onChanged;
@@ -464,12 +504,18 @@ class BrandColorPicker extends StatelessWidget {
                           color: parseHexColor(hex),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: current == hex ? scheme.onSurface : scheme.outlineVariant,
+                            color: current == hex
+                                ? scheme.onSurface
+                                : scheme.outlineVariant,
                             width: current == hex ? 3 : 1,
                           ),
                         ),
                         child: current == hex
-                            ? Icon(Icons.check, size: 18, color: onColor(parseHexColor(hex)!))
+                            ? Icon(
+                                Icons.check,
+                                size: 18,
+                                color: onColor(parseHexColor(hex)!),
+                              )
                             : null,
                       ),
                     ),
@@ -557,10 +603,7 @@ class SectionOrderEditor extends StatelessWidget {
           ),
           title: Text(DisplaySections.label(key)),
           subtitle: Text(visible ? 'Shown' : 'Hidden'),
-          trailing: Switch(
-            value: visible,
-            onChanged: (v) => onToggle(key, v),
-          ),
+          trailing: Switch(value: visible, onChanged: (v) => onToggle(key, v)),
         );
       },
     );
@@ -569,18 +612,20 @@ class SectionOrderEditor extends StatelessWidget {
 
 /// Inherit / Public / Private selector with explanations (plan §7.2–7.3).
 class VisibilitySelector extends StatelessWidget {
-  const VisibilitySelector({super.key, required this.value, required this.onChanged});
+  const VisibilitySelector({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   final CardVisibility value;
   final ValueChanged<CardVisibility>? onChanged;
 
   static String explain(CardVisibility v) => switch (v) {
-        CardVisibility.inherit =>
-          'Follows the organization directory setting. Listed only when the directory is public and the card is active.',
-        CardVisibility.public =>
-          'Listed when the card is active. A private organization directory still hides it.',
-        CardVisibility.private => 'Never listed in the public people directory.',
-      };
+    CardVisibility.inherit => 'Follows the organization directory setting. Listed only when the directory is public and the card is active.',
+    CardVisibility.public => 'Listed when the card is active. A private organization directory still hides it.',
+    CardVisibility.private => 'Never listed in the public people directory.',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -610,13 +655,19 @@ class VisibilitySelector extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.link, size: 18, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.link,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 'Hiding a card from the directory does not block its direct link or QR code. '
                 'Anyone with the link can still open it while the card is active.',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

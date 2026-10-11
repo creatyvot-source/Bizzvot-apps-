@@ -50,21 +50,22 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
       return _BlockingScreen(
         icon: Icons.construction_outlined,
         title: 'We’ll be right back',
-        message: config.maintenanceMessage ??
-            'Bizzvot is undergoing scheduled maintenance. Please try again shortly.',
+        message: config.maintenanceMessage ?? 'Bizzvot is undergoing scheduled maintenance. Please try again shortly.',
         actionLabel: 'Try again',
         onAction: () => ref.invalidate(appConfigProvider),
       );
     }
 
-    final requirement =
-        version == null ? UpdateRequirement.none : updateRequirement(config, version);
+    final requirement = version == null
+        ? UpdateRequirement.none
+        : updateRequirement(config, version);
 
     if (requirement == UpdateRequirement.required) {
       return _BlockingScreen(
         icon: Icons.system_update_outlined,
         title: 'Update required',
-        message: 'This version of Bizzvot is no longer supported. '
+        message:
+            'This version of Bizzvot is no longer supported. '
             'Please update to continue.',
         actionLabel: 'Update now',
         onAction: () => _openStore(config),
@@ -84,7 +85,9 @@ class _AppGateState extends ConsumerState<AppGate> with WidgetsBindingObserver {
                   children: [
                     const Icon(Icons.system_update_outlined),
                     const SizedBox(width: AppSpacing.sm),
-                    const Expanded(child: Text('A new version of Bizzvot is available.')),
+                    const Expanded(
+                      child: Text('A new version of Bizzvot is available.'),
+                    ),
                     TextButton(
                       onPressed: () => _openStore(config),
                       child: const Text('Update'),
@@ -156,11 +159,17 @@ class _BlockingScreen extends StatelessWidget {
               children: [
                 Icon(icon, size: 72, color: theme.colorScheme.primary),
                 const SizedBox(height: AppSpacing.lg),
-                Text(title,
-                    style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+                Text(
+                  title,
+                  style: theme.textTheme.headlineSmall,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: AppSpacing.md),
-                Text(message,
-                    style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+                Text(
+                  message,
+                  style: theme.textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 FilledButton(onPressed: onAction, child: Text(actionLabel)),
               ],

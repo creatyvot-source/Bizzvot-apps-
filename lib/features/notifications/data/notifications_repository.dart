@@ -14,11 +14,14 @@ class NotificationsRepository {
 
   /// `GET /notifications?page=&limit=`.
   Future<Paged<AppNotification>> notifications({int page = 1}) => _api.get(
-        Endpoints.notifications,
-        query: {'page': page, 'limit': 20},
-        parse: (d) => Paged.parse(d, AppNotification.fromJson,
-            listKeys: const ['notifications', 'items', 'docs', 'results', 'data']),
-      );
+    Endpoints.notifications,
+    query: {'page': page, 'limit': 20},
+    parse: (d) => Paged.parse(
+      d,
+      AppNotification.fromJson,
+      listKeys: const ['notifications', 'items', 'docs', 'results', 'data'],
+    ),
+  );
 
   /// `POST /notifications/:id/read`.
   Future<void> markRead(String id) =>

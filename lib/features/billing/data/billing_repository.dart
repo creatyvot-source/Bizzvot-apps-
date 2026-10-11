@@ -26,11 +26,14 @@ class BillingRepository {
     try {
       final list = await _api.get(
         Endpoints.catalogPlans,
-        parse: (d) => Paged.parse(d, Plan.fromJson,
-                listKeys: const ['plans', 'items', 'data'])
-            .items
-            .where((p) => p.id.isNotEmpty && p.active)
-            .toList(growable: false),
+        parse: (d) =>
+            Paged.parse(
+                  d,
+                  Plan.fromJson,
+                  listKeys: const ['plans', 'items', 'data'],
+                ).items
+                .where((p) => p.id.isNotEmpty && p.active)
+                .toList(growable: false),
       );
       if (list.isNotEmpty) return list;
     } on AppException catch (e) {
@@ -51,7 +54,11 @@ class BillingRepository {
         body: {
           'purpose': 'seats',
           'lines': [
-            {'itemType': CatalogItemType.plan.name, 'itemId': planId, 'quantity': quantity},
+            {
+              'itemType': CatalogItemType.plan.name,
+              'itemId': planId,
+              'quantity': quantity,
+            },
           ],
         },
         parse: Quote.fromJson,
@@ -63,13 +70,12 @@ class BillingRepository {
     required int quantity,
     required String planId,
     required String idempotencyKey,
-  }) =>
-      _api.post(
-        Endpoints.billing,
-        body: {'quantity': quantity, 'planId': planId},
-        headers: {idempotencyHeader: idempotencyKey},
-        parse: PaymentSession.fromJson,
-      );
+  }) => _api.post(
+    Endpoints.billing,
+    body: {'quantity': quantity, 'planId': planId},
+    headers: {idempotencyHeader: idempotencyKey},
+    parse: PaymentSession.fromJson,
+  );
 }
 
 final billingRepositoryProvider = Provider<BillingRepository>(

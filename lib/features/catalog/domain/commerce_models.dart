@@ -41,33 +41,28 @@ class CartLine {
   }
 
   CartLine copyWith({int? quantity}) => CartLine(
-        itemType: itemType,
-        itemId: itemId,
-        variantId: variantId,
-        variantLabel: variantLabel,
-        addOnIds: addOnIds,
-        quantity: quantity ?? this.quantity,
-        titleSnapshot: titleSnapshot,
-        paymentPolicy: paymentPolicy,
-      );
+    itemType: itemType,
+    itemId: itemId,
+    variantId: variantId,
+    variantLabel: variantLabel,
+    addOnIds: addOnIds,
+    quantity: quantity ?? this.quantity,
+    titleSnapshot: titleSnapshot,
+    paymentPolicy: paymentPolicy,
+  );
 
   /// Body for `POST /cart/quote` and `POST /orders`. No amounts, no titles.
   Json toRequestJson() => compact({
-        'itemType': itemType.name,
-        'itemId': itemId,
-        'variantId': variantId,
-        if (addOnIds.isNotEmpty) 'addOnIds': addOnIds,
-        'quantity': quantity,
-      });
+    'itemType': itemType.name,
+    'itemId': itemId,
+    'variantId': variantId,
+    if (addOnIds.isNotEmpty) 'addOnIds': addOnIds,
+    'quantity': quantity,
+  });
 
-  bool matches({
-    required String itemId,
-    String? itemType,
-    String? variantId,
-  }) =>
+  bool matches({required String itemId, String? itemType, String? variantId}) =>
       this.itemId == itemId &&
-      (itemType == null ||
-          CatalogItemType.parse(itemType) == this.itemType) &&
+      (itemType == null || CatalogItemType.parse(itemType) == this.itemType) &&
       (variantId == null || this.variantId == variantId);
 }
 
@@ -84,21 +79,30 @@ class Adjustment {
   /// Display string such as "18%"; never used for maths.
   final String? rate;
 
-  static List<Adjustment> listFrom(Object? raw, {String? currency, String fallbackLabel = 'Adjustment'}) {
+  static List<Adjustment> listFrom(
+    Object? raw, {
+    String? currency,
+    String fallbackLabel = 'Adjustment',
+  }) {
     final out = <Adjustment>[];
     for (final j in asJsonList(raw)) {
-      final amount = Money.firstField(j, const ['amount', 'value', 'total'],
-          currency: currency);
+      final amount = Money.firstField(j, const [
+        'amount',
+        'value',
+        'total',
+      ], currency: currency);
       if (amount == null) continue;
       final rate = j['rate'] ?? j['percent'] ?? j['percentage'];
-      out.add(Adjustment(
-        label: strOr(
-          j['label'] ?? j['name'] ?? j['title'] ?? j['code'] ?? j['type'],
-          fallbackLabel,
+      out.add(
+        Adjustment(
+          label: strOr(
+            j['label'] ?? j['name'] ?? j['title'] ?? j['code'] ?? j['type'],
+            fallbackLabel,
+          ),
+          amount: amount,
+          rate: rate == null ? null : (rate is num ? '$rate%' : str(rate)),
         ),
-        amount: amount,
-        rate: rate == null ? null : (rate is num ? '$rate%' : str(rate)),
-      ));
+      );
     }
     return out;
   }
@@ -137,21 +141,37 @@ class QuoteLine {
     final j = asJson(raw);
     final item = asJson(j['item']);
     final status = wireKey(str(j['status']));
-    final issue = str(j['issue'] ?? j['error'] ?? j['reason'] ?? j['unavailableReason']);
+    final issue = str(
+      j['issue'] ?? j['error'] ?? j['reason'] ?? j['unavailableReason'],
+    );
     return QuoteLine(
-      itemType: CatalogItemType.parse(j['itemType'] ?? j['type'] ?? item['type']),
+      itemType: CatalogItemType.parse(
+        j['itemType'] ?? j['type'] ?? item['type'],
+      ),
       itemId: strOr(j['itemId'] ?? (item.isEmpty ? null : idOf(item))),
       variantId: str(j['variantId']),
-      title: strOr(j['title'] ?? j['name'] ?? item['title'] ?? item['name'], 'Item'),
+      title: strOr(
+        j['title'] ?? j['name'] ?? item['title'] ?? item['name'],
+        'Item',
+      ),
       variantLabel: str(j['variantName'] ?? j['variantLabel']),
       quantity: intOr(j['quantity'], 1),
-      unitPrice: Money.firstField(j, const ['unitPrice', 'price'], currency: currency),
-      lineTotal: Money.firstField(j, const ['lineTotal', 'total', 'amount'],
-          currency: currency),
-      available: boolOrNull(j['available'] ?? j['valid']) ??
+      unitPrice: Money.firstField(j, const [
+        'unitPrice',
+        'price',
+      ], currency: currency),
+      lineTotal: Money.firstField(j, const [
+        'lineTotal',
+        'total',
+        'amount',
+      ], currency: currency),
+      available:
+          boolOrNull(j['available'] ?? j['valid']) ??
           !(status == 'unavailable' || status == 'invalid' || issue != null),
       issue: issue,
-      paymentPolicy: PaymentPolicy.tryParse(j['paymentPolicy'] ?? item['paymentPolicy']),
+      paymentPolicy: PaymentPolicy.tryParse(
+        j['paymentPolicy'] ?? item['paymentPolicy'],
+      ),
     );
   }
 }
@@ -227,7 +247,10 @@ class Quote {
 
   /// Checkout requires a server total and no unavailable lines.
   bool get canCheckout =>
-      (checkoutAllowed ?? true) && !hasUnavailable && total != null && lines.isNotEmpty;
+      (checkoutAllowed ?? true) &&
+      !hasUnavailable &&
+      total != null &&
+      lines.isNotEmpty;
 
   /// Policy classifications across lines (server value, else cart snapshot).
   bool blocksInApp(List<CartLine> cart) {
@@ -241,7 +264,9 @@ class Quote {
     var j = asJson(raw);
     if (j['quote'] is Map) j = asJson(j['quote']);
     final totals = asJson(j['totals']);
-    final currency = Money.normalizeCurrency(j['currency'] ?? totals['currency']);
+    final currency = Money.normalizeCurrency(
+      j['currency'] ?? totals['currency'],
+    );
     final cur = currency.isEmpty ? null : currency;
     Money? total(List<String> keys) =>
         Money.firstField(totals, keys, currency: cur) ??
@@ -258,15 +283,25 @@ class Quote {
           .map((l) => QuoteLine.fromJson(l, currency: cur))
           .toList(growable: false),
       subtotal: total(const ['subtotal', 'subTotal']),
-      discounts: Adjustment.listFrom(j['discounts'], currency: cur, fallbackLabel: 'Discount'),
+      discounts: Adjustment.listFrom(
+        j['discounts'],
+        currency: cur,
+        fallbackLabel: 'Discount',
+      ),
       discountTotal: total(const ['discountTotal', 'discount']),
-      taxes: Adjustment.listFrom(j['taxes'] ?? j['taxLines'], currency: cur, fallbackLabel: 'Tax'),
+      taxes: Adjustment.listFrom(
+        j['taxes'] ?? j['taxLines'],
+        currency: cur,
+        fallbackLabel: 'Tax',
+      ),
       taxTotal: total(const ['taxTotal', 'tax']),
       shipping: total(const ['shipping', 'shippingTotal']),
       total: total(const ['total', 'grandTotal', 'amountDue']),
       invalidLines: invalid,
       expiresAt: dateOrNull(j['expiresAt']),
-      checkoutAllowed: boolOrNull(j['checkoutAllowed'] ?? j['valid'] ?? j['canCheckout']),
+      checkoutAllowed: boolOrNull(
+        j['checkoutAllowed'] ?? j['valid'] ?? j['canCheckout'],
+      ),
       termsUrl: str(j['termsUrl']),
       notes: strList(j['notes'] ?? j['messages']),
     );
@@ -293,33 +328,35 @@ enum OrderStatus {
   unknown;
 
   static OrderStatus parse(Object? v) => switch (wireKey(str(v))) {
-        'draft' => OrderStatus.draft,
-        'pending_payment' || 'pending' || 'awaiting_payment' || 'created' =>
-          OrderStatus.pendingPayment,
-        'paid' => OrderStatus.paid,
-        'processing' || 'in_progress' => OrderStatus.processing,
-        'fulfilled' || 'delivered' || 'shipped' => OrderStatus.fulfilled,
-        'completed' || 'complete' => OrderStatus.completed,
-        'payment_failed' || 'failed' => OrderStatus.paymentFailed,
-        'cancelled' || 'canceled' => OrderStatus.cancelled,
-        'refunded' => OrderStatus.refunded,
-        'expired' => OrderStatus.expired,
-        _ => OrderStatus.unknown,
-      };
+    'draft' => OrderStatus.draft,
+    'pending_payment' ||
+    'pending' ||
+    'awaiting_payment' ||
+    'created' => OrderStatus.pendingPayment,
+    'paid' => OrderStatus.paid,
+    'processing' || 'in_progress' => OrderStatus.processing,
+    'fulfilled' || 'delivered' || 'shipped' => OrderStatus.fulfilled,
+    'completed' || 'complete' => OrderStatus.completed,
+    'payment_failed' || 'failed' => OrderStatus.paymentFailed,
+    'cancelled' || 'canceled' => OrderStatus.cancelled,
+    'refunded' => OrderStatus.refunded,
+    'expired' => OrderStatus.expired,
+    _ => OrderStatus.unknown,
+  };
 
   String get wire => switch (this) {
-        OrderStatus.draft => 'draft',
-        OrderStatus.pendingPayment => 'pending_payment',
-        OrderStatus.paid => 'paid',
-        OrderStatus.processing => 'processing',
-        OrderStatus.fulfilled => 'fulfilled',
-        OrderStatus.completed => 'completed',
-        OrderStatus.paymentFailed => 'payment_failed',
-        OrderStatus.cancelled => 'cancelled',
-        OrderStatus.refunded => 'refunded',
-        OrderStatus.expired => 'expired',
-        OrderStatus.unknown => 'unknown',
-      };
+    OrderStatus.draft => 'draft',
+    OrderStatus.pendingPayment => 'pending_payment',
+    OrderStatus.paid => 'paid',
+    OrderStatus.processing => 'processing',
+    OrderStatus.fulfilled => 'fulfilled',
+    OrderStatus.completed => 'completed',
+    OrderStatus.paymentFailed => 'payment_failed',
+    OrderStatus.cancelled => 'cancelled',
+    OrderStatus.refunded => 'refunded',
+    OrderStatus.expired => 'expired',
+    OrderStatus.unknown => 'unknown',
+  };
 
   String get label => humanize(wire);
 }
@@ -336,28 +373,37 @@ enum PaymentStatus {
   unknown;
 
   static PaymentStatus parse(Object? v) => switch (wireKey(str(v))) {
-        'pending' || 'created' || 'unpaid' || 'awaiting_payment' ||
-        'requires_payment' || 'pending_payment' =>
-          PaymentStatus.pending,
-        'processing' || 'authorized' || 'authorised' || 'in_progress' =>
-          PaymentStatus.processing,
-        'paid' || 'captured' || 'succeeded' || 'success' || 'successful' ||
-        'completed' =>
-          PaymentStatus.paid,
-        'failed' || 'payment_failed' || 'declined' || 'error' =>
-          PaymentStatus.failed,
-        'cancelled' || 'canceled' => PaymentStatus.cancelled,
-        'expired' => PaymentStatus.expired,
-        'refunded' => PaymentStatus.refunded,
-        'partially_refunded' || 'partial_refund' =>
-          PaymentStatus.partiallyRefunded,
-        _ => PaymentStatus.unknown,
-      };
+    'pending' ||
+    'created' ||
+    'unpaid' ||
+    'awaiting_payment' ||
+    'requires_payment' ||
+    'pending_payment' => PaymentStatus.pending,
+    'processing' ||
+    'authorized' ||
+    'authorised' ||
+    'in_progress' => PaymentStatus.processing,
+    'paid' ||
+    'captured' ||
+    'succeeded' ||
+    'success' ||
+    'successful' ||
+    'completed' => PaymentStatus.paid,
+    'failed' ||
+    'payment_failed' ||
+    'declined' ||
+    'error' => PaymentStatus.failed,
+    'cancelled' || 'canceled' => PaymentStatus.cancelled,
+    'expired' => PaymentStatus.expired,
+    'refunded' => PaymentStatus.refunded,
+    'partially_refunded' || 'partial_refund' => PaymentStatus.partiallyRefunded,
+    _ => PaymentStatus.unknown,
+  };
 
   String get label => switch (this) {
-        PaymentStatus.partiallyRefunded => 'Partially refunded',
-        _ => humanize(name),
-      };
+    PaymentStatus.partiallyRefunded => 'Partially refunded',
+    _ => humanize(name),
+  };
 }
 
 /// What the payment status screen shows, derived only from server state.
@@ -371,9 +417,9 @@ enum PaymentOutcome {
   refunded;
 
   bool get isTerminal => switch (this) {
-        PaymentOutcome.pending || PaymentOutcome.processing => false,
-        _ => true,
-      };
+    PaymentOutcome.pending || PaymentOutcome.processing => false,
+    _ => true,
+  };
 }
 
 class TaxLine {
@@ -397,8 +443,11 @@ class TaxLine {
   }
 
   static TaxLine? _one(Json j, String? currency) {
-    final amount = Money.firstField(j, const ['amount', 'value', 'total'],
-        currency: currency);
+    final amount = Money.firstField(j, const [
+      'amount',
+      'value',
+      'total',
+    ], currency: currency);
     final label = str(j['label'] ?? j['name'] ?? j['type'] ?? j['code']);
     if (amount == null && label == null) return null;
     final rate = j['rate'] ?? j['percent'];
@@ -441,9 +490,15 @@ class OrderLine {
       itemType: t == null ? null : CatalogItemType.parse(t),
       itemId: str(j['itemId']),
       variantLabel: str(j['variantName'] ?? j['variantLabel'] ?? j['sku']),
-      unitPrice: Money.firstField(j, const ['unitPrice', 'price'], currency: currency),
-      lineTotal: Money.firstField(j, const ['lineTotal', 'total', 'amount'],
-          currency: currency),
+      unitPrice: Money.firstField(j, const [
+        'unitPrice',
+        'price',
+      ], currency: currency),
+      lineTotal: Money.firstField(j, const [
+        'lineTotal',
+        'total',
+        'amount',
+      ], currency: currency),
       tax: Money.firstField(j, const ['tax', 'taxAmount'], currency: currency),
     );
   }
@@ -504,7 +559,8 @@ class Order {
   /// Safe, user-facing failure reason from the server, if any.
   final String? failureReason;
 
-  String get displayNumber => orderNumber ?? (id.length > 8 ? id.substring(id.length - 8) : id);
+  String get displayNumber =>
+      orderNumber ?? (id.length > 8 ? id.substring(id.length - 8) : id);
 
   String get statusLabel =>
       status == OrderStatus.unknown ? humanize(statusRaw) : status.label;
@@ -555,7 +611,9 @@ class Order {
     var j = asJson(raw);
     if (j['order'] is Map) j = {...j, ...asJson(j['order'])};
     final totals = asJson(j['totals']);
-    final currency = Money.normalizeCurrency(j['currency'] ?? totals['currency']);
+    final currency = Money.normalizeCurrency(
+      j['currency'] ?? totals['currency'],
+    );
     final cur = currency.isEmpty ? null : currency;
     Money? total(List<String> keys) =>
         Money.firstField(totals, keys, currency: cur) ??
@@ -596,7 +654,9 @@ class Order {
       subscriptionId: subscription is Map
           ? idOf(asJson(subscription))
           : str(subscription ?? j['subscriptionId']),
-      invoiceId: invoice is Map ? idOf(asJson(invoice)) : str(invoice ?? j['invoiceId']),
+      invoiceId: invoice is Map
+          ? idOf(asJson(invoice))
+          : str(invoice ?? j['invoiceId']),
       canRetryPayment: boolOrNull(j['canRetryPayment'] ?? payment['canRetry']),
       createdAt: dateOrNull(j['createdAt']),
       updatedAt: dateOrNull(j['updatedAt']),
@@ -638,18 +698,28 @@ class PaymentSession {
       asJson(j['checkout']),
       asJson(j['subscription']),
     ]) {
-      url ??= str(src['checkoutUrl'] ?? src['paymentUrl'] ?? src['shortUrl'] ??
-          src['hostedUrl'] ?? src['url']);
+      url ??= str(
+        src['checkoutUrl'] ??
+            src['paymentUrl'] ??
+            src['shortUrl'] ??
+            src['hostedUrl'] ??
+            src['url'],
+      );
       status ??= str(src['status']);
     }
     final attempt = asJson(j['paymentAttempt'] ?? j['payment']);
-    attemptId = str(j['attemptId']) ?? (attempt.isEmpty ? null : str(attempt['id'] ?? attempt['_id']));
+    attemptId =
+        str(j['attemptId']) ??
+        (attempt.isEmpty ? null : str(attempt['id'] ?? attempt['_id']));
     final order = j['order'];
     final sub = j['subscription'];
     return PaymentSession(
       checkoutUrl: url,
-      orderId: str(j['orderId']) ?? (order is Map ? idOf(asJson(order)) : str(order)),
-      subscriptionId: str(j['subscriptionId']) ??
+      orderId:
+          str(j['orderId']) ??
+          (order is Map ? idOf(asJson(order)) : str(order)),
+      subscriptionId:
+          str(j['subscriptionId']) ??
           (sub is Map ? idOf(asJson(sub)) : str(sub)),
       attemptId: attemptId,
       status: status,
@@ -720,7 +790,9 @@ class Invoice {
     var j = asJson(raw);
     if (j['invoice'] is Map) j = {...j, ...asJson(j['invoice'])};
     final totals = asJson(j['totals']);
-    final currency = Money.normalizeCurrency(j['currency'] ?? totals['currency']);
+    final currency = Money.normalizeCurrency(
+      j['currency'] ?? totals['currency'],
+    );
     final cur = currency.isEmpty ? null : currency;
     Money? total(List<String> keys) =>
         Money.firstField(totals, keys, currency: cur) ??
@@ -731,9 +803,12 @@ class Invoice {
       id: idOf(j),
       invoiceNumber: str(j['invoiceNumber'] ?? j['number']),
       status: str(j['status']),
-      orderId: str(j['orderId']) ?? (order is Map ? idOf(asJson(order)) : str(order)),
+      orderId:
+          str(j['orderId']) ??
+          (order is Map ? idOf(asJson(order)) : str(order)),
       subscriptionId:
-          str(j['subscriptionId']) ?? (sub is Map ? idOf(asJson(sub)) : str(sub)),
+          str(j['subscriptionId']) ??
+          (sub is Map ? idOf(asJson(sub)) : str(sub)),
       currency: currency,
       lines: asJsonList(j['lines'] ?? j['items'] ?? j['itemsSnapshot'])
           .map((l) => OrderLine.fromJson(l, currency: cur))
@@ -743,7 +818,10 @@ class Invoice {
       taxTotal: total(const ['taxTotal', 'tax']),
       total: total(const ['total', 'grandTotal']),
       amountPaid: total(const ['amountPaid', 'paid']),
-      taxDetails: TaxLine.listFrom(j['taxDetails'] ?? j['taxes'], currency: cur),
+      taxDetails: TaxLine.listFrom(
+        j['taxDetails'] ?? j['taxes'],
+        currency: cur,
+      ),
       issuedAt: dateOrNull(j['issuedAt'] ?? j['createdAt']),
       dueAt: dateOrNull(j['dueAt'] ?? j['dueDate']),
       fileUrl: str(j['fileUrl'] ?? j['pdfUrl'] ?? j['url']),
@@ -767,47 +845,48 @@ enum SubscriptionStatus {
   unknown;
 
   static SubscriptionStatus parse(Object? v) => switch (wireKey(str(v))) {
-        'pending' || 'incomplete' || 'created' || 'pending_payment' =>
-          SubscriptionStatus.pending,
-        'trial' || 'trialing' || 'in_trial' => SubscriptionStatus.trialing,
-        'active' => SubscriptionStatus.active,
-        'past_due' || 'payment_failed' || 'unpaid' => SubscriptionStatus.pastDue,
-        'grace_period' || 'grace' || 'in_grace' => SubscriptionStatus.gracePeriod,
-        'cancelled' || 'canceled' => SubscriptionStatus.cancelled,
-        'expired' || 'ended' => SubscriptionStatus.expired,
-        _ => SubscriptionStatus.unknown,
-      };
+    'pending' ||
+    'incomplete' ||
+    'created' ||
+    'pending_payment' => SubscriptionStatus.pending,
+    'trial' || 'trialing' || 'in_trial' => SubscriptionStatus.trialing,
+    'active' => SubscriptionStatus.active,
+    'past_due' || 'payment_failed' || 'unpaid' => SubscriptionStatus.pastDue,
+    'grace_period' || 'grace' || 'in_grace' => SubscriptionStatus.gracePeriod,
+    'cancelled' || 'canceled' => SubscriptionStatus.cancelled,
+    'expired' || 'ended' => SubscriptionStatus.expired,
+    _ => SubscriptionStatus.unknown,
+  };
 
   String get label => switch (this) {
-        SubscriptionStatus.pastDue => 'Past due',
-        SubscriptionStatus.gracePeriod => 'Grace period',
-        SubscriptionStatus.trialing => 'Trial',
-        _ => humanize(name),
-      };
+    SubscriptionStatus.pastDue => 'Past due',
+    SubscriptionStatus.gracePeriod => 'Grace period',
+    SubscriptionStatus.trialing => 'Trial',
+    _ => humanize(name),
+  };
 
   /// Plain-language explanation for owners.
   String get explanation => switch (this) {
-        SubscriptionStatus.pending =>
-          'Waiting for payment confirmation. Seats are added only after the '
-              'payment is verified.',
-        SubscriptionStatus.trialing =>
-          'You are on a free trial. Choose a plan before the trial ends to keep '
-              'your cards active.',
-        SubscriptionStatus.active => 'Your subscription is active.',
-        SubscriptionStatus.pastDue =>
-          'The last renewal payment did not go through. Renew now to avoid '
-              'interruption to your cards.',
-        SubscriptionStatus.gracePeriod =>
-          'Your subscription has lapsed but your cards stay active until the '
-              'grace period ends. Renew to keep them active.',
-        SubscriptionStatus.cancelled =>
-          'This subscription has been cancelled.',
-        SubscriptionStatus.expired =>
-          'This subscription has expired. Cards covered by it may be disabled '
-              'until you renew.',
-        SubscriptionStatus.unknown =>
-          'We could not determine the status of this subscription.',
-      };
+    SubscriptionStatus.pending =>
+      'Waiting for payment confirmation. Seats are added only after the '
+          'payment is verified.',
+    SubscriptionStatus.trialing =>
+      'You are on a free trial. Choose a plan before the trial ends to keep '
+          'your cards active.',
+    SubscriptionStatus.active => 'Your subscription is active.',
+    SubscriptionStatus.pastDue =>
+      'The last renewal payment did not go through. Renew now to avoid '
+          'interruption to your cards.',
+    SubscriptionStatus.gracePeriod =>
+      'Your subscription has lapsed but your cards stay active until the '
+          'grace period ends. Renew to keep them active.',
+    SubscriptionStatus.cancelled => 'This subscription has been cancelled.',
+    SubscriptionStatus.expired =>
+      'This subscription has expired. Cards covered by it may be disabled '
+          'until you renew.',
+    SubscriptionStatus.unknown =>
+      'We could not determine the status of this subscription.',
+  };
 }
 
 class Subscription {
@@ -872,8 +951,7 @@ class Subscription {
     return switch (status) {
       SubscriptionStatus.pastDue ||
       SubscriptionStatus.gracePeriod ||
-      SubscriptionStatus.expired =>
-        true,
+      SubscriptionStatus.expired => true,
       _ => false,
     };
   }
@@ -891,9 +969,14 @@ class Subscription {
       id: idOf(j),
       status: SubscriptionStatus.parse(statusRaw),
       statusRaw: statusRaw,
-      planId: str(j['planId']) ?? (plan is Map ? str(planJson['planId']) ?? idOf(planJson) : null),
-      planName: str(j['planName']) ?? (plan is Map ? str(planJson['name']) : str(plan)),
-      planVersion: str(j['planVersionId'] ?? j['planVersionName']) ??
+      planId:
+          str(j['planId']) ??
+          (plan is Map ? str(planJson['planId']) ?? idOf(planJson) : null),
+      planName:
+          str(j['planName']) ??
+          (plan is Map ? str(planJson['name']) : str(plan)),
+      planVersion:
+          str(j['planVersionId'] ?? j['planVersionName']) ??
           (plan is Map ? str(planJson['version']) : null),
       billingPeriod: str(j['billingPeriod'] ?? planJson['billingPeriod']),
       quantity: intOrNull(j['quantity'] ?? j['seats']),
@@ -903,12 +986,19 @@ class Subscription {
       graceUntil: dateOrNull(j['graceUntil'] ?? j['gracePeriodEndsAt']),
       cancelAtPeriodEnd: boolOr(j['cancelAtPeriodEnd']),
       autoRenew: boolOrNull(j['autoRenew']),
-      canRenew: boolOrNull(j['canRenew'] ?? j['renewable'] ??
-          j['renewalEligible'] ?? actions['renew'] ?? renewal['eligible']),
+      canRenew: boolOrNull(
+        j['canRenew'] ??
+            j['renewable'] ??
+            j['renewalEligible'] ??
+            actions['renew'] ??
+            renewal['eligible'],
+      ),
       renewalBlockedReason: str(j['renewalBlockedReason'] ?? renewal['reason']),
-      renewalPrice: Money.firstField(j, const ['renewalPrice', 'renewalAmount']) ??
+      renewalPrice:
+          Money.firstField(j, const ['renewalPrice', 'renewalAmount']) ??
           Money.firstField(renewal, const ['price', 'amount']),
-      renewalInProgress: renewalState == 'pending' ||
+      renewalInProgress:
+          renewalState == 'pending' ||
           renewalState == 'processing' ||
           boolOr(j['renewalPending']),
       lastOrderId: str(j['lastOrderId'] ?? renewal['orderId']),

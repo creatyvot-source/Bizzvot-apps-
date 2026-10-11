@@ -29,7 +29,8 @@ class PollSchedule {
   /// Transient errors tolerated in a row before giving up.
   final int maxConsecutiveErrors;
 
-  Duration delayAt(int attempt) => attempt < steps.length ? steps[attempt] : cap;
+  Duration delayAt(int attempt) =>
+      attempt < steps.length ? steps[attempt] : cap;
 }
 
 enum PollEnd { done, timedOut, failed, cancelled }
@@ -76,8 +77,9 @@ Future<PollResult<T>> pollUntil<T>({
     } catch (e) {
       final ex = AppException.from(e);
       final transient =
-          ex.kind == AppErrorKind.network || ex.kind == AppErrorKind.server ||
-              ex.kind == AppErrorKind.rateLimited;
+          ex.kind == AppErrorKind.network ||
+          ex.kind == AppErrorKind.server ||
+          ex.kind == AppErrorKind.rateLimited;
       lastError = ex;
       errors++;
       if (!transient || errors >= schedule.maxConsecutiveErrors) {
@@ -85,7 +87,8 @@ Future<PollResult<T>> pollUntil<T>({
       }
     }
     var delay = schedule.delayAt(attempt++);
-    if (lastError is AppException && lastError.retryAfter != null &&
+    if (lastError is AppException &&
+        lastError.retryAfter != null &&
         lastError.retryAfter! > delay) {
       delay = lastError.retryAfter!;
     }

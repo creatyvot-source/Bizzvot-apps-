@@ -14,7 +14,11 @@ import 'star_rating.dart';
 
 /// Approved reviews with business replies + "Write a review".
 class PublicReviewsSection extends ConsumerWidget {
-  const PublicReviewsSection({super.key, required this.slug, required this.card});
+  const PublicReviewsSection({
+    super.key,
+    required this.slug,
+    required this.card,
+  });
 
   final String slug;
   final PublicCard card;

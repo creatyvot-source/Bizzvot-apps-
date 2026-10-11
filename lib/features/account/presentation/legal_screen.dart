@@ -23,7 +23,8 @@ class LegalScreen extends ConsumerWidget {
           subtitle: subtitle == null ? null : Text(subtitle),
           trailing: const Icon(Icons.open_in_new),
           enabled: url != null && Validators.isSafeWebUrl(url),
-          onTap: () => launchUrl(Uri.parse(url!), mode: LaunchMode.externalApplication),
+          onTap: () =>
+              launchUrl(Uri.parse(url!), mode: LaunchMode.externalApplication),
         );
 
     return Scaffold(
@@ -31,7 +32,11 @@ class LegalScreen extends ConsumerWidget {
       body: ContentWidth(
         child: ListView(
           children: [
-            link(Icons.privacy_tip_outlined, 'Privacy policy', config.privacyPolicyUrl),
+            link(
+              Icons.privacy_tip_outlined,
+              'Privacy policy',
+              config.privacyPolicyUrl,
+            ),
             link(Icons.gavel_outlined, 'Terms of service', config.termsUrl),
             link(
               Icons.insights_outlined,
@@ -44,14 +49,16 @@ class LegalScreen extends ConsumerWidget {
                 leading: const Icon(Icons.support_agent_outlined),
                 title: const Text('Contact support'),
                 subtitle: Text(config.supportEmail!),
-                onTap: () => launchUrl(Uri(scheme: 'mailto', path: config.supportEmail)),
+                onTap: () =>
+                    launchUrl(Uri(scheme: 'mailto', path: config.supportEmail)),
               ),
             if (config.supportPhone != null)
               ListTile(
                 leading: const Icon(Icons.call_outlined),
                 title: const Text('Call support'),
                 subtitle: Text(config.supportPhone!),
-                onTap: () => launchUrl(Uri(scheme: 'tel', path: config.supportPhone)),
+                onTap: () =>
+                    launchUrl(Uri(scheme: 'tel', path: config.supportPhone)),
               ),
             ListTile(
               leading: const Icon(Icons.description_outlined),

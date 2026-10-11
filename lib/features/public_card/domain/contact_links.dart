@@ -9,7 +9,10 @@ abstract final class ContactLinks {
     final trimmed = raw.trim();
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.length < 3 || digits.length > 20) return null;
-    return Uri(scheme: 'tel', path: trimmed.startsWith('+') ? '+$digits' : digits);
+    return Uri(
+      scheme: 'tel',
+      path: trimmed.startsWith('+') ? '+$digits' : digits,
+    );
   }
 
   /// `https://wa.me/<digits>` — WhatsApp expects the international number
@@ -17,7 +20,8 @@ abstract final class ContactLinks {
   static Uri? whatsapp(String? raw) {
     if (raw == null) return null;
     final existing = web(raw);
-    if (existing != null && (existing.host == 'wa.me' || existing.host == 'api.whatsapp.com')) {
+    if (existing != null &&
+        (existing.host == 'wa.me' || existing.host == 'api.whatsapp.com')) {
       return existing;
     }
     final digits = raw.replaceAll(RegExp(r'\D'), '');
@@ -49,13 +53,16 @@ abstract final class ContactLinks {
     if (link != null) return link;
     final a = address?.trim();
     if (a == null || a.isEmpty) return null;
-    return Uri.https('www.google.com', '/maps/search/', {'api': '1', 'query': a});
+    return Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': a,
+    });
   }
 
   /// Schemes the app is ever allowed to open.
   static bool isAllowed(Uri uri) => switch (uri.scheme) {
-        'http' || 'https' => uri.host.isNotEmpty,
-        'tel' || 'mailto' => uri.path.isNotEmpty,
-        _ => false,
-      };
+    'http' || 'https' => uri.host.isNotEmpty,
+    'tel' || 'mailto' => uri.path.isNotEmpty,
+    _ => false,
+  };
 }

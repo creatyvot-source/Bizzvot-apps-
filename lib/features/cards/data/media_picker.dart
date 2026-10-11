@@ -26,10 +26,13 @@ abstract class MediaPicker {
   Future<List<PickedFile>> pickPdfs({required int limit});
 }
 
-final mediaPickerProvider = Provider<MediaPicker>((ref) => PlatformMediaPicker());
+final mediaPickerProvider = Provider<MediaPicker>(
+  (ref) => PlatformMediaPicker(),
+);
 
 class PlatformMediaPicker implements MediaPicker {
-  PlatformMediaPicker([ImagePicker? picker]) : _picker = picker ?? ImagePicker();
+  PlatformMediaPicker([ImagePicker? picker])
+    : _picker = picker ?? ImagePicker();
 
   final ImagePicker _picker;
 
@@ -54,13 +57,15 @@ class PlatformMediaPicker implements MediaPicker {
   Future<List<PickedFile>> pickImages({required int limit}) async {
     if (limit <= 0) return const [];
     final files = limit == 1
-        ? [?await _picker.pickImage(
-            source: ImageSource.gallery,
-            maxWidth: _maxDimension,
-            maxHeight: _maxDimension,
-            imageQuality: _quality,
-            requestFullMetadata: false,
-          )]
+        ? [
+            ?await _picker.pickImage(
+              source: ImageSource.gallery,
+              maxWidth: _maxDimension,
+              maxHeight: _maxDimension,
+              imageQuality: _quality,
+              requestFullMetadata: false,
+            ),
+          ]
         : await _picker.pickMultiImage(
             maxWidth: _maxDimension,
             maxHeight: _maxDimension,

@@ -15,18 +15,18 @@ final staffListProvider = FutureProvider<List<StaffMember>>((ref) async {
 
 /// One staff member. There is no single-item endpoint, so this resolves from
 /// the list.
-final staffMemberProvider =
-    FutureProvider.autoDispose.family<StaffMember, String>((ref, id) async {
-  ref.watch(sessionKeyProvider);
-  final all = await ref.watch(staffListProvider.future);
-  for (final m in all) {
-    if (m.id == id) return m;
-  }
-  throw const AppException(
-    AppErrorKind.notFound,
-    'This staff member could not be found. They may have been removed.',
-  );
-});
+final staffMemberProvider = FutureProvider.autoDispose
+    .family<StaffMember, String>((ref, id) async {
+      ref.watch(sessionKeyProvider);
+      final all = await ref.watch(staffListProvider.future);
+      for (final m in all) {
+        if (m.id == id) return m;
+      }
+      throw const AppException(
+        AppErrorKind.notFound,
+        'This staff member could not be found. They may have been removed.',
+      );
+    });
 
 /// Create / update / delete, then refresh dependent data.
 class StaffMutations {

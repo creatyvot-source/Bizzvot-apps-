@@ -19,11 +19,13 @@ class OrdersListController extends PagedNotifier<Order> {
 
 final ordersListProvider = AsyncNotifierProvider.autoDispose
     .family<OrdersListController, PagedList<Order>, OrderStatus?>(
-  OrdersListController.new,
-);
+      OrdersListController.new,
+    );
 
-final orderDetailProvider =
-    FutureProvider.autoDispose.family<Order, String>((ref, id) {
+final orderDetailProvider = FutureProvider.autoDispose.family<Order, String>((
+  ref,
+  id,
+) {
   ref.watch(sessionKeyProvider);
   return ref.watch(ordersRepositoryProvider).order(id);
 });
@@ -35,15 +37,16 @@ class InvoicesListController extends PagedNotifier<Invoice> {
 }
 
 final invoicesListProvider =
-    AsyncNotifierProvider.autoDispose<InvoicesListController, PagedList<Invoice>>(
-  InvoicesListController.new,
-);
+    AsyncNotifierProvider.autoDispose<
+      InvoicesListController,
+      PagedList<Invoice>
+    >(InvoicesListController.new);
 
-final invoiceDetailProvider =
-    FutureProvider.autoDispose.family<Invoice, String>((ref, id) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(ordersRepositoryProvider).invoice(id);
-});
+final invoiceDetailProvider = FutureProvider.autoDispose
+    .family<Invoice, String>((ref, id) {
+      ref.watch(sessionKeyProvider);
+      return ref.watch(ordersRepositoryProvider).invoice(id);
+    });
 
 /// Invalidates cached order/invoice data after a payment state change.
 void invalidateOrderCaches(Ref ref, {String? orderId}) {

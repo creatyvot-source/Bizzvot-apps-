@@ -10,6 +10,7 @@ import '../../../core/utilities/validators.dart';
 import '../../../shared/models/organization.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../../auth/presentation/widgets/callout.dart';
 import '../../auth/presentation/widgets/cooldown.dart';
 import '../../auth/presentation/widgets/password_field.dart';
@@ -115,8 +116,13 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
 
   bool get _isCreate => widget.member == null;
 
-  List<TextEditingController> get _controllers =>
-      [_name, _email, _phone, _designation, _password];
+  List<TextEditingController> get _controllers => [
+    _name,
+    _email,
+    _phone,
+    _designation,
+    _password,
+  ];
 
   @override
   void initState() {
@@ -148,13 +154,13 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
   void _onChanged() => setState(() {});
 
   StaffDraft get _draft => StaffDraft(
-        name: _name.text.trim(),
-        email: _email.text.trim(),
-        phone: _phone.text.trim(),
-        designation: _designation.text.trim(),
-        password: _password.text,
-        permissions: _permissions,
-      );
+    name: _name.text.trim(),
+    email: _email.text.trim(),
+    phone: _phone.text.trim(),
+    designation: _designation.text.trim(),
+    password: _password.text,
+    permissions: _permissions,
+  );
 
   bool get _isDirty {
     if (_finished) return false;
@@ -184,12 +190,14 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
         _editCard => p.copyWith(editCard: on),
         _manageLinks => p.copyWith(manageLinks: on),
         // Replying requires seeing reviews.
-        _viewReviews => on
-            ? p.copyWith(viewReviews: true)
-            : p.copyWith(viewReviews: false, replyReviews: false),
-        _replyReviews => on
-            ? p.copyWith(replyReviews: true, viewReviews: true)
-            : p.copyWith(replyReviews: false),
+        _viewReviews =>
+          on
+              ? p.copyWith(viewReviews: true)
+              : p.copyWith(viewReviews: false, replyReviews: false),
+        _replyReviews =>
+          on
+              ? p.copyWith(replyReviews: true, viewReviews: true)
+              : p.copyWith(replyReviews: false),
         _ => p,
       };
     });
@@ -226,7 +234,8 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
         final state = created == null ? null : StaffCardState.of(created);
         showMessage(
           context,
-          state == StaffCardState.disabledByBilling || state == StaffCardState.disabled
+          state == StaffCardState.disabledByBilling ||
+                  state == StaffCardState.disabled
               ? 'Staff member added. Their card stays inactive until a paid seat is available.'
               : 'Staff member added with their own card.',
         );
@@ -260,7 +269,8 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
           _seatProblem = true;
         case StaffSaveProblem.duplicateEmail:
           _fieldErrors = {
-            'email': e.fieldErrors['email'] ??
+            'email':
+                e.fieldErrors['email'] ??
                 'This login email is already in use. Use a different email.',
           };
         case StaffSaveProblem.other:
@@ -366,8 +376,7 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
                         )
                       else if (member != null)
                         _CardSummary(member: member),
-                      const SizedBox(height: AppSpacing.lg),
-                      const _SectionHeader('Details'),
+                      const SectionHeader('Details'),
                       gap,
                       TextFormField(
                         controller: _name,
@@ -410,14 +419,14 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
                           prefixIcon: Icon(Icons.phone_outlined),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.lg),
-                      const _SectionHeader('Sign-in'),
+                      const SectionHeader('Sign-in'),
                       gap,
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
-                        textInputAction:
-                            _isCreate ? TextInputAction.next : TextInputAction.done,
+                        textInputAction: _isCreate
+                            ? TextInputAction.next
+                            : TextInputAction.done,
                         autocorrect: false,
                         enableSuggestions: false,
                         validator: Validators.email,
@@ -439,12 +448,10 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
                           validator: Validators.password,
                           errorText: _fieldErrors['password'],
                           onChanged: (_) => _clearFieldError('password'),
-                          helperText:
-                              'Share it with them privately. They can change it after signing in.',
+                          helperText: 'Share it with them privately. They can change it after signing in.',
                         ),
                       ],
-                      const SizedBox(height: AppSpacing.lg),
-                      const _SectionHeader('Permissions'),
+                      const SectionHeader('Permissions'),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'Everything is off by default. Staff can always view '
@@ -520,24 +527,6 @@ class _StaffFormState extends ConsumerState<_StaffForm> {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      header: true,
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
-      ),
-    );
-  }
-}
-
 class _PermissionSwitch extends StatelessWidget {
   const _PermissionSwitch({
     required this.info,
@@ -551,12 +540,12 @@ class _PermissionSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SwitchListTile(
-        secondary: Icon(info.icon),
-        title: Text(info.title),
-        subtitle: Text(info.subtitle),
-        value: value,
-        onChanged: onChanged,
-      );
+    secondary: Icon(info.icon),
+    title: Text(info.title),
+    subtitle: Text(info.subtitle),
+    value: value,
+    onChanged: onChanged,
+  );
 }
 
 class _SeatCallout extends StatelessWidget {
@@ -571,10 +560,10 @@ class _SeatCallout extends StatelessWidget {
       title: 'No paid card slot available',
       message: isCreate
           ? 'Every staff member gets a digital card, and each active card needs '
-              'a paid seat once your trial has ended. Purchase more seats or '
-              'deactivate another card, then try again.'
+                'a paid seat once your trial has ended. Purchase more seats or '
+                'deactivate another card, then try again.'
           : 'This change needs an active card, but all paid seats are in use. '
-              'Purchase more seats or deactivate another card, then try again.',
+                'Purchase more seats or deactivate another card, then try again.',
       action: FilledButton.tonal(
         onPressed: () => context.push(Routes.ownerSeats),
         child: const Text('Purchase seats'),
@@ -594,7 +583,8 @@ class _CardSummary extends StatelessWidget {
     final card = member.card;
     final explanation = switch (state) {
       StaffCardState.active => 'Their card is live and can be shared.',
-      StaffCardState.disabled => 'Their card is turned off and hidden from visitors.',
+      StaffCardState.disabled =>
+        'Their card is turned off and hidden from visitors.',
       StaffCardState.disabledByBilling =>
         'Their card is inactive because no paid seat is available. Purchase '
             'seats or renew your plan to reactivate it.',

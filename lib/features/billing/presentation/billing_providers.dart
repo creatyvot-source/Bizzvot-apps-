@@ -62,16 +62,15 @@ class SeatPurchaseState {
     Uri? checkoutUri,
     Object? error,
     bool clearError = false,
-  }) =>
-      SeatPurchaseState(
-        planId: planId ?? this.planId,
-        quantity: quantity ?? this.quantity,
-        quote: clearQuote ? null : (quote ?? this.quote),
-        quoteUnsupported: quoteUnsupported ?? this.quoteUnsupported,
-        phase: phase ?? this.phase,
-        checkoutUri: checkoutUri ?? this.checkoutUri,
-        error: clearError ? null : (error ?? this.error),
-      );
+  }) => SeatPurchaseState(
+    planId: planId ?? this.planId,
+    quantity: quantity ?? this.quantity,
+    quote: clearQuote ? null : (quote ?? this.quote),
+    quoteUnsupported: quoteUnsupported ?? this.quoteUnsupported,
+    phase: phase ?? this.phase,
+    checkoutUri: checkoutUri ?? this.checkoutUri,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 /// Seat purchase flow: select → server quote → POST /organization/billing
@@ -111,15 +110,21 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
     final planId = state.planId;
     if (planId == null) return;
     final qty = state.quantity;
-    state = state.copyWith(quote: const AsyncLoading<Quote>(), clearError: true);
+    state = state.copyWith(
+      quote: const AsyncLoading<Quote>(),
+      clearError: true,
+    );
     try {
       final q = await _repo.quoteSeats(planId: planId, quantity: qty);
-      if (!ref.mounted || state.planId != planId || state.quantity != qty) return;
+      if (!ref.mounted || state.planId != planId || state.quantity != qty)
+        return;
       state = state.copyWith(quote: AsyncData(q), quoteUnsupported: false);
     } catch (e, st) {
-      if (!ref.mounted || state.planId != planId || state.quantity != qty) return;
+      if (!ref.mounted || state.planId != planId || state.quantity != qty)
+        return;
       final ex = AppException.from(e);
-      final unsupported = ex.kind == AppErrorKind.notFound || ex.kind == AppErrorKind.gone;
+      final unsupported =
+          ex.kind == AppErrorKind.notFound || ex.kind == AppErrorKind.gone;
       state = state.copyWith(
         quote: AsyncError<Quote>(ex, st),
         quoteUnsupported: unsupported,
@@ -140,7 +145,10 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
       idempotencyKey: key,
     );
     if (ref.mounted) {
-      state = state.copyWith(checkoutUri: session.safeCheckoutUri, clearError: true);
+      state = state.copyWith(
+        checkoutUri: session.safeCheckoutUri,
+        clearError: true,
+      );
     }
     return session;
   }
@@ -166,7 +174,9 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
       case PollEnd.done:
         final outcome = evaluateSeatPurchase(before, result.last!);
         final ok = outcome == SeatConfirmation.confirmed;
-        state = state.copyWith(phase: ok ? SeatPhase.confirmed : SeatPhase.failed);
+        state = state.copyWith(
+          phase: ok ? SeatPhase.confirmed : SeatPhase.failed,
+        );
         _key.reset();
         _baseline = null;
         ref.invalidate(billingProvider);
@@ -174,7 +184,10 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
       case PollEnd.timedOut:
         state = state.copyWith(phase: SeatPhase.stillProcessing);
       case PollEnd.failed:
-        state = state.copyWith(phase: SeatPhase.stillProcessing, error: result.error);
+        state = state.copyWith(
+          phase: SeatPhase.stillProcessing,
+          error: result.error,
+        );
       case PollEnd.cancelled:
         break;
     }
@@ -189,7 +202,8 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
   }
 
   void checkNow() {
-    if (state.phase == SeatPhase.confirming || state.phase == SeatPhase.stillProcessing) {
+    if (state.phase == SeatPhase.confirming ||
+        state.phase == SeatPhase.stillProcessing) {
       unawaited(confirm());
     }
   }
@@ -197,5 +211,5 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
 
 final seatPurchaseProvider =
     NotifierProvider.autoDispose<SeatPurchaseController, SeatPurchaseState>(
-  SeatPurchaseController.new,
-);
+      SeatPurchaseController.new,
+    );

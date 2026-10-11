@@ -23,10 +23,11 @@ class NotificationsController extends PagedNotifier<AppNotification> {
   }
 }
 
-final notificationsProvider = AsyncNotifierProvider.autoDispose<
-    NotificationsController, PagedList<AppNotification>>(
-  NotificationsController.new,
-);
+final notificationsProvider =
+    AsyncNotifierProvider.autoDispose<
+      NotificationsController,
+      PagedList<AppNotification>
+    >(NotificationsController.new);
 
 /// Unread count among loaded notifications.
 final unreadNotificationsCountProvider = Provider.autoDispose<int>((ref) {

@@ -56,7 +56,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     try {
-      await ref.read(authFlowRepositoryProvider).changePassword(
+      await ref
+          .read(authFlowRepositoryProvider)
+          .changePassword(
             currentPassword: _current.text,
             newPassword: _next.text,
           );
@@ -118,7 +120,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               validator: (v) => (v == null || v.isEmpty)
                   ? 'Current password is required'
                   : null,
-              errorText: _fieldErrors['currentPassword'] ??
+              errorText:
+                  _fieldErrors['currentPassword'] ??
                   _fieldErrors['oldPassword'],
               onChanged: (_) {
                 _clearFieldError('currentPassword');
@@ -139,7 +142,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 }
                 return null;
               },
-              errorText: _fieldErrors['newPassword'] ?? _fieldErrors['password'],
+              errorText:
+                  _fieldErrors['newPassword'] ?? _fieldErrors['password'],
               onChanged: (_) {
                 _clearFieldError('newPassword');
                 _clearFieldError('password');
@@ -150,7 +154,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               controller: _confirm,
               label: 'Confirm new password',
               isNewPassword: true,
-              validator: (v) => v != _next.text ? 'Passwords don’t match' : null,
+              validator: (v) =>
+                  v != _next.text ? 'Passwords don’t match' : null,
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: AppSpacing.lg),

@@ -36,7 +36,12 @@ enum PublicSection {
 }
 
 /// Keys that must never be carried by a public DTO, even as toggle names.
-const _privateKeys = {'bloodgroup', 'fathername', 'mothername', 'privatedetails'};
+const _privateKeys = {
+  'bloodgroup',
+  'fathername',
+  'mothername',
+  'privatedetails',
+};
 
 /// Public card as rendered to anonymous visitors.
 ///
@@ -138,7 +143,9 @@ class PublicCard {
 
   /// vCard is offered only when enabled, not toggled off and an id exists.
   bool get canSaveContact =>
-      vcardEnabled && (id?.isNotEmpty ?? false) && shows(const ['vcard', 'savecontact']);
+      vcardEnabled &&
+      (id?.isNotEmpty ?? false) &&
+      shows(const ['vcard', 'savecontact']);
 
   factory PublicCard.fromJson(Object? data) {
     final root = asJson(data);
@@ -200,16 +207,20 @@ class PublicCard {
         j['averageRating'] ?? stats['averageRating'] ?? stats['average'],
       ),
       reviewCount: intOrNull(
-        j['reviewCount'] ?? j['totalReviews'] ?? stats['reviewCount'] ?? stats['total'],
+        j['reviewCount'] ??
+            j['totalReviews'] ??
+            stats['reviewCount'] ??
+            stats['total'],
       ),
     );
   }
 
-  static List<CardLink> _links(Object? v) => asJsonList(v)
-      .map(CardLink.fromJson)
-      .where((l) => l.url.isNotEmpty)
-      .map((l) => CardLink(type: l.type, url: l.url, label: l.label))
-      .toList(growable: false);
+  static List<CardLink> _links(Object? v) =>
+      asJsonList(v)
+          .map(CardLink.fromJson)
+          .where((l) => l.url.isNotEmpty)
+          .map((l) => CardLink(type: l.type, url: l.url, label: l.label))
+          .toList(growable: false);
 
   static List<MediaItem> _media(Object? v) {
     if (v is! List) return const [];
@@ -223,37 +234,37 @@ class PublicCard {
   /// Every field this DTO holds. Used by tests to prove nothing private is
   /// carried; keep in sync when adding fields.
   Json toPublicJson() => {
-        'id': id,
-        'slug': slug,
-        'name': name,
-        'designation': designation,
-        'company': company,
-        'pronouns': pronouns,
-        'bio': bio,
-        'profilePhoto': profilePhoto,
-        'coverImage': coverImage,
-        'logo': logo,
-        'phone': phone,
-        'companyPhone': companyPhone,
-        'whatsapp': whatsapp,
-        'email': email,
-        'website': website,
-        'address': address,
-        'mapLink': mapLink,
-        'socialLinks': socialLinks.map((l) => l.toJson()).toList(),
-        'customLinks': customLinks.map((l) => l.toJson()).toList(),
-        'gallery': gallery.map((m) => m.toJson()).toList(),
-        'pdfs': pdfs.map((m) => m.toJson()).toList(),
-        'videos': videos.map((m) => m.toJson()).toList(),
-        'template': template.wire,
-        'brandColor': brandColor,
-        'sectionOrder': sectionOrder.map((s) => s.name).toList(),
-        'displayToggles': displayToggles,
-        'vcardEnabled': vcardEnabled,
-        'googleReviewUrl': googleReviewUrl,
-        'organizationName': organizationName,
-        'organizationLogo': organizationLogo,
-        'averageRating': averageRating,
-        'reviewCount': reviewCount,
-      };
+    'id': id,
+    'slug': slug,
+    'name': name,
+    'designation': designation,
+    'company': company,
+    'pronouns': pronouns,
+    'bio': bio,
+    'profilePhoto': profilePhoto,
+    'coverImage': coverImage,
+    'logo': logo,
+    'phone': phone,
+    'companyPhone': companyPhone,
+    'whatsapp': whatsapp,
+    'email': email,
+    'website': website,
+    'address': address,
+    'mapLink': mapLink,
+    'socialLinks': socialLinks.map((l) => l.toJson()).toList(),
+    'customLinks': customLinks.map((l) => l.toJson()).toList(),
+    'gallery': gallery.map((m) => m.toJson()).toList(),
+    'pdfs': pdfs.map((m) => m.toJson()).toList(),
+    'videos': videos.map((m) => m.toJson()).toList(),
+    'template': template.wire,
+    'brandColor': brandColor,
+    'sectionOrder': sectionOrder.map((s) => s.name).toList(),
+    'displayToggles': displayToggles,
+    'vcardEnabled': vcardEnabled,
+    'googleReviewUrl': googleReviewUrl,
+    'organizationName': organizationName,
+    'organizationLogo': organizationLogo,
+    'averageRating': averageRating,
+    'reviewCount': reviewCount,
+  };
 }

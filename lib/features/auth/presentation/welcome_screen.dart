@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/auth/session_controller.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import 'widgets/callout.dart';
 
 /// Entry point for signed-out users: choose owner sign-in, staff sign-in or
@@ -23,7 +24,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionControllerProvider);
-    final expired = session is SignedOut && session.expired && !_dismissedExpiry;
+    final expired =
+        session is SignedOut && session.expired && !_dismissedExpiry;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -46,37 +48,21 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         Callout(
                           tone: CalloutTone.warning,
                           title: 'You’ve been signed out',
-                          message:
-                              'Your session ended for security reasons. Please sign in again to continue.',
+                          message: 'Your session ended for security reasons. Please sign in again to continue.',
                           onDismiss: () =>
                               setState(() => _dismissedExpiry = true),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ],
-                      ExcludeSemantics(
-                        child: Icon(
-                          Icons.contact_page_outlined,
-                          size: 72,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Semantics(
-                        header: true,
-                        child: Text(
-                          'Bizzvot',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                      const HeroHeader(
+                        title: 'Bizzvot',
+                        subtitle: 'Digital business cards, reviews and services for your whole team.',
+                        trailing: ExcludeSemantics(
+                          child: Icon(
+                            Icons.contact_page_outlined,
+                            size: 40,
+                            color: Colors.white,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'Digital business cards, reviews and services for your team.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
@@ -105,6 +91,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () => context.push(Routes.legal),
+                          icon: const Icon(Icons.policy_outlined),
+                          label: const Text('Privacy & legal'),
                         ),
                       ),
                     ],
@@ -144,10 +138,13 @@ class _RoleChoice extends StatelessWidget {
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          leading: CircleAvatar(
-            backgroundColor: scheme.primaryContainer,
-            foregroundColor: scheme.onPrimaryContainer,
-            child: Icon(icon),
+          leading: Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, color: scheme.onPrimaryContainer),
           ),
           title: Text(title),
           subtitle: Text(subtitle),

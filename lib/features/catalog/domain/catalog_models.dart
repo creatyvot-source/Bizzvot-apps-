@@ -16,11 +16,11 @@ enum CatalogItemType {
   final String label;
 
   static CatalogItemType parse(Object? v) => switch (wireKey(str(v))) {
-        'service' || 'services' => CatalogItemType.service,
-        'product' || 'products' => CatalogItemType.product,
-        'plan' || 'plans' => CatalogItemType.plan,
-        _ => CatalogItemType.unknown,
-      };
+    'service' || 'services' => CatalogItemType.service,
+    'product' || 'products' => CatalogItemType.product,
+    'plan' || 'plans' => CatalogItemType.plan,
+    _ => CatalogItemType.unknown,
+  };
 }
 
 /// App-store payment classification (plan §12.6).
@@ -48,29 +48,30 @@ enum PaymentPolicy {
   bool get blocksCheckout => this == PaymentPolicy.inAppDigital;
 
   static PaymentPolicy? tryParse(Object? v) => switch (wireKey(str(v))) {
-        'physical' || 'physical_goods' || 'physical_good' =>
-          PaymentPolicy.physical,
-        'in_person_service' || 'business_service' || 'in_person' ||
-        'service' =>
-          PaymentPolicy.inPersonService,
-        'external_digital_service' || 'external_digital' ||
-        'digital_service' =>
-          PaymentPolicy.externalDigitalService,
-        'in_app_digital' || 'digital_feature' || 'in_app' ||
-        'digital_content' =>
-          PaymentPolicy.inAppDigital,
-        _ => null,
-      };
+    'physical' || 'physical_goods' || 'physical_good' => PaymentPolicy.physical,
+    'in_person_service' ||
+    'business_service' ||
+    'in_person' ||
+    'service' => PaymentPolicy.inPersonService,
+    'external_digital_service' ||
+    'external_digital' ||
+    'digital_service' => PaymentPolicy.externalDigitalService,
+    'in_app_digital' ||
+    'digital_feature' ||
+    'in_app' ||
+    'digital_content' => PaymentPolicy.inAppDigital,
+    _ => null,
+  };
 
   /// Stop-gap default when the server sends no classification.
   static PaymentPolicy defaultFor(CatalogItemType type) => switch (type) {
-        CatalogItemType.product => PaymentPolicy.physical,
-        CatalogItemType.service => PaymentPolicy.inPersonService,
-        // TODO(policy): seat plans are org-management entitlements bought on
-        // the web as well; confirm classification before store release.
-        CatalogItemType.plan => PaymentPolicy.externalDigitalService,
-        CatalogItemType.unknown => PaymentPolicy.externalDigitalService,
-      };
+    CatalogItemType.product => PaymentPolicy.physical,
+    CatalogItemType.service => PaymentPolicy.inPersonService,
+    // TODO(policy): seat plans are org-management entitlements bought on
+    // the web as well; confirm classification before store release.
+    CatalogItemType.plan => PaymentPolicy.externalDigitalService,
+    CatalogItemType.unknown => PaymentPolicy.externalDigitalService,
+  };
 }
 
 class CatalogCategory {
@@ -126,9 +127,13 @@ class CatalogVariant {
       id: idOf(j).isEmpty ? strOr(j['sku']) : idOf(j),
       name: strOr(j['name'] ?? j['title'] ?? j['label'], 'Option'),
       sku: str(j['sku']),
-      price: Money.firstField(j, const ['price', 'priceReference', 'amount'],
-          currency: currency),
-      available: boolOrNull(j['available'] ?? j['inStock'] ?? j['active']) ??
+      price: Money.firstField(j, const [
+        'price',
+        'priceReference',
+        'amount',
+      ], currency: currency),
+      available:
+          boolOrNull(j['available'] ?? j['inStock'] ?? j['active']) ??
           !_isOutOfStock(j['inventoryStatus'] ?? j['status']),
     );
   }
@@ -153,8 +158,11 @@ class CatalogAddOn {
       id: idOf(j),
       title: strOr(j['title'] ?? j['name'], 'Add-on'),
       description: str(j['description']),
-      price: Money.firstField(j, const ['price', 'priceReference', 'amount'],
-          currency: currency),
+      price: Money.firstField(j, const [
+        'price',
+        'priceReference',
+        'amount',
+      ], currency: currency),
     );
   }
 }
@@ -202,9 +210,13 @@ List<String> _images(Json j) {
 List<String> _textList(Object? v) {
   if (v is List) {
     return v
-        .map((e) => e is Map
-            ? str(asJson(e)['title'] ?? asJson(e)['name'] ?? asJson(e)['text'])
-            : str(e))
+        .map(
+          (e) => e is Map
+              ? str(
+                  asJson(e)['title'] ?? asJson(e)['name'] ?? asJson(e)['text'],
+                )
+              : str(e),
+        )
         .whereType<String>()
         .toList(growable: false);
   }
@@ -290,19 +302,20 @@ class CatalogItem {
         ? type
         : CatalogItemType.parse(j['type'] ?? j['kind']);
     final currency = str(j['currency']);
-    final price = Money.firstField(
-      j,
-      const ['price', 'priceReference', 'basePrice', 'amount'],
-      currency: currency,
-    );
+    final price = Money.firstField(j, const [
+      'price',
+      'priceReference',
+      'basePrice',
+      'amount',
+    ], currency: currency);
     final category = j['category'];
     final declared = PaymentPolicy.tryParse(
       j['paymentPolicy'] ?? j['paymentCategory'] ?? j['purchaseCategory'],
     );
     final support = asJson(j['support']);
     final status = wireKey(str(j['status']));
-    final eligibility = j['eligibility'] ?? j['eligibilityNotes'] ??
-        j['purchaseRules'];
+    final eligibility =
+        j['eligibility'] ?? j['eligibilityNotes'] ?? j['purchaseRules'];
     return CatalogItem(
       id: idOf(j),
       type: resolvedType,
@@ -315,8 +328,9 @@ class CatalogItem {
       priceLabel: str(j['priceLabel'] ?? j['displayPrice']),
       billingPeriod: str(j['billingPeriod'] ?? j['interval']),
       categoryId: category is Map ? idOf(asJson(category)) : str(category),
-      categoryName:
-          category is Map ? str(asJson(category)['name']) : str(j['categoryName']),
+      categoryName: category is Map
+          ? str(asJson(category)['name'])
+          : str(j['categoryName']),
       benefits: _textList(j['benefits']),
       features: _textList(j['features'] ?? j['inclusions']),
       variants: asJsonList(j['variants'])
@@ -331,15 +345,21 @@ class CatalogItem {
           .map(FaqEntry.tryParse)
           .whereType<FaqEntry>()
           .toList(growable: false),
-      eligibilityNotes:
-          eligibility is String ? [eligibility] : _textList(eligibility),
+      eligibilityNotes: eligibility is String
+          ? [eligibility]
+          : _textList(eligibility),
       supportEmail: str(support['email'] ?? j['supportEmail']),
       supportPhone: str(support['phone'] ?? j['supportPhone']),
-      active: boolOrNull(j['active'] ?? j['isActive']) ??
+      active:
+          boolOrNull(j['active'] ?? j['isActive']) ??
           !(status == 'inactive' || status == 'archived' || status == 'draft'),
-      inStock: boolOrNull(j['inStock'] ?? j['available']) ??
-          !_isOutOfStock(j['inventoryStatus'] ?? asJson(j['inventory'])['status']),
-      contactOnly: boolOrNull(j['contactOnly'] ?? j['contactUs']) ??
+      inStock:
+          boolOrNull(j['inStock'] ?? j['available']) ??
+          !_isOutOfStock(
+            j['inventoryStatus'] ?? asJson(j['inventory'])['status'],
+          ),
+      contactOnly:
+          boolOrNull(j['contactOnly'] ?? j['contactUs']) ??
           (price == null && str(j['priceLabel']) == null),
       paymentPolicy: declared ?? PaymentPolicy.defaultFor(resolvedType),
       policyDeclared: declared != null,
@@ -349,18 +369,18 @@ class CatalogItem {
 
   /// Shapes a [Plan] like a catalogue item so the shop can list it.
   factory CatalogItem.fromPlan(Plan p) => CatalogItem(
-        id: p.id,
-        type: CatalogItemType.plan,
-        title: p.name,
-        summary: p.description,
-        price: p.price,
-        billingPeriod: p.billingPeriod,
-        features: p.features,
-        active: p.active,
-        contactOnly: p.price == null,
-        paymentPolicy: p.paymentPolicy,
-        policyDeclared: p.policyDeclared,
-      );
+    id: p.id,
+    type: CatalogItemType.plan,
+    title: p.name,
+    summary: p.description,
+    price: p.price,
+    billingPeriod: p.billingPeriod,
+    features: p.features,
+    active: p.active,
+    contactOnly: p.price == null,
+    paymentPolicy: p.paymentPolicy,
+    policyDeclared: p.policyDeclared,
+  );
 }
 
 /// Subscription plan from `GET /catalog/plans` (or `plans` in billing).
@@ -415,11 +435,12 @@ class Plan {
       name: strOr(j['name'] ?? j['title'], 'Plan'),
       version: str(j['version'] ?? j['planVersion']),
       billingPeriod: str(j['billingPeriod'] ?? j['interval']),
-      price: Money.firstField(
-        j,
-        const ['price', 'pricePerSeat', 'seatPrice', 'amount'],
-        currency: currency,
-      ),
+      price: Money.firstField(j, const [
+        'price',
+        'pricePerSeat',
+        'seatPrice',
+        'amount',
+      ], currency: currency),
       priceLabel: str(j['priceLabel'] ?? j['displayPrice']),
       description: str(j['description']),
       features: _textList(j['features']),

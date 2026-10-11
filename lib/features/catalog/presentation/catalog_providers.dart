@@ -10,9 +10,9 @@ import 'common/paged_list.dart';
 /// provider watches the session key.
 final catalogCategoriesProvider =
     FutureProvider.autoDispose<List<CatalogCategory>>((ref) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(catalogRepositoryProvider).categories();
-});
+      ref.watch(sessionKeyProvider);
+      return ref.watch(catalogRepositoryProvider).categories();
+    });
 
 class CatalogListController extends PagedNotifier<CatalogItem> {
   CatalogListController(this.query);
@@ -26,13 +26,13 @@ class CatalogListController extends PagedNotifier<CatalogItem> {
 
 final catalogListProvider = AsyncNotifierProvider.autoDispose
     .family<CatalogListController, PagedList<CatalogItem>, CatalogQuery>(
-  CatalogListController.new,
-);
+      CatalogListController.new,
+    );
 
 typedef CatalogItemKey = ({CatalogItemType type, String id});
 
-final catalogItemProvider =
-    FutureProvider.autoDispose.family<CatalogItem, CatalogItemKey>((ref, key) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(catalogRepositoryProvider).item(key.type, key.id);
-});
+final catalogItemProvider = FutureProvider.autoDispose
+    .family<CatalogItem, CatalogItemKey>((ref, key) {
+      ref.watch(sessionKeyProvider);
+      return ref.watch(catalogRepositoryProvider).item(key.type, key.id);
+    });

@@ -17,21 +17,23 @@ class SubscriptionsListController extends PagedNotifier<Subscription> {
       ref.read(subscriptionsRepositoryProvider).subscriptions(page: page);
 }
 
-final subscriptionsListProvider = AsyncNotifierProvider.autoDispose<
-    SubscriptionsListController, PagedList<Subscription>>(
-  SubscriptionsListController.new,
-);
+final subscriptionsListProvider =
+    AsyncNotifierProvider.autoDispose<
+      SubscriptionsListController,
+      PagedList<Subscription>
+    >(SubscriptionsListController.new);
 
-final subscriptionDetailProvider =
-    FutureProvider.autoDispose.family<Subscription, String>((ref, id) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(subscriptionsRepositoryProvider).subscription(id);
-});
+final subscriptionDetailProvider = FutureProvider.autoDispose
+    .family<Subscription, String>((ref, id) {
+      ref.watch(sessionKeyProvider);
+      return ref.watch(subscriptionsRepositoryProvider).subscription(id);
+    });
 
 /// True once the server shows the renewal took effect.
 bool renewalConfirmed(Subscription before, Subscription now) {
   if (now.renewalInProgress) return false;
-  bool advanced(DateTime? a, DateTime? b) => a != null && b != null && b.isAfter(a);
+  bool advanced(DateTime? a, DateTime? b) =>
+      a != null && b != null && b.isAfter(a);
   return advanced(before.currentPeriodEnd, now.currentPeriodEnd) ||
       advanced(before.nextRenewalAt, now.nextRenewalAt) ||
       (now.status == SubscriptionStatus.active &&
@@ -41,7 +43,11 @@ bool renewalConfirmed(Subscription before, Subscription now) {
 enum RenewalPhase { idle, confirming, confirmed, stillProcessing }
 
 class RenewalState {
-  const RenewalState({this.phase = RenewalPhase.idle, this.checkoutUri, this.error});
+  const RenewalState({
+    this.phase = RenewalPhase.idle,
+    this.checkoutUri,
+    this.error,
+  });
   final RenewalPhase phase;
   final Uri? checkoutUri;
   final Object? error;
@@ -73,7 +79,10 @@ class RenewalController extends Notifier<RenewalState> {
     _baseline = await repo.subscription(subscriptionId);
     final session = await repo.renew(subscriptionId, idempotencyKey: key);
     if (ref.mounted) {
-      state = RenewalState(phase: state.phase, checkoutUri: session.safeCheckoutUri);
+      state = RenewalState(
+        phase: state.phase,
+        checkoutUri: session.safeCheckoutUri,
+      );
     }
     return session;
   }
@@ -87,7 +96,10 @@ class RenewalController extends Notifier<RenewalState> {
     final before = _baseline ?? await repo.subscription(subscriptionId);
     if (stale()) return;
     _baseline = before;
-    state = RenewalState(phase: RenewalPhase.confirming, checkoutUri: state.checkoutUri);
+    state = RenewalState(
+      phase: RenewalPhase.confirming,
+      checkoutUri: state.checkoutUri,
+    );
     final result = await pollUntil<Subscription>(
       fetch: () => repo.subscription(subscriptionId),
       isDone: (s) => renewalConfirmed(before, s),

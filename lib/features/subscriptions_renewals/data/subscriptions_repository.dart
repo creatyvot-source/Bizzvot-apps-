@@ -15,11 +15,14 @@ class SubscriptionsRepository {
 
   /// `GET /subscriptions`.
   Future<Paged<Subscription>> subscriptions({int page = 1}) => _api.get(
-        Endpoints.subscriptions,
-        query: {'page': page, 'limit': 20},
-        parse: (d) => Paged.parse(d, Subscription.fromJson,
-            listKeys: const ['subscriptions', 'items', 'docs', 'results', 'data']),
-      );
+    Endpoints.subscriptions,
+    query: {'page': page, 'limit': 20},
+    parse: (d) => Paged.parse(
+      d,
+      Subscription.fromJson,
+      listKeys: const ['subscriptions', 'items', 'docs', 'results', 'data'],
+    ),
+  );
 
   /// `GET /subscriptions/:id`.
   Future<Subscription> subscription(String id) =>

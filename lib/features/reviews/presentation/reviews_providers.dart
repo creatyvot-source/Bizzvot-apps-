@@ -20,17 +20,21 @@ enum ReviewFilter {
 }
 
 extension ReviewCopy on Review {
-  Review copyWith({ReviewStatus? status, ReviewReply? reply, bool clearReply = false}) => Review(
-        id: id,
-        rating: rating,
-        status: status ?? this.status,
-        cardId: cardId,
-        cardTitle: cardTitle,
-        reviewerName: reviewerName,
-        comment: comment,
-        reply: clearReply ? null : (reply ?? this.reply),
-        createdAt: createdAt,
-      );
+  Review copyWith({
+    ReviewStatus? status,
+    ReviewReply? reply,
+    bool clearReply = false,
+  }) => Review(
+    id: id,
+    rating: rating,
+    status: status ?? this.status,
+    cardId: cardId,
+    cardTitle: cardTitle,
+    reviewerName: reviewerName,
+    comment: comment,
+    reply: clearReply ? null : (reply ?? this.reply),
+    createdAt: createdAt,
+  );
 }
 
 class ReviewFilterController extends Notifier<ReviewFilter> {
@@ -45,10 +49,10 @@ class ReviewFilterController extends Notifier<ReviewFilter> {
 }
 
 /// Selected filter chip, per scope.
-final reviewFilterProvider =
-    NotifierProvider.autoDispose.family<ReviewFilterController, ReviewFilter, ReviewScope>(
-  ReviewFilterController.new,
-);
+final reviewFilterProvider = NotifierProvider.autoDispose
+    .family<ReviewFilterController, ReviewFilter, ReviewScope>(
+      ReviewFilterController.new,
+    );
 
 class ReviewsState {
   const ReviewsState({
@@ -72,7 +76,8 @@ class ReviewsState {
 
   /// Items matching [f] — the server filters too; this is defensive and
   /// makes optimistic status changes move items out of a filtered view.
-  List<Review> visible(ReviewFilter f) => items.where(f.matches).toList(growable: false);
+  List<Review> visible(ReviewFilter f) =>
+      items.where(f.matches).toList(growable: false);
 
   ReviewsState copyWith({
     List<Review>? items,
@@ -80,15 +85,14 @@ class ReviewsState {
     bool? hasMore,
     bool? loadingMore,
     Set<String>? busyIds,
-  }) =>
-      ReviewsState(
-        filter: filter,
-        items: items ?? this.items,
-        page: page ?? this.page,
-        hasMore: hasMore ?? this.hasMore,
-        loadingMore: loadingMore ?? this.loadingMore,
-        busyIds: busyIds ?? this.busyIds,
-      );
+  }) => ReviewsState(
+    filter: filter,
+    items: items ?? this.items,
+    page: page ?? this.page,
+    hasMore: hasMore ?? this.hasMore,
+    loadingMore: loadingMore ?? this.loadingMore,
+    busyIds: busyIds ?? this.busyIds,
+  );
 }
 
 class ReviewsController extends AsyncNotifier<ReviewsState> {
@@ -129,7 +133,10 @@ class ReviewsController extends AsyncNotifier<ReviewsState> {
       final seen = latest.items.map((r) => r.id).toSet();
       state = AsyncData(
         latest.copyWith(
-          items: [...latest.items, ...next.items.where((r) => !seen.contains(r.id))],
+          items: [
+            ...latest.items,
+            ...next.items.where((r) => !seen.contains(r.id)),
+          ],
           page: next.page <= current.page ? current.page + 1 : next.page,
           hasMore: next.hasMore,
           loadingMore: false,
@@ -137,31 +144,32 @@ class ReviewsController extends AsyncNotifier<ReviewsState> {
       );
     } catch (_) {
       if (ref.mounted) {
-        state = AsyncData((state.value ?? current).copyWith(loadingMore: false));
+        state = AsyncData(
+          (state.value ?? current).copyWith(loadingMore: false),
+        );
       }
       rethrow;
     }
   }
 
   /// Optimistically changes the status; rolls back and rethrows on failure.
-  Future<void> setStatus(String id, ReviewStatus status) => _mutate(
-        id,
-        (r) => r.copyWith(status: status),
-        () async {
-          final server = await _repo.setStatus(scope, id, status);
-          return (Review r) => server ?? r;
-        },
-      );
+  Future<void> setStatus(String id, ReviewStatus status) =>
+      _mutate(id, (r) => r.copyWith(status: status), () async {
+        final server = await _repo.setStatus(scope, id, status);
+        return (Review r) => server ?? r;
+      });
 
   /// Optimistically sets the reply; rolls back and rethrows on failure.
   Future<void> reply(String id, String text) => _mutate(
-        id,
-        (r) => r.copyWith(reply: ReviewReply(text: text.trim(), createdAt: DateTime.now())),
-        () async {
-          final server = await _repo.reply(scope, id, text);
-          return (Review r) => server == null ? r : r.copyWith(reply: server);
-        },
-      );
+    id,
+    (r) => r.copyWith(
+      reply: ReviewReply(text: text.trim(), createdAt: DateTime.now()),
+    ),
+    () async {
+      final server = await _repo.reply(scope, id, text);
+      return (Review r) => server == null ? r : r.copyWith(reply: server);
+    },
+  );
 
   Future<void> _mutate(
     String id,
@@ -207,8 +215,8 @@ class ReviewsController extends AsyncNotifier<ReviewsState> {
   }
 }
 
-final reviewsControllerProvider =
-    AsyncNotifierProvider.autoDispose.family<ReviewsController, ReviewsState, ReviewScope>(
-  ReviewsController.new,
-  retry: _noRetry,
-);
+final reviewsControllerProvider = AsyncNotifierProvider.autoDispose
+    .family<ReviewsController, ReviewsState, ReviewScope>(
+      ReviewsController.new,
+      retry: _noRetry,
+    );

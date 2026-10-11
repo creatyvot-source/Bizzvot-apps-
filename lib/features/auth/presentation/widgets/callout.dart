@@ -28,25 +28,25 @@ class Callout extends StatelessWidget {
     final scheme = theme.colorScheme;
     final (bg, fg, icon) = switch (tone) {
       CalloutTone.info => (
-          scheme.secondaryContainer,
-          scheme.onSecondaryContainer,
-          Icons.info_outline,
-        ),
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+        Icons.info_outline,
+      ),
       CalloutTone.warning => (
-          scheme.tertiaryContainer,
-          scheme.onTertiaryContainer,
-          Icons.warning_amber_rounded,
-        ),
+        scheme.tertiaryContainer,
+        scheme.onTertiaryContainer,
+        Icons.warning_amber_rounded,
+      ),
       CalloutTone.error => (
-          scheme.errorContainer,
-          scheme.onErrorContainer,
-          Icons.error_outline,
-        ),
+        scheme.errorContainer,
+        scheme.onErrorContainer,
+        Icons.error_outline,
+      ),
       CalloutTone.success => (
-          scheme.primaryContainer,
-          scheme.onPrimaryContainer,
-          Icons.check_circle_outline,
-        ),
+        scheme.primaryContainer,
+        scheme.onPrimaryContainer,
+        Icons.check_circle_outline,
+      ),
     };
     return Semantics(
       container: true,

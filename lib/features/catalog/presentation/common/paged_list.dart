@@ -5,6 +5,7 @@ import '../../../../app/theme.dart';
 import '../../../../core/auth/session_controller.dart';
 import '../../../../shared/models/paged.dart';
 import '../../../../shared/widgets/state_views.dart';
+import '../../../../shared/widgets/ui_kit.dart';
 
 /// Accumulated pages of a server list.
 class PagedList<T> {
@@ -27,14 +28,13 @@ class PagedList<T> {
     bool? loadingMore,
     Object? loadMoreError,
     bool clearError = false,
-  }) =>
-      PagedList(
-        items: items ?? this.items,
-        page: page,
-        hasMore: hasMore,
-        loadingMore: loadingMore ?? this.loadingMore,
-        loadMoreError: clearError ? null : (loadMoreError ?? this.loadMoreError),
-      );
+  }) => PagedList(
+    items: items ?? this.items,
+    page: page,
+    hasMore: hasMore,
+    loadingMore: loadingMore ?? this.loadingMore,
+    loadMoreError: clearError ? null : (loadMoreError ?? this.loadMoreError),
+  );
 }
 
 /// Base notifier for paginated, session-scoped lists.
@@ -46,7 +46,11 @@ abstract class PagedNotifier<T> extends AsyncNotifier<PagedList<T>> {
   Future<PagedList<T>> build() async {
     ref.watch(sessionKeyProvider);
     final p = await fetchPage(1);
-    return PagedList(items: p.items, page: 1, hasMore: p.hasMore && p.items.isNotEmpty);
+    return PagedList(
+      items: p.items,
+      page: 1,
+      hasMore: p.hasMore && p.items.isNotEmpty,
+    );
   }
 
   Future<void> refresh() async {
@@ -56,16 +60,19 @@ abstract class PagedNotifier<T> extends AsyncNotifier<PagedList<T>> {
 
   Future<void> loadMore() async {
     final cur = state.value;
-    if (cur == null || !cur.hasMore || cur.loadingMore || state.isLoading) return;
+    if (cur == null || !cur.hasMore || cur.loadingMore || state.isLoading)
+      return;
     state = AsyncData(cur.copyWith(loadingMore: true, clearError: true));
     try {
       final next = await fetchPage(cur.page + 1);
       if (!ref.mounted) return;
-      state = AsyncData(PagedList(
-        items: [...cur.items, ...next.items],
-        page: cur.page + 1,
-        hasMore: next.hasMore && next.items.isNotEmpty,
-      ));
+      state = AsyncData(
+        PagedList(
+          items: [...cur.items, ...next.items],
+          page: cur.page + 1,
+          hasMore: next.hasMore && next.items.isNotEmpty,
+        ),
+      );
     } catch (e) {
       if (!ref.mounted) return;
       state = AsyncData(cur.copyWith(loadingMore: false, loadMoreError: e));
@@ -76,9 +83,9 @@ abstract class PagedNotifier<T> extends AsyncNotifier<PagedList<T>> {
   void replaceWhere(bool Function(T) test, T Function(T) update) {
     final cur = state.value;
     if (cur == null) return;
-    state = AsyncData(cur.copyWith(
-      items: [for (final i in cur.items) test(i) ? update(i) : i],
-    ));
+    state = AsyncData(
+      cur.copyWith(items: [for (final i in cur.items) test(i) ? update(i) : i]),
+    );
   }
 }
 
@@ -94,6 +101,8 @@ class PagedListView<T> extends StatelessWidget {
     required this.empty,
     this.header,
     this.separated = true,
+    this.columns = 1,
+    this.padding = EdgeInsets.zero,
   });
 
   final AsyncValue<PagedList<T>> value;
@@ -104,6 +113,11 @@ class PagedListView<T> extends StatelessWidget {
   final Widget? header;
   final bool separated;
 
+  /// >1 lays items out in rows of equal-height cards (grid look that still
+  /// grows with text size).
+  final int columns;
+  final EdgeInsets padding;
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
@@ -111,26 +125,53 @@ class PagedListView<T> extends StatelessWidget {
       child: value.when(
         skipLoadingOnRefresh: true,
         skipLoadingOnReload: true,
-        loading: () => _Scrollable(header: header, child: const LoadingView()),
+        loading: () => header == null
+            ? const SkeletonList()
+            : _Scrollable(header: header, child: const LoadingView()),
         error: (e, _) => _Scrollable(
           header: header,
           child: ErrorView(error: e, onRetry: onRefresh),
         ),
         data: (page) {
-          if (page.items.isEmpty) return _Scrollable(header: header, child: empty);
+          if (page.items.isEmpty)
+            return _Scrollable(header: header, child: empty);
           final hasHeader = header != null;
-          final count = page.items.length + (hasHeader ? 1 : 0) + (page.hasMore ? 1 : 0);
+          final cols = columns < 1 ? 1 : columns;
+          final rows = (page.items.length + cols - 1) ~/ cols;
+          final count = rows + (hasHeader ? 1 : 0) + (page.hasMore ? 1 : 0);
           return ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: padding,
             itemCount: count,
             itemBuilder: (context, index) {
               if (hasHeader && index == 0) return header!;
-              final i = index - (hasHeader ? 1 : 0);
-              if (i >= page.items.length) {
+              final r = index - (hasHeader ? 1 : 0);
+              if (r >= rows) {
                 return _LoadMoreFooter(page: page, onLoadMore: onLoadMore);
               }
-              final child = itemBuilder(context, page.items[i]);
-              return separated && i > 0
+              if (cols > 1) {
+                final start = r * cols;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var c = 0; c < cols; c++) ...[
+                          if (c > 0) const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: start + c < page.items.length
+                                ? itemBuilder(context, page.items[start + c])
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+              final child = itemBuilder(context, page.items[r]);
+              return separated && r > 0
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [const Divider(height: 1), child],
@@ -151,17 +192,17 @@ class _Scrollable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, c) => ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            ?header,
-            ConstrainedBox(
-              constraints: BoxConstraints(minHeight: c.maxHeight * 0.6),
-              child: Center(child: child),
-            ),
-          ],
+    builder: (context, c) => ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        ?header,
+        ConstrainedBox(
+          constraints: BoxConstraints(minHeight: c.maxHeight * 0.6),
+          child: Center(child: child),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _LoadMoreFooter extends StatelessWidget {

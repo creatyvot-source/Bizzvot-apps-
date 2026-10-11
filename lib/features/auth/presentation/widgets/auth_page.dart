@@ -49,7 +49,10 @@ class AuthPage extends StatelessWidget {
                     if (heading != null) ...[
                       Semantics(
                         header: true,
-                        child: Text(heading!, style: theme.textTheme.headlineSmall),
+                        child: Text(
+                          heading!,
+                          style: theme.textTheme.headlineSmall,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                     ],

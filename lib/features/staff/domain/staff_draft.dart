@@ -26,25 +26,25 @@ class StaffDraft {
   final StaffPermissions permissions;
 
   factory StaffDraft.fromMember(StaffMember m) => StaffDraft(
-        name: m.name.trim(),
-        email: m.email.trim(),
-        phone: m.phone?.trim() ?? '',
-        designation: m.designation?.trim() ?? '',
-        permissions: m.permissions,
-      );
+    name: m.name.trim(),
+    email: m.email.trim(),
+    phone: m.phone?.trim() ?? '',
+    designation: m.designation?.trim() ?? '',
+    permissions: m.permissions,
+  );
 
   String get _normalizedEmail => email.trim().toLowerCase();
 
   /// `POST /organization/staff` body. The server also creates the staff
   /// member's assigned card.
   Json toCreateJson() => compact({
-        'name': name,
-        'email': _normalizedEmail,
-        'password': password,
-        'phone': phone.isEmpty ? null : phone,
-        'designation': designation.isEmpty ? null : designation,
-        'permissions': permissions.toJson(),
-      });
+    'name': name,
+    'email': _normalizedEmail,
+    'password': password,
+    'phone': phone.isEmpty ? null : phone,
+    'designation': designation.isEmpty ? null : designation,
+    'permissions': permissions.toJson(),
+  });
 
   /// `PATCH /organization/staff/:id` body with changed fields only. Cleared
   /// optional fields are sent as `null`; permissions are sent as a whole.
@@ -56,7 +56,9 @@ class StaffDraft {
     }
 
     put('name', name, before.name);
-    if (_normalizedEmail != before._normalizedEmail) out['email'] = _normalizedEmail;
+    if (_normalizedEmail != before._normalizedEmail) {
+      out['email'] = _normalizedEmail;
+    }
     put('phone', phone, before.phone);
     put('designation', designation, before.designation);
     if (permissions != before.permissions) {
@@ -94,8 +96,10 @@ enum StaffSaveProblem {
   other,
 }
 
-final _seatPattern =
-    RegExp(r'seat|slot|quota|limit|plan|billing|subscription', caseSensitive: false);
+final _seatPattern = RegExp(
+  r'seat|slot|quota|limit|plan|billing|subscription',
+  caseSensitive: false,
+);
 final _duplicatePattern = RegExp(
   r'email|already (exists|registered|in use|taken)|duplicate',
   caseSensitive: false,
@@ -110,7 +114,8 @@ StaffSaveProblem classifyStaffSaveError(AppException e) {
   final text = '${e.code ?? ''} ${e.message}';
   if (_seatPattern.hasMatch(text)) return StaffSaveProblem.noSeat;
   if (e.kind == AppErrorKind.conflict &&
-      (_duplicatePattern.hasMatch(text) || e.fieldErrors.containsKey('email'))) {
+      (_duplicatePattern.hasMatch(text) ||
+          e.fieldErrors.containsKey('email'))) {
     return StaffSaveProblem.duplicateEmail;
   }
   return StaffSaveProblem.noSeat;

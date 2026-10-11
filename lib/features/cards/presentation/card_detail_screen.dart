@@ -35,9 +35,9 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
       title: activating ? 'Activate this card?' : 'Disable this card?',
       message: activating
           ? 'Outside the trial, an active card uses one paid card slot. '
-              'The card link and QR code will open for visitors.'
+                'The card link and QR code will open for visitors.'
           : 'Visitors will no longer be able to open this card by link or QR code. '
-              'You can activate it again later if a slot is available.',
+                'You can activate it again later if a slot is available.',
       confirmLabel: activating ? 'Activate' : 'Disable',
       destructive: !activating,
     );
@@ -45,10 +45,13 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
     setState(() => _busy = true);
     try {
       await ref.read(cardActionsProvider).setStatus(card.id, status);
-      if (mounted) showMessage(context, activating ? 'Card activated' : 'Card disabled');
+      if (mounted) {
+        showMessage(context, activating ? 'Card activated' : 'Card disabled');
+      }
     } on AppException catch (e) {
       if (!mounted) return;
-      final seatProblem = activating &&
+      final seatProblem =
+          activating &&
           (e.kind == AppErrorKind.forbidden ||
               e.kind == AppErrorKind.conflict ||
               e.statusCode == 402);
@@ -75,8 +78,14 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
           'You can add seats from Billing.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Close')),
-          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('View seats')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('View seats'),
+          ),
         ],
       ),
     );
@@ -87,7 +96,8 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
     final ok = await confirmAction(
       context,
       title: 'Delete this card?',
-      message: 'This permanently deletes "${card.displayTitle}". Its link and QR code '
+      message:
+          'This permanently deletes "${card.displayTitle}". Its link and QR code '
           'will stop working. This cannot be undone.',
       confirmLabel: 'Delete',
       destructive: true,
@@ -121,7 +131,9 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
           if (card != null) ...[
             IconButton(
               tooltip: 'Edit card',
-              onPressed: _busy ? null : () => context.push(Routes.ownerCardEdit(card.id)),
+              onPressed: _busy
+                  ? null
+                  : () => context.push(Routes.ownerCardEdit(card.id)),
               icon: const Icon(Icons.edit_outlined),
             ),
             PopupMenuButton<_MenuAction>(
@@ -135,8 +147,14 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
                   value: _MenuAction.delete,
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.delete_outline, color: Theme.of(ctx).colorScheme.error),
-                    title: Text('Delete card', style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+                    leading: Icon(
+                      Icons.delete_outline,
+                      color: Theme.of(ctx).colorScheme.error,
+                    ),
+                    title: Text(
+                      'Delete card',
+                      style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                    ),
                   ),
                 ),
               ],
@@ -150,7 +168,8 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
           loadingLabel: 'Loading card',
           onRetry: () => ref.invalidate(cardDetailProvider(widget.cardId)),
           data: (card) => RefreshIndicator(
-            onRefresh: () => ref.refresh(cardDetailProvider(widget.cardId).future),
+            onRefresh: () =>
+                ref.refresh(cardDetailProvider(widget.cardId).future),
             child: ListView(
               padding: AppSpacing.page,
               children: [
@@ -165,12 +184,18 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (card.disabledByBilling && !card.isActive) ...[
-                  _BillingBanner(onViewSeats: () => context.push(Routes.ownerSeats)),
+                  _BillingBanner(
+                    onViewSeats: () => context.push(Routes.ownerSeats),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                 ],
                 CardPreview(card: card),
                 const SizedBox(height: AppSpacing.md),
-                _StatusAction(card: card, busy: _busy, onChange: (s) => _setStatus(card, s)),
+                _StatusAction(
+                  card: card,
+                  busy: _busy,
+                  onChange: (s) => _setStatus(card, s),
+                ),
                 const SizedBox(height: AppSpacing.md),
                 _ActionGrid(card: card),
                 const SizedBox(height: AppSpacing.md),
@@ -201,12 +226,16 @@ class _BillingBanner extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.credit_card_off_outlined, color: scheme.onErrorContainer),
+                Icon(
+                  Icons.credit_card_off_outlined,
+                  color: scheme.onErrorContainer,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Disabled by billing',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: scheme.onErrorContainer),
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(color: scheme.onErrorContainer),
                   ),
                 ),
               ],
@@ -232,7 +261,11 @@ class _BillingBanner extends StatelessWidget {
 }
 
 class _StatusAction extends StatelessWidget {
-  const _StatusAction({required this.card, required this.busy, required this.onChange});
+  const _StatusAction({
+    required this.card,
+    required this.busy,
+    required this.onChange,
+  });
 
   final CardModel card;
   final bool busy;
@@ -263,13 +296,27 @@ class _ActionGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = <(IconData, String, VoidCallback?)>[
-      (Icons.edit_outlined, 'Edit', () => context.push(Routes.ownerCardEdit(card.id))),
-      (Icons.qr_code_2, 'Share & QR', () => context.push(Routes.ownerCardShare(card.id))),
-      (Icons.insights_outlined, 'Analytics', () => context.push(Routes.ownerCardAnalytics(card.id))),
+      (
+        Icons.edit_outlined,
+        'Edit',
+        () => context.push(Routes.ownerCardEdit(card.id)),
+      ),
+      (
+        Icons.qr_code_2,
+        'Share & QR',
+        () => context.push(Routes.ownerCardShare(card.id)),
+      ),
+      (
+        Icons.insights_outlined,
+        'Analytics',
+        () => context.push(Routes.ownerCardAnalytics(card.id)),
+      ),
       (
         Icons.open_in_new,
         'Preview as visitor',
-        card.slug.isEmpty ? null : () => context.push(Routes.publicCard(card.slug)),
+        card.slug.isEmpty
+            ? null
+            : () => context.push(Routes.publicCard(card.slug)),
       ),
     ];
     return Card(
@@ -308,8 +355,10 @@ class _Summary extends StatelessWidget {
       ('Videos', '${card.videos.length} of ${CardLimits.videos}'),
       if (card.viewCount != null) ('Views', '${card.viewCount}'),
       if (card.reviewCount != null) ('Reviews', '${card.reviewCount}'),
-      if (card.averageRating != null) ('Average rating', card.averageRating!.toStringAsFixed(1)),
-      if (card.updatedAt != null) ('Last updated', DateFormat.yMMMd().add_jm().format(card.updatedAt!)),
+      if (card.averageRating != null)
+        ('Average rating', card.averageRating!.toStringAsFixed(1)),
+      if (card.updatedAt != null)
+        ('Last updated', DateFormat.yMMMd().add_jm().format(card.updatedAt!)),
     ];
     return Card(
       child: Padding(
@@ -327,7 +376,12 @@ class _Summary extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(k, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                        child: Text(
+                          k,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Flexible(child: Text(v, textAlign: TextAlign.end)),

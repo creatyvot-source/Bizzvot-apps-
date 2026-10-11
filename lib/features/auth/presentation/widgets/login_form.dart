@@ -84,16 +84,18 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   }
 
   void _switchPortal() {
-    ref.read(loginEmailHintProvider.notifier).set(
-          _email.text.trim().isEmpty ? null : _email.text.trim(),
-        );
+    ref
+        .read(loginEmailHintProvider.notifier)
+        .set(_email.text.trim().isEmpty ? null : _email.text.trim());
     context.pushReplacement(_isOwner ? Routes.staffLogin : Routes.login);
   }
 
   @override
   Widget build(BuildContext context) {
     final failure = _failure;
-    final otherPortalLabel = _isOwner ? 'Go to staff sign-in' : 'Go to owner sign-in';
+    final otherPortalLabel = _isOwner
+        ? 'Go to staff sign-in'
+        : 'Go to owner sign-in';
 
     return AuthPage(
       title: _isOwner ? 'Owner sign-in' : 'Staff sign-in',
@@ -181,8 +183,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   'login email or reset your password.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],

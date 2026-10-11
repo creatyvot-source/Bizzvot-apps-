@@ -17,7 +17,8 @@ class AuthFlowRepository {
   final Ref _ref;
 
   AuthRepository get _auth => _ref.read(authRepositoryProvider);
-  SessionController get _session => _ref.read(sessionControllerProvider.notifier);
+  SessionController get _session =>
+      _ref.read(sessionControllerProvider.notifier);
 
   /// `POST /auth/login`, then `GET /auth/me`.
   Future<void> loginOwner(String email, String password) =>
@@ -34,19 +35,21 @@ class AuthFlowRepository {
   Future<void> forgotPassword(String email) => _auth.forgotPassword(email);
 
   /// `POST /auth/reset-password`.
-  Future<void> resetPassword({required String token, required String password}) =>
-      _auth.resetPassword(token: token, password: password);
+  Future<void> resetPassword({
+    required String token,
+    required String password,
+  }) => _auth.resetPassword(token: token, password: password);
 
   /// `POST /auth/change-password`.
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
-  }) =>
-      _auth.changePassword(
-        currentPassword: currentPassword,
-        newPassword: newPassword,
-      );
+  }) => _auth.changePassword(
+    currentPassword: currentPassword,
+    newPassword: newPassword,
+  );
 }
 
-final authFlowRepositoryProvider =
-    Provider<AuthFlowRepository>(AuthFlowRepository.new);
+final authFlowRepositoryProvider = Provider<AuthFlowRepository>(
+  AuthFlowRepository.new,
+);

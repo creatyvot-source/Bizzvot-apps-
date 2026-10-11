@@ -127,10 +127,12 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
                     bytes,
                     fit: BoxFit.contain,
                     gaplessPlayback: true,
-                    semanticLabel: 'QR code that opens the card of ${card.displayTitle}',
+                    semanticLabel:
+                        'QR code that opens the card of ${card.displayTitle}',
                     errorBuilder: (_, _, _) => const _QrUnavailable(),
                   ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (_, _) => _QrUnavailable(
                     onRetry: () => ref.invalidate(cardQrProvider(card.id)),
                   ),
@@ -162,11 +164,14 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
                     ? null
                     : () {
                         final origin = shareOriginOf(anchor);
-                        _run('link', () => share.shareText(
-                              link,
-                              subject: card.displayTitle,
-                              origin: origin,
-                            ));
+                        _run(
+                          'link',
+                          () => share.shareText(
+                            link,
+                            subject: card.displayTitle,
+                            origin: origin,
+                          ),
+                        );
                       },
                 icon: const Icon(Icons.share),
                 label: const Text('Share link'),
@@ -182,10 +187,16 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
                       final origin = shareOriginOf(anchor);
                       _run('qr', () async {
                         final file = await actions.qrFile(card);
-                        await share.shareFiles([file], text: link, origin: origin);
+                        await share.shareFiles(
+                          [file],
+                          text: link,
+                          origin: origin,
+                        );
                       });
                     },
-              icon: _busy == 'qr' ? const _Spinner() : const Icon(Icons.qr_code_2),
+              icon: _busy == 'qr'
+                  ? const _Spinner()
+                  : const Icon(Icons.qr_code_2),
               label: const Text('Share QR image'),
             ),
           ),
@@ -202,21 +213,27 @@ class _ShareBodyState extends ConsumerState<_ShareBody> {
                           await share.shareFiles([file], origin: origin);
                         });
                       },
-                icon: _busy == 'vcard' ? const _Spinner() : const Icon(Icons.contact_page_outlined),
+                icon: _busy == 'vcard'
+                    ? const _Spinner()
+                    : const Icon(Icons.contact_page_outlined),
                 label: const Text('Share / save contact (vCard)'),
               ),
             )
           else
             Text(
               'Save contact (vCard) is turned off for this card.',
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             'Anyone with this link or QR code can open the card while it is active, '
             'even if it is hidden from the people directory.',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -230,9 +247,9 @@ class _Spinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const SizedBox.square(
-        dimension: 18,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
+    dimension: 18,
+    child: CircularProgressIndicator(strokeWidth: 2),
+  );
 }
 
 class _QrUnavailable extends StatelessWidget {
@@ -242,22 +259,22 @@ class _QrUnavailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.qr_code_2, size: 48, color: Colors.black38),
-            const Text(
-              'QR code unavailable',
-              style: TextStyle(color: Colors.black87),
-              textAlign: TextAlign.center,
-            ),
-            if (onRetry != null)
-              TextButton(
-                onPressed: onRetry,
-                style: TextButton.styleFrom(foregroundColor: AppColors.brand),
-                child: const Text('Try again'),
-              ),
-          ],
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.qr_code_2, size: 48, color: Colors.black38),
+        const Text(
+          'QR code unavailable',
+          style: TextStyle(color: Colors.black87),
+          textAlign: TextAlign.center,
         ),
-      );
+        if (onRetry != null)
+          TextButton(
+            onPressed: onRetry,
+            style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+            child: const Text('Try again'),
+          ),
+      ],
+    ),
+  );
 }

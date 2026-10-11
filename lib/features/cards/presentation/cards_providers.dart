@@ -22,11 +22,12 @@ final cardsListProvider = FutureProvider.autoDispose<List<CardModel>>((ref) {
 });
 
 /// `GET /organization/cards/:id` (owner).
-final cardDetailProvider =
-    FutureProvider.autoDispose.family<CardModel, String>((ref, id) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(cardsRepositoryProvider).getCard(id);
-});
+final cardDetailProvider = FutureProvider.autoDispose.family<CardModel, String>(
+  (ref, id) {
+    ref.watch(sessionKeyProvider);
+    return ref.watch(cardsRepositoryProvider).getCard(id);
+  },
+);
 
 /// The staff member's assigned card, or `null` when none is assigned.
 final staffCardProvider = FutureProvider.autoDispose<CardModel?>((ref) {
@@ -36,8 +37,10 @@ final staffCardProvider = FutureProvider.autoDispose<CardModel?>((ref) {
 });
 
 /// Resolves a [CardRef] to a card (owner → detail, staff → own card).
-final cardForProvider =
-    FutureProvider.autoDispose.family<CardModel?, CardRef>((ref, target) {
+final cardForProvider = FutureProvider.autoDispose.family<CardModel?, CardRef>((
+  ref,
+  target,
+) {
   if (target.staffMode) return ref.watch(staffCardProvider.future);
   final id = target.cardId;
   if (id == null || id.isEmpty) return Future.value(null);
@@ -45,8 +48,10 @@ final cardForProvider =
 });
 
 /// QR PNG bytes for a card id.
-final cardQrProvider =
-    FutureProvider.autoDispose.family<Uint8List, String>((ref, cardId) {
+final cardQrProvider = FutureProvider.autoDispose.family<Uint8List, String>((
+  ref,
+  cardId,
+) {
   ref.watch(sessionKeyProvider);
   return ref.watch(cardsRepositoryProvider).qrCode(cardId);
 });
@@ -121,14 +126,13 @@ class CardActions {
     PickedFile file, {
     void Function(double progress)? onProgress,
     CancelToken? cancelToken,
-  }) =>
-      _repo.uploadCardDocument(
-        cardId,
-        bytes: file.bytes,
-        filename: '${safeFileStem(_stem(file.name), fallback: 'document')}.pdf',
-        onProgress: onProgress,
-        cancelToken: cancelToken,
-      );
+  }) => _repo.uploadCardDocument(
+    cardId,
+    bytes: file.bytes,
+    filename: '${safeFileStem(_stem(file.name), fallback: 'document')}.pdf',
+    onProgress: onProgress,
+    cancelToken: cancelToken,
+  );
 
   static String _stem(String name) {
     final dot = name.lastIndexOf('.');
@@ -150,7 +154,8 @@ class CardActions {
     final bytes = await _ref.read(cardQrProvider(card.id).future);
     return ShareableFile(
       bytes: bytes,
-      name: 'qr-${safeFileStem(card.slug.isEmpty ? card.displayTitle : card.slug)}.png',
+      name:
+          'qr-${safeFileStem(card.slug.isEmpty ? card.displayTitle : card.slug)}.png',
       mimeType: 'image/png',
     );
   }
@@ -187,7 +192,13 @@ class CardActions {
             for (var n = 2; !usedNames.add(stem); n++) {
               stem = '$base-$n';
             }
-            files.add(ShareableFile(bytes: bytes, name: 'qr-$stem.png', mimeType: 'image/png'));
+            files.add(
+              ShareableFile(
+                bytes: bytes,
+                name: 'qr-$stem.png',
+                mimeType: 'image/png',
+              ),
+            );
           } catch (_) {
             failed++;
           }

@@ -75,7 +75,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
   String? get _ratingError {
     if (_fieldErrors['rating'] case final e?) return e;
-    if (_ratingTouched && (_rating < 1 || _rating > 5)) return 'Choose a rating from 1 to 5 stars';
+    if (_ratingTouched && (_rating < 1 || _rating > 5))
+      return 'Choose a rating from 1 to 5 stars';
     return null;
   }
 
@@ -90,9 +91,15 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     setState(() => _submitting = true);
     try {
-      final result = await ref.read(publicCardRepositoryProvider).submitReview(
+      final result = await ref
+          .read(publicCardRepositoryProvider)
+          .submitReview(
             widget.slug,
-            ReviewSubmission(rating: _rating, name: _name.text, comment: _comment.text),
+            ReviewSubmission(
+              rating: _rating,
+              name: _name.text,
+              comment: _comment.text,
+            ),
           );
       if (!mounted) return;
       if (result.isApproved) ref.invalidate(publicReviewsProvider(widget.slug));
@@ -156,7 +163,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  cardName == null ? 'How was your experience?' : 'How was your experience with $cardName?',
+                  cardName == null
+                      ? 'How was your experience?'
+                      : 'How was your experience with $cardName?',
                   style: theme.textTheme.titleLarge,
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -177,7 +186,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   _Banner(
                     key: const ValueKey('cooldown'),
                     icon: Icons.hourglass_empty,
-                    text: 'Too many attempts. You can try again in ${_fmt(left)}.',
+                    text:
+                        'Too many attempts. You can try again in ${_fmt(left)}.',
                     liveRegion: false,
                   ),
                 StarRatingInput(
@@ -201,7 +211,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   decoration: const InputDecoration(labelText: 'Your name'),
                   validator: (v) {
                     if (_fieldErrors['name'] case final e?) return e;
-                    if (v == null || v.trim().isEmpty) return 'Please enter your name';
+                    if (v == null || v.trim().isEmpty)
+                      return 'Please enter your name';
                     return null;
                   },
                 ),
@@ -223,7 +234,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                 const SizedBox(height: AppSpacing.lg),
                 BusyButton(
                   key: const ValueKey('submit-review'),
-                  label: left > Duration.zero ? 'Try again in ${_fmt(left)}' : 'Submit review',
+                  label: left > Duration.zero
+                      ? 'Try again in ${_fmt(left)}'
+                      : 'Submit review',
                   icon: Icons.send_outlined,
                   onPressed: disabled ? null : _submit,
                 ),
@@ -244,7 +257,12 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 }
 
 class _Banner extends StatelessWidget {
-  const _Banner({super.key, required this.icon, required this.text, this.liveRegion = true});
+  const _Banner({
+    super.key,
+    required this.icon,
+    required this.text,
+    this.liveRegion = true,
+  });
 
   final IconData icon;
   final String text;
@@ -268,7 +286,10 @@ class _Banner extends StatelessWidget {
               Icon(icon, color: scheme.onSecondaryContainer),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(text, style: TextStyle(color: scheme.onSecondaryContainer)),
+                child: Text(
+                  text,
+                  style: TextStyle(color: scheme.onSecondaryContainer),
+                ),
               ),
             ],
           ),
@@ -293,7 +314,10 @@ class _SuccessView extends StatelessWidget {
         title: result.isApproved
             ? 'Thanks for your review'
             : 'Thanks! Your review will appear after approval',
-        action: FilledButton(onPressed: onDone, child: const Text('Back to card')),
+        action: FilledButton(
+          onPressed: onDone,
+          child: const Text('Back to card'),
+        ),
       ),
     );
   }

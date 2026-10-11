@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../shared/widgets/ui_kit.dart';
 import '../../domain/money.dart';
+
+export '../../../../shared/widgets/ui_kit.dart'
+    show
+        SectionHeader,
+        StatusChip,
+        StatusTone,
+        SkeletonBox,
+        SkeletonList,
+        HeroHeader,
+        StatTile;
 
 /// Displays a server amount. Shows [fallback] when the server sent none —
 /// the app never derives a price itself.
@@ -28,75 +39,22 @@ class MoneyText extends StatelessWidget {
   }
 }
 
-enum StatusTone { neutral, info, success, warning, error }
-
-/// Compact status pill. Colour is never the only signal: the label is text.
-class StatusChip extends StatelessWidget {
-  const StatusChip({
-    super.key,
-    required this.label,
-    this.tone = StatusTone.neutral,
-    this.icon,
-  });
-
-  final String label;
-  final StatusTone tone;
-  final IconData? icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = toneColors(context, tone);
-    return Semantics(
-      label: 'Status: $label',
-      excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm + 2,
-          vertical: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 16, color: fg),
-              const SizedBox(width: AppSpacing.xs),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(color: fg, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 (Color, Color) toneColors(BuildContext context, StatusTone tone) {
   final s = Theme.of(context).colorScheme;
   final dark = Theme.of(context).brightness == Brightness.dark;
   Color tint(Color c) => dark ? Color.lerp(c, Colors.white, 0.45)! : c;
   return switch (tone) {
     StatusTone.neutral => (s.surfaceContainerHighest, s.onSurfaceVariant),
-    StatusTone.info => (s.secondaryContainer, s.onSecondaryContainer),
+    StatusTone.info => (s.primaryContainer, s.onPrimaryContainer),
     StatusTone.success => (
-        AppColors.success.withValues(alpha: dark ? 0.25 : 0.12),
-        tint(AppColors.success),
-      ),
+      AppColors.success.withValues(alpha: dark ? 0.25 : 0.12),
+      tint(AppColors.success),
+    ),
     StatusTone.warning => (
-        AppColors.warning.withValues(alpha: dark ? 0.25 : 0.12),
-        tint(AppColors.warning),
-      ),
-    StatusTone.error => (s.errorContainer, s.onErrorContainer),
+      AppColors.warning.withValues(alpha: dark ? 0.25 : 0.12),
+      tint(AppColors.warning),
+    ),
+    StatusTone.danger => (s.errorContainer, s.onErrorContainer),
   };
 }
 
@@ -123,13 +81,13 @@ class NoticeCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Semantics(
       container: true,
-      liveRegion: tone == StatusTone.error || tone == StatusTone.warning,
+      liveRegion: tone == StatusTone.danger || tone == StatusTone.warning,
       child: Container(
         width: double.infinity,
         padding: AppSpacing.page,
         decoration: BoxDecoration(
           color: bg,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,7 +95,7 @@ class NoticeCard extends StatelessWidget {
             Icon(
               icon ??
                   switch (tone) {
-                    StatusTone.error => Icons.error_outline,
+                    StatusTone.danger => Icons.error_outline,
                     StatusTone.warning => Icons.warning_amber_outlined,
                     StatusTone.success => Icons.check_circle_outline,
                     _ => Icons.info_outline,
@@ -188,17 +146,21 @@ class InfoRow extends StatelessWidget {
   factory InfoRow.text(String label, String value, {bool emphasize = false}) =>
       InfoRow(label: label, value: Text(value), emphasize: emphasize);
 
-  factory InfoRow.money(String label, Money? money,
-          {bool emphasize = false, String fallback = '—', bool negative = false}) =>
-      InfoRow(
-        label: label,
-        emphasize: emphasize,
-        value: MoneyText(
-          money,
-          fallback: fallback,
-          prefix: negative && money != null && !money.isNegative ? '−' : null,
-        ),
-      );
+  factory InfoRow.money(
+    String label,
+    Money? money, {
+    bool emphasize = false,
+    String fallback = '—',
+    bool negative = false,
+  }) => InfoRow(
+    label: label,
+    emphasize: emphasize,
+    value: MoneyText(
+      money,
+      fallback: fallback,
+      prefix: negative && money != null && !money.isNegative ? '−' : null,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -233,20 +195,6 @@ class InfoRow extends StatelessWidget {
   }
 }
 
-class SectionTitle extends StatelessWidget {
-  const SectionTitle(this.text, {super.key});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
-        child: Semantics(
-          header: true,
-          child: Text(text, style: Theme.of(context).textTheme.titleMedium),
-        ),
-      );
-}
-
 /// Accessible − / value / + control with 48dp targets.
 class QuantityStepper extends StatelessWidget {
   const QuantityStepper({
@@ -279,7 +227,9 @@ class QuantityStepper extends StatelessWidget {
         children: [
           IconButton.outlined(
             tooltip: 'Decrease $label',
-            onPressed: enabled && value > min ? () => onChanged!(value - 1) : null,
+            onPressed: enabled && value > min
+                ? () => onChanged!(value - 1)
+                : null,
             icon: const Icon(Icons.remove),
           ),
           ConstrainedBox(
@@ -294,7 +244,9 @@ class QuantityStepper extends StatelessWidget {
           ),
           IconButton.outlined(
             tooltip: 'Increase $label',
-            onPressed: enabled && value < max ? () => onChanged!(value + 1) : null,
+            onPressed: enabled && value < max
+                ? () => onChanged!(value + 1)
+                : null,
             icon: const Icon(Icons.add),
           ),
         ],
@@ -324,7 +276,11 @@ class SafeNetworkImage extends StatelessWidget {
     final placeholder = ColoredBox(
       color: scheme.surfaceContainerHighest,
       child: Center(
-        child: Icon(placeholderIcon, color: scheme.outline, semanticLabel: semanticLabel),
+        child: Icon(
+          placeholderIcon,
+          color: scheme.outline,
+          semanticLabel: semanticLabel,
+        ),
       ),
     );
     final u = url;

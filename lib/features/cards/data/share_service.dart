@@ -14,12 +14,18 @@ abstract class ShareService {
 
   /// Writes [files] to the app's temporary directory and opens the share
   /// sheet with them.
-  Future<void> shareFiles(List<ShareableFile> files, {String? text, Rect? origin});
+  Future<void> shareFiles(
+    List<ShareableFile> files, {
+    String? text,
+    Rect? origin,
+  });
 
   Future<void> copyText(String text);
 }
 
-final shareServiceProvider = Provider<ShareService>((ref) => PlatformShareService());
+final shareServiceProvider = Provider<ShareService>(
+  (ref) => PlatformShareService(),
+);
 
 class PlatformShareService implements ShareService {
   @override

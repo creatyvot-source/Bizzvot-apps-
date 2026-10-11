@@ -37,13 +37,17 @@ List<DailyPoint> parseSeries(Object? raw) {
     final points = <DailyPoint>[];
     asJson(raw).forEach((k, v) {
       final date = DateTime.tryParse(k);
-      final count = v is Map ? intOrNull(asJson(v)['count'] ?? asJson(v)['views']) : intOrNull(v);
+      final count = v is Map
+          ? intOrNull(asJson(v)['count'] ?? asJson(v)['views'])
+          : intOrNull(v);
       if (date != null && count != null) {
-        points.add(DailyPoint(
-          date: date,
-          count: count,
-          unique: v is Map ? intOrNull(asJson(v)['unique']) : null,
-        ));
+        points.add(
+          DailyPoint(
+            date: date,
+            count: count,
+            unique: v is Map ? intOrNull(asJson(v)['unique']) : null,
+          ),
+        );
       }
     });
     points.sort((a, b) => a.date.compareTo(b.date));
@@ -57,7 +61,9 @@ List<DailyPoint> parseSeries(Object? raw) {
       DailyPoint(
         date: date,
         count: intOr(j['count'] ?? j['views'] ?? j['total'] ?? j['value']),
-        unique: intOrNull(j['unique'] ?? j['uniqueVisitors'] ?? j['uniqueViews']),
+        unique: intOrNull(
+          j['unique'] ?? j['uniqueVisitors'] ?? j['uniqueViews'],
+        ),
       ),
     );
   }
@@ -112,9 +118,17 @@ class ViewsStats {
     }
     final j = asJson(data);
     final series = parseSeries(
-      _firstList(j, const ['series', 'daily', 'timeline', 'byDay', 'data', 'views']),
+      _firstList(j, const [
+        'series',
+        'daily',
+        'timeline',
+        'byDay',
+        'data',
+        'views',
+      ]),
     );
-    final total = intOrNull(j['total'] ?? j['totalViews'] ?? j['views'] ?? j['count']) ??
+    final total =
+        intOrNull(j['total'] ?? j['totalViews'] ?? j['views'] ?? j['count']) ??
         series.fold<int>(0, (a, p) => a + p.count);
     final unique = intOrNull(
       j['unique'] ?? j['uniqueVisitors'] ?? j['uniqueViews'] ?? j['visitors'],
@@ -144,7 +158,8 @@ class ReviewStats {
   factory ReviewStats.fromJson(Object? data) {
     final j = asJson(data);
     final breakdown = {for (var i = 1; i <= 5; i++) i: 0};
-    final raw = j['breakdown'] ?? j['distribution'] ?? j['ratings'] ?? j['byRating'];
+    final raw =
+        j['breakdown'] ?? j['distribution'] ?? j['ratings'] ?? j['byRating'];
     if (raw is Map) {
       asJson(raw).forEach((k, v) {
         final star = intOrNull(k.replaceAll(RegExp(r'\D'), ''));
@@ -167,14 +182,18 @@ class ReviewStats {
     }
     final sum = breakdown.values.fold(0, (a, b) => a + b);
     final weighted = breakdown.entries.fold(0, (a, e) => a + e.key * e.value);
-    final total = intOrNull(j['total'] ?? j['totalReviews'] ?? j['count']) ?? sum;
-    final average = doubleOrNull(j['average'] ?? j['averageRating'] ?? j['avg']) ??
+    final total =
+        intOrNull(j['total'] ?? j['totalReviews'] ?? j['count']) ?? sum;
+    final average =
+        doubleOrNull(j['average'] ?? j['averageRating'] ?? j['avg']) ??
         (sum > 0 ? weighted / sum : null);
     return ReviewStats(
       total: total,
       average: average,
       breakdown: breakdown,
-      series: parseSeries(_firstList(j, const ['series', 'daily', 'timeline', 'byDay'])),
+      series: parseSeries(
+        _firstList(j, const ['series', 'daily', 'timeline', 'byDay']),
+      ),
     );
   }
 }
@@ -194,19 +213,34 @@ enum LinkCategory {
   final String label;
 
   static const _social = {
-    'social', 'instagram', 'facebook', 'linkedin', 'x', 'twitter', 'youtube',
-    'tiktok', 'snapchat', 'pinterest', 'threads', 'telegram', 'github',
+    'social',
+    'instagram',
+    'facebook',
+    'linkedin',
+    'x',
+    'twitter',
+    'youtube',
+    'tiktok',
+    'snapchat',
+    'pinterest',
+    'threads',
+    'telegram',
+    'github',
   };
 
   static LinkCategory parse(String? raw) {
     final t = (raw ?? '').toLowerCase().replaceAll(RegExp('[^a-z]'), '');
     if (t.isEmpty) return other;
     if (t.contains('whatsapp')) return whatsapp;
-    if (t == 'phone' || t == 'call' || t == 'tel' || t.contains('phone')) return phone;
+    if (t == 'phone' || t == 'call' || t == 'tel' || t.contains('phone'))
+      return phone;
     if (t == 'email' || t == 'mail' || t == 'mailto') return email;
-    if (t == 'website' || t == 'web' || t == 'site' || t == 'url') return website;
-    if (t.contains('vcard') || t == 'savecontact' || t == 'contact') return vcard;
-    if (t == 'custom' || t == 'customlink' || t == 'customlinks' || t == 'link') return custom;
+    if (t == 'website' || t == 'web' || t == 'site' || t == 'url')
+      return website;
+    if (t.contains('vcard') || t == 'savecontact' || t == 'contact')
+      return vcard;
+    if (t == 'custom' || t == 'customlink' || t == 'customlinks' || t == 'link')
+      return custom;
     if (_social.contains(t) || t.startsWith('social')) return social;
     return other;
   }
@@ -234,11 +268,19 @@ class LinkClicks {
     Object? list = data;
     if (data is Map) {
       final j = asJson(data);
-      list = _firstList(j, const ['items', 'links', 'clicks', 'byType', 'breakdown', 'data']);
+      list = _firstList(j, const [
+        'items',
+        'links',
+        'clicks',
+        'byType',
+        'breakdown',
+        'data',
+      ]);
       if (list == null) {
         const meta = {'total', 'count', 'sum', 'range', 'from', 'to', 'cardid'};
         j.forEach((k, v) {
-          if ((v is num || v is String) && !meta.contains(k.toLowerCase())) add(k, v);
+          if ((v is num || v is String) && !meta.contains(k.toLowerCase()))
+            add(k, v);
         });
       }
     }
@@ -246,8 +288,10 @@ class LinkClicks {
       asJson(list).forEach(add);
     } else if (list is List) {
       for (final e in asJsonList(list)) {
-        add(e['type'] ?? e['_id'] ?? e['linkType'] ?? e['eventType'] ?? e['name'],
-            e['count'] ?? e['clicks'] ?? e['total']);
+        add(
+          e['type'] ?? e['_id'] ?? e['linkType'] ?? e['eventType'] ?? e['name'],
+          e['count'] ?? e['clicks'] ?? e['total'],
+        );
       }
     }
     final sorted = totals.entries.map((e) => (e.key, e.value)).toList()

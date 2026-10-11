@@ -17,5 +17,6 @@ class LoginEmailHint extends Notifier<String?> {
   }
 }
 
-final loginEmailHintProvider =
-    NotifierProvider<LoginEmailHint, String?>(LoginEmailHint.new);
+final loginEmailHintProvider = NotifierProvider<LoginEmailHint, String?>(
+  LoginEmailHint.new,
+);

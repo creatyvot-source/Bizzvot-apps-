@@ -17,32 +17,32 @@ class AnalyticsRangeController extends Notifier<AnalyticsRange> {
 
 final analyticsRangeProvider =
     NotifierProvider.autoDispose<AnalyticsRangeController, AnalyticsRange>(
-  AnalyticsRangeController.new,
-);
+      AnalyticsRangeController.new,
+    );
 
 // Each section loads independently so one failing endpoint does not hide the
 // others. All are account-scoped and reset on logout.
 
-final viewsStatsProvider = FutureProvider.autoDispose.family<ViewsStats, AnalyticsQuery>(
-  (ref, q) {
-    ref.watch(sessionKeyProvider);
-    return ref.watch(analyticsRepositoryProvider).fetchViews(q.cardId, q.range);
-  },
-  retry: _noRetry,
-);
+final viewsStatsProvider = FutureProvider.autoDispose
+    .family<ViewsStats, AnalyticsQuery>((ref, q) {
+      ref.watch(sessionKeyProvider);
+      return ref
+          .watch(analyticsRepositoryProvider)
+          .fetchViews(q.cardId, q.range);
+    }, retry: _noRetry);
 
-final reviewStatsProvider = FutureProvider.autoDispose.family<ReviewStats, AnalyticsQuery>(
-  (ref, q) {
-    ref.watch(sessionKeyProvider);
-    return ref.watch(analyticsRepositoryProvider).fetchReviews(q.cardId, q.range);
-  },
-  retry: _noRetry,
-);
+final reviewStatsProvider = FutureProvider.autoDispose
+    .family<ReviewStats, AnalyticsQuery>((ref, q) {
+      ref.watch(sessionKeyProvider);
+      return ref
+          .watch(analyticsRepositoryProvider)
+          .fetchReviews(q.cardId, q.range);
+    }, retry: _noRetry);
 
-final linkClicksProvider = FutureProvider.autoDispose.family<LinkClicks, AnalyticsQuery>(
-  (ref, q) {
-    ref.watch(sessionKeyProvider);
-    return ref.watch(analyticsRepositoryProvider).fetchLinks(q.cardId, q.range);
-  },
-  retry: _noRetry,
-);
+final linkClicksProvider = FutureProvider.autoDispose
+    .family<LinkClicks, AnalyticsQuery>((ref, q) {
+      ref.watch(sessionKeyProvider);
+      return ref
+          .watch(analyticsRepositoryProvider)
+          .fetchLinks(q.cardId, q.range);
+    }, retry: _noRetry);

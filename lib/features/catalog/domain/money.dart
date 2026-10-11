@@ -186,7 +186,10 @@ class Money {
   String format({String? locale}) {
     final digits = digitsFor(currency);
     final f = currency.isEmpty
-        ? NumberFormat.decimalPatternDigits(locale: locale, decimalDigits: digits)
+        ? NumberFormat.decimalPatternDigits(
+            locale: locale,
+            decimalDigits: digits,
+          )
         : NumberFormat.simpleCurrency(locale: locale, name: currency);
     return f.format(_displayValue);
   }

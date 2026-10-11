@@ -25,13 +25,15 @@ class LinkLauncher {
 
   Future<bool> email(String address, {String? subject}) {
     if (Validators.email(address) != null) return Future.value(false);
-    return _launch(Uri(
-      scheme: 'mailto',
-      path: address.trim(),
-      query: subject == null
-          ? null
-          : 'subject=${Uri.encodeComponent(subject)}',
-    ));
+    return _launch(
+      Uri(
+        scheme: 'mailto',
+        path: address.trim(),
+        query: subject == null
+            ? null
+            : 'subject=${Uri.encodeComponent(subject)}',
+      ),
+    );
   }
 
   Future<bool> call(String phone) {
@@ -59,4 +61,6 @@ class LinkLauncher {
   }
 }
 
-final linkLauncherProvider = Provider<LinkLauncher>((ref) => const LinkLauncher());
+final linkLauncherProvider = Provider<LinkLauncher>(
+  (ref) => const LinkLauncher(),
+);

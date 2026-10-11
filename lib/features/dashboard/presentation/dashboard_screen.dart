@@ -5,8 +5,10 @@ import 'package:intl/intl.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/config/app_config.dart';
 import '../../../shared/models/organization.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../../auth/presentation/widgets/callout.dart';
 import 'dashboard_providers.dart';
 import 'widgets/stat_tile.dart';
@@ -19,6 +21,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(dashboardSummaryProvider);
+    final shopEnabled = ref.watch(currentConfigProvider).isEnabled(Flags.shop);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
@@ -30,23 +33,25 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: AsyncValueView<DashboardSummary>(
-        value: summary,
-        loadingLabel: 'Loading dashboard…',
-        onRetry: () => ref.invalidate(dashboardSummaryProvider),
-        data: (s) => RefreshIndicator(
-          onRefresh: () => ref.refresh(dashboardSummaryProvider.future),
-          child: _DashboardBody(summary: s),
-        ),
-      ),
+      body: summary.isLoading && !summary.hasValue
+          ? const _DashboardSkeleton()
+          : AsyncValueView<DashboardSummary>(
+              value: summary,
+              onRetry: () => ref.invalidate(dashboardSummaryProvider),
+              data: (s) => RefreshIndicator(
+                onRefresh: () => ref.refresh(dashboardSummaryProvider.future),
+                child: _DashboardBody(summary: s, shopEnabled: shopEnabled),
+              ),
+            ),
     );
   }
 }
 
 class _DashboardBody extends StatelessWidget {
-  const _DashboardBody({required this.summary});
+  const _DashboardBody({required this.summary, required this.shopEnabled});
 
   final DashboardSummary summary;
+  final bool shopEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +59,7 @@ class _DashboardBody extends StatelessWidget {
     final trial = s.trial;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       children: [
         ContentWidth(
           child: Padding(
@@ -62,11 +67,7 @@ class _DashboardBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _OrganizationHeader(summary: s),
-                if (trial != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  _TrialCallout(trial: trial),
-                ],
+                _OrganizationHero(summary: s),
                 if (s.disabledByBilling > 0) ...[
                   const SizedBox(height: AppSpacing.md),
                   Callout(
@@ -84,14 +85,14 @@ class _DashboardBody extends StatelessWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.lg),
-                const _SectionTitle('Overview'),
-                const SizedBox(height: AppSpacing.sm),
+                if (trial != null && !trial.active) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  _TrialEndedCallout(trial: trial),
+                ],
+                const SectionHeader('Overview'),
                 _Stats(summary: s),
-                const SizedBox(height: AppSpacing.lg),
-                const _SectionTitle('Quick actions'),
-                const SizedBox(height: AppSpacing.sm),
-                const _QuickActions(),
+                const SectionHeader('Quick actions'),
+                _QuickActions(shopEnabled: shopEnabled),
               ],
             ),
           ),
@@ -101,59 +102,88 @@ class _DashboardBody extends StatelessWidget {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+String? _formatDate(DateTime? d) =>
+    d == null ? null : DateFormat.yMMMd().format(d);
 
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        header: true,
-        child: Text(text, style: Theme.of(context).textTheme.titleMedium),
-      );
-}
-
-class _OrganizationHeader extends StatelessWidget {
-  const _OrganizationHeader({required this.summary});
+class _OrganizationHero extends StatelessWidget {
+  const _OrganizationHero({required this.summary});
 
   final DashboardSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final status = summary.organizationStatus;
-    return Card(
-      child: Padding(
-        padding: AppSpacing.page,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final trial = summary.trial;
+    final trialActive = trial?.active ?? false;
+    final ends = _formatDate(trial?.endsAt);
+    final days = trial?.daysRemaining;
+    final trialLine = !trialActive
+        ? null
+        : switch (days) {
+            null =>
+              ends == null ? 'Free trial active' : 'Free trial · ends $ends',
+            0 => 'Your trial ends today',
+            1 => '1 day left in your trial',
+            _ => '$days days left in your trial',
+          };
+
+    return HeroHeader(
+      title: summary.organizationName,
+      subtitle: trialLine ?? 'Here’s how your team is doing.',
+      trailing: status == null ? null : OrganizationStatusChip(status: status),
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (trialActive)
             Text(
-              summary.organizationName,
-              style: theme.textTheme.titleLarge,
+              [
+                if (days != null && ends != null) 'Ends $ends.',
+                'Unlimited cards during the trial.',
+              ].join(' '),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (status != null) OrganizationStatusChip(status: status),
-                TextButton.icon(
-                  onPressed: () => context.push(Routes.ownerProfile),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Edit profile'),
-                ),
-              ],
+          _HeroButton(
+            icon: Icons.edit_outlined,
+            label: 'Edit profile',
+            onPressed: () => context.push(Routes.ownerProfile),
+          ),
+          if (trialActive)
+            _HeroButton(
+              icon: Icons.event_seat_outlined,
+              label: 'Purchase seats',
+              onPressed: () => context.push(Routes.ownerSeats),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
-/// Organization status (`active`, `trial`, `suspended`, …) as a chip.
+class _HeroButton extends StatelessWidget {
+  const _HeroButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: Colors.white,
+      side: const BorderSide(color: Colors.white70),
+    ),
+    onPressed: onPressed,
+    icon: Icon(icon),
+    label: Text(label),
+  );
+}
+
+/// Organization status (`active`, `trial`, `suspended`, …) as a pill.
 class OrganizationStatusChip extends StatelessWidget {
   const OrganizationStatusChip({super.key, required this.status});
 
@@ -161,74 +191,57 @@ class OrganizationStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final normalized = status.toLowerCase();
-    final (bg, fg, icon) = switch (normalized) {
-      'active' => (scheme.primaryContainer, scheme.onPrimaryContainer, Icons.check_circle_outline),
-      'trial' || 'trialing' => (scheme.secondaryContainer, scheme.onSecondaryContainer, Icons.hourglass_top),
-      'suspended' || 'inactive' || 'disabled' || 'cancelled' || 'canceled' || 'past_due' =>
-        (scheme.errorContainer, scheme.onErrorContainer, Icons.error_outline),
-      _ => (scheme.surfaceContainerHighest, scheme.onSurfaceVariant, Icons.info_outline),
+    final (tone, icon) = switch (normalized) {
+      'active' => (StatusTone.success, Icons.check_circle_outline),
+      'trial' || 'trialing' => (StatusTone.info, Icons.hourglass_top),
+      'suspended' ||
+      'inactive' ||
+      'disabled' ||
+      'cancelled' ||
+      'canceled' ||
+      'past_due' => (StatusTone.danger, Icons.error_outline),
+      _ => (StatusTone.neutral, Icons.info_outline),
     };
-    final label = _humanize(normalized);
+    final label = humanizeStatus(normalized);
     return Semantics(
       label: 'Organization status: $label',
       excludeSemantics: true,
-      child: Chip(
-        avatar: Icon(icon, size: 18, color: fg),
-        label: Text(label),
-        labelStyle: TextStyle(color: fg),
-        backgroundColor: bg,
-        side: BorderSide.none,
+      // Solid surface so the pill stays legible on the hero gradient.
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: StatusChip(label, tone: tone, icon: icon),
       ),
     );
   }
-
-  static String _humanize(String s) {
-    final words = s.replaceAll(RegExp(r'[_-]+'), ' ').trim();
-    if (words.isEmpty) return 'Unknown';
-    return words[0].toUpperCase() + words.substring(1);
-  }
 }
 
-class _TrialCallout extends StatelessWidget {
-  const _TrialCallout({required this.trial});
+/// `past_due` → `Past due`.
+String humanizeStatus(String s) {
+  final words = s.replaceAll(RegExp(r'[_-]+'), ' ').trim();
+  if (words.isEmpty) return 'Unknown';
+  return words[0].toUpperCase() + words.substring(1);
+}
+
+class _TrialEndedCallout extends StatelessWidget {
+  const _TrialEndedCallout({required this.trial});
 
   final TrialInfo trial;
 
   @override
   Widget build(BuildContext context) {
-    final ends = trial.endsAt == null ? null : DateFormat.yMMMd().format(trial.endsAt!);
-    if (!trial.active) {
-      return Callout(
-        tone: CalloutTone.warning,
-        title: 'Your free trial has ended',
-        message: [
-          if (ends != null) 'It ended on $ends.',
-          'Purchase seats to keep your team’s cards active.',
-        ].join(' '),
-        action: FilledButton.tonal(
-          onPressed: () => context.push(Routes.ownerSeats),
-          child: const Text('Purchase seats'),
-        ),
-      );
-    }
-    final days = trial.daysRemaining;
-    final remaining = switch (days) {
-      null => null,
-      0 => 'Your trial ends today',
-      1 => '1 day left in your trial',
-      _ => '$days days left in your trial',
-    };
-    final title = remaining ?? 'Free trial active';
+    final ends = _formatDate(trial.endsAt);
     return Callout(
-      tone: CalloutTone.info,
-      title: title,
+      tone: CalloutTone.warning,
+      title: 'Your free trial has ended',
       message: [
-        if (ends != null) 'Trial ends on $ends.',
-        'You can activate unlimited cards during the trial.',
+        if (ends != null) 'It ended on $ends.',
+        'Purchase seats to keep your team’s cards active.',
       ].join(' '),
-      action: TextButton(
+      action: FilledButton.tonal(
         onPressed: () => context.push(Routes.ownerSeats),
         child: const Text('Purchase seats'),
       ),
@@ -244,46 +257,47 @@ class _Stats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = summary;
-    final seats = s.unlimitedSeats
-        ? StatTile(
-            icon: Icons.badge_outlined,
-            label: 'Active cards',
-            value: '${s.activeCards}',
-            caption: 'Unlimited during trial',
-            semanticsLabel:
-                'Active cards: ${s.activeCards}. Unlimited during trial.',
-          )
-        : StatTile(
-            icon: Icons.badge_outlined,
-            label: 'Active cards',
-            value: '${s.activeCards} / ${s.paidSeats}',
-            caption: s.paidSeats == 1 ? 'of 1 paid seat' : 'of ${s.paidSeats} paid seats',
-            semanticsLabel:
-                'Active cards: ${s.activeCards} of ${s.paidSeats} paid seats.',
-            highlight: s.paidSeats > 0 && s.activeCards >= s.paidSeats,
-          );
-    final rating = s.totalReviews == 0 ? '—' : s.averageRating.toStringAsFixed(1);
+    final full =
+        !s.unlimitedSeats && s.paidSeats > 0 && s.activeCards >= s.paidSeats;
+    final rating = s.totalReviews == 0
+        ? '—'
+        : s.averageRating.toStringAsFixed(1);
     final tiles = [
-      seats,
+      StatTile(
+        icon: Icons.badge_outlined,
+        label: 'Active cards',
+        value: s.unlimitedSeats
+            ? '${s.activeCards}'
+            : '${s.activeCards} / ${s.paidSeats}',
+        caption: s.unlimitedSeats
+            ? 'Unlimited during trial'
+            : full
+            ? 'All paid seats in use'
+            : (s.paidSeats == 1
+                  ? 'of 1 paid seat'
+                  : 'of ${s.paidSeats} paid seats'),
+        color: full ? AppColors.warning : null,
+        onTap: () => context.go(Routes.ownerCards),
+      ),
       StatTile(
         icon: Icons.style_outlined,
         label: 'Total cards',
         value: '${s.totalCards}',
+        onTap: () => context.go(Routes.ownerCards),
       ),
       StatTile(
         icon: Icons.reviews_outlined,
         label: 'Total reviews',
         value: '${s.totalReviews}',
+        color: AppColors.accent,
+        onTap: () => context.go(Routes.ownerReviews),
       ),
       StatTile(
         icon: Icons.star_rate_rounded,
-        iconColor: AppColors.star,
+        color: AppColors.star,
         label: 'Average rating',
         value: rating,
         caption: s.totalReviews == 0 ? 'No reviews yet' : 'out of 5',
-        semanticsLabel: s.totalReviews == 0
-            ? 'Average rating: no reviews yet.'
-            : 'Average rating: $rating out of 5.',
       ),
     ];
     return ResponsiveGrid(minTileWidth: 150, children: tiles);
@@ -291,7 +305,9 @@ class _Stats extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
-  const _QuickActions();
+  const _QuickActions({required this.shopEnabled});
+
+  final bool shopEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -321,12 +337,43 @@ class _QuickActions extends StatelessWidget {
         label: 'Purchase seats',
         onTap: () => context.push(Routes.ownerSeats),
       ),
-      QuickActionTile(
-        icon: Icons.storefront_outlined,
-        label: 'Browse services',
-        onTap: () => context.push(Routes.ownerShop),
-      ),
+      if (shopEnabled)
+        QuickActionTile(
+          icon: Icons.storefront_outlined,
+          label: 'Browse services',
+          onTap: () => context.push(Routes.ownerShop),
+        ),
     ];
     return ResponsiveGrid(minTileWidth: 140, children: actions);
+  }
+}
+
+class _DashboardSkeleton extends StatelessWidget {
+  const _DashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Loading dashboard',
+      child: ExcludeSemantics(
+        child: ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          padding: AppSpacing.page,
+          children: [
+            const SkeletonBox(height: 140, radius: AppRadius.xl),
+            const SizedBox(height: AppSpacing.lg),
+            const SkeletonBox(height: 18, width: 120),
+            const SizedBox(height: AppSpacing.md),
+            ResponsiveGrid(
+              minTileWidth: 150,
+              children: [
+                for (var i = 0; i < 4; i++)
+                  const SkeletonBox(height: 120, radius: AppRadius.lg),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

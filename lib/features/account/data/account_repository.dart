@@ -18,7 +18,8 @@ class AccountRepository {
         body: {
           'password': password,
           'confirm': 'DELETE',
-          if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
         },
         parse: (_) {},
       );

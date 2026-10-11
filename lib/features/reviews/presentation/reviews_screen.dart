@@ -7,6 +7,7 @@ import '../../../core/auth/session_controller.dart';
 import '../../../shared/models/review.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../../public_card/presentation/widgets/star_rating.dart';
 import '../data/reviews_repository.dart';
 import 'reviews_providers.dart';
@@ -79,8 +80,9 @@ class _ReviewsBody extends ConsumerWidget {
                     child: ChoiceChip(
                       label: Text(f.label),
                       selected: f == filter,
-                      onSelected: (_) =>
-                          ref.read(reviewFilterProvider(scope).notifier).select(f),
+                      onSelected: (_) => ref
+                          .read(reviewFilterProvider(scope).notifier)
+                          .select(f),
                     ),
                   ),
               ],
@@ -89,88 +91,95 @@ class _ReviewsBody extends ConsumerWidget {
         ),
         if (async.isLoading && async.hasValue) const LinearProgressIndicator(),
         Expanded(
-          child: AsyncValueView(
-            value: async,
-            loadingLabel: 'Loading reviews',
-            onRetry: () => ref.invalidate(provider),
-            data: (state) {
-              final items = state.visible(filter);
-              if (items.isEmpty) {
-                return RefreshIndicator(
-                  onRefresh: refresh,
-                  child: ListView(
-                    children: [
-                      const SizedBox(height: AppSpacing.xl),
-                      _emptyFor(filter),
-                    ],
-                  ),
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: refresh,
-                child: ListView.separated(
-                  padding: AppSpacing.page,
-                  itemCount: items.length + (state.hasMore ? 1 : 0),
-                  separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                  itemBuilder: (context, i) {
-                    if (i >= items.length) {
-                      return Center(
-                        child: state.loadingMore
-                            ? const CircularProgressIndicator()
-                            : OutlinedButton(
-                                onPressed: () async {
-                                  try {
-                                    await ref.read(provider.notifier).loadMore();
-                                  } catch (e) {
-                                    if (context.mounted) showError(context, e);
-                                  }
-                                },
-                                child: const Text('Load more'),
-                              ),
+          child: !async.hasValue && !async.hasError
+              ? const SkeletonList(count: 4)
+              : AsyncValueView(
+                  value: async,
+                  loadingLabel: 'Loading reviews',
+                  onRetry: () => ref.invalidate(provider),
+                  data: (state) {
+                    final items = state.visible(filter);
+                    if (items.isEmpty) {
+                      return RefreshIndicator(
+                        onRefresh: refresh,
+                        child: ListView(
+                          children: [
+                            const SizedBox(height: AppSpacing.xl),
+                            _emptyFor(filter),
+                          ],
+                        ),
                       );
                     }
-                    final review = items[i];
-                    return ContentWidth(
-                      child: ReviewCard(
-                        review: review,
-                        canModerate: canModerate,
-                        busy: state.busyIds.contains(review.id),
-                        onStatus: (s) => _setStatus(context, ref, review, s),
-                        onReply: () => _reply(context, ref, review),
+                    return RefreshIndicator(
+                      onRefresh: refresh,
+                      child: ListView.separated(
+                        padding: AppSpacing.page,
+                        itemCount: items.length + (state.hasMore ? 1 : 0),
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, i) {
+                          if (i >= items.length) {
+                            return Center(
+                              child: state.loadingMore
+                                  ? const CircularProgressIndicator()
+                                  : OutlinedButton(
+                                      onPressed: () async {
+                                        try {
+                                          await ref
+                                              .read(provider.notifier)
+                                              .loadMore();
+                                        } catch (e) {
+                                          if (context.mounted)
+                                            showError(context, e);
+                                        }
+                                      },
+                                      child: const Text('Load more'),
+                                    ),
+                            );
+                          }
+                          final review = items[i];
+                          return ContentWidth(
+                            child: ReviewCard(
+                              review: review,
+                              canModerate: canModerate,
+                              busy: state.busyIds.contains(review.id),
+                              onStatus: (s) =>
+                                  _setStatus(context, ref, review, s),
+                              onReply: () => _reply(context, ref, review),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
   }
 
   Widget _emptyFor(ReviewFilter f) => switch (f) {
-        ReviewFilter.all => const EmptyView(
-            icon: Icons.reviews_outlined,
-            title: 'No reviews yet',
-            message: 'Reviews left on your cards will appear here.',
-          ),
-        ReviewFilter.pending => const EmptyView(
-            icon: Icons.task_alt,
-            title: 'Nothing waiting for approval',
-            message: 'New reviews that need moderation will appear here.',
-          ),
-        ReviewFilter.approved => const EmptyView(
-            icon: Icons.visibility_outlined,
-            title: 'No approved reviews',
-            message: 'Approved reviews are shown publicly on cards.',
-          ),
-        ReviewFilter.hidden => const EmptyView(
-            icon: Icons.visibility_off_outlined,
-            title: 'No hidden reviews',
-            message: 'Reviews you hide will appear here.',
-          ),
-      };
+    ReviewFilter.all => const EmptyView(
+      icon: Icons.reviews_outlined,
+      title: 'No reviews yet',
+      message: 'Reviews left on your cards will appear here.',
+    ),
+    ReviewFilter.pending => const EmptyView(
+      icon: Icons.task_alt,
+      title: 'Nothing waiting for approval',
+      message: 'New reviews that need moderation will appear here.',
+    ),
+    ReviewFilter.approved => const EmptyView(
+      icon: Icons.visibility_outlined,
+      title: 'No approved reviews',
+      message: 'Approved reviews are shown publicly on cards.',
+    ),
+    ReviewFilter.hidden => const EmptyView(
+      icon: Icons.visibility_off_outlined,
+      title: 'No hidden reviews',
+      message: 'Reviews you hide will appear here.',
+    ),
+  };
 
   Future<void> _setStatus(
     BuildContext context,
@@ -179,7 +188,9 @@ class _ReviewsBody extends ConsumerWidget {
     ReviewStatus status,
   ) async {
     try {
-      await ref.read(reviewsControllerProvider(scope).notifier).setStatus(review.id, status);
+      await ref
+          .read(reviewsControllerProvider(scope).notifier)
+          .setStatus(review.id, status);
       if (context.mounted) {
         showMessage(context, switch (status) {
           ReviewStatus.approved => 'Review approved',
@@ -192,7 +203,11 @@ class _ReviewsBody extends ConsumerWidget {
     }
   }
 
-  Future<void> _reply(BuildContext context, WidgetRef ref, Review review) async {
+  Future<void> _reply(
+    BuildContext context,
+    WidgetRef ref,
+    Review review,
+  ) async {
     final text = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -201,7 +216,9 @@ class _ReviewsBody extends ConsumerWidget {
     );
     if (text == null || !context.mounted) return;
     try {
-      await ref.read(reviewsControllerProvider(scope).notifier).reply(review.id, text);
+      await ref
+          .read(reviewsControllerProvider(scope).notifier)
+          .reply(review.id, text);
       if (context.mounted) showMessage(context, 'Reply posted');
     } catch (e) {
       if (context.mounted) showError(context, e);
@@ -238,11 +255,23 @@ class ReviewCard extends StatelessWidget {
       if (s == ReviewStatus.pending)
         _action('Approve', Icons.check, () => onStatus(ReviewStatus.approved)),
       if (s == ReviewStatus.hidden)
-        _action('Unhide', Icons.visibility_outlined, () => onStatus(ReviewStatus.approved)),
+        _action(
+          'Unhide',
+          Icons.visibility_outlined,
+          () => onStatus(ReviewStatus.approved),
+        ),
       if (s != ReviewStatus.hidden)
-        _action('Hide', Icons.visibility_off_outlined, () => onStatus(ReviewStatus.hidden)),
+        _action(
+          'Hide',
+          Icons.visibility_off_outlined,
+          () => onStatus(ReviewStatus.hidden),
+        ),
       if (s != ReviewStatus.pending)
-        _action('Move to pending', Icons.schedule, () => onStatus(ReviewStatus.pending)),
+        _action(
+          'Move to pending',
+          Icons.schedule,
+          () => onStatus(ReviewStatus.pending),
+        ),
       _action(
         review.reply == null ? 'Reply' : 'Edit reply',
         Icons.reply_outlined,
@@ -268,21 +297,45 @@ class ReviewCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                StatusChip(status: s),
+                ReviewStatusChip(status: s),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.xs,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                Text(review.reviewerName ?? 'Anonymous', style: theme.textTheme.titleSmall),
-                if (date != null) Text(DateFormat.yMMMd().format(date), style: muted),
+                ExcludeSemantics(
+                  child: InitialsAvatar(
+                    name: review.reviewerName ?? 'Anonymous',
+                    radius: 20,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm + 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        review.reviewerName ?? 'Anonymous',
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: AppSpacing.xxs),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          StarRating(
+                            rating: review.rating.toDouble(),
+                            size: 16,
+                          ),
+                          if (date != null)
+                            Text(DateFormat.yMMMd().format(date), style: muted),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: AppSpacing.xs),
-            StarRating(rating: review.rating.toDouble()),
             if (review.comment != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(review.comment!, style: theme.textTheme.bodyMedium),
@@ -293,8 +346,10 @@ class ReviewCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.md - 4),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.35,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,34 +382,35 @@ class ReviewCard extends StatelessWidget {
     );
   }
 
-  Widget _action(String label, IconData icon, VoidCallback onPressed) => TextButton.icon(
+  Widget _action(String label, IconData icon, VoidCallback onPressed) =>
+      TextButton.icon(
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
         label: Text(label),
       );
 }
 
-class StatusChip extends StatelessWidget {
-  const StatusChip({super.key, required this.status});
+/// Review status pill built on the shared [StatusChip].
+class ReviewStatusChip extends StatelessWidget {
+  const ReviewStatusChip({super.key, required this.status});
 
   final ReviewStatus status;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final (label, bg, fg) = switch (status) {
-      ReviewStatus.pending => ('Pending', scheme.tertiaryContainer, scheme.onTertiaryContainer),
-      ReviewStatus.approved => ('Approved', scheme.primaryContainer, scheme.onPrimaryContainer),
-      ReviewStatus.hidden => ('Hidden', scheme.surfaceContainerHighest, scheme.onSurfaceVariant),
+    final (label, tone, icon) = switch (status) {
+      ReviewStatus.pending => ('Pending', StatusTone.warning, Icons.schedule),
+      ReviewStatus.approved => ('Approved', StatusTone.success, Icons.check),
+      ReviewStatus.hidden => (
+        'Hidden',
+        StatusTone.neutral,
+        Icons.visibility_off_outlined,
+      ),
     };
     return Semantics(
       label: 'Status: $label',
       excludeSemantics: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
-        child: Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: fg)),
-      ),
+      child: StatusChip(label, tone: tone, icon: icon),
     );
   }
 }

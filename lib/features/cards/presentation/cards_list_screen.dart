@@ -7,6 +7,7 @@ import '../../../app/theme.dart';
 import '../../../shared/models/card.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../data/share_service.dart';
 import '../domain/card_filters.dart';
 import 'cards_providers.dart';
@@ -40,7 +41,9 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
     final origin = shareOriginOf(anchor);
     setState(() => _exporting = true);
     try {
-      final (:files, :failed) = await ref.read(cardActionsProvider).allQrFiles();
+      final (:files, :failed) = await ref
+          .read(cardActionsProvider)
+          .allQrFiles();
       if (failed > 0 && mounted) {
         showMessage(
           context,
@@ -48,14 +51,14 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
         );
       }
       if (files.isEmpty) {
-        if (mounted) showMessage(context, 'There are no QR codes to share yet.');
+        if (mounted) {
+          showMessage(context, 'There are no QR codes to share yet.');
+        }
         return;
       }
-      await ref.read(shareServiceProvider).shareFiles(
-            files,
-            text: 'Bizzvot card QR codes',
-            origin: origin,
-          );
+      await ref
+          .read(shareServiceProvider)
+          .shareFiles(files, text: 'Bizzvot card QR codes', origin: origin);
     } catch (e) {
       if (mounted) showError(context, e);
     } finally {
@@ -90,80 +93,97 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
         ],
       ),
       body: ContentWidth(
-        child: AsyncValueView<List<CardModel>>(
-          value: cards,
-          loadingLabel: 'Loading cards',
-          onRetry: () => ref.invalidate(cardsListProvider),
-          data: (all) {
-            if (all.isEmpty) {
-              return RefreshIndicator(
-                onRefresh: _refresh,
-                child: LayoutBuilder(
-                  builder: (context, c) => SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: c.maxHeight),
-                      child: EmptyView(
-                        icon: Icons.badge_outlined,
-                        title: 'No cards yet',
-                        message:
-                            'Each staff member gets a digital card. Add a staff member to create one.',
-                        action: FilledButton.icon(
-                          onPressed: () => context.push(Routes.ownerStaffNew),
-                          icon: const Icon(Icons.person_add_alt),
-                          label: const Text('Add staff member'),
+        child: cards.isLoading && !cards.hasValue
+            ? const SkeletonList()
+            : AsyncValueView<List<CardModel>>(
+                value: cards,
+                loadingLabel: 'Loading cards',
+                onRetry: () => ref.invalidate(cardsListProvider),
+                data: (all) {
+                  if (all.isEmpty) {
+                    return RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: LayoutBuilder(
+                        builder: (context, c) => SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minHeight: c.maxHeight),
+                            child: EmptyView(
+                              icon: Icons.badge_outlined,
+                              title: 'No cards yet',
+                              message: 'Each staff member gets a digital card. Add a staff member to create one.',
+                              action: FilledButton.icon(
+                                onPressed: () =>
+                                    context.push(Routes.ownerStaffNew),
+                                icon: const Icon(Icons.person_add_alt),
+                                label: const Text('Add staff member'),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
-              );
-            }
-            final visible = filterCards(all, query: _search.text, status: _filter);
-            return RefreshIndicator(
-              onRefresh: _refresh,
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(child: _filters(all.length, visible.length)),
-                  if (visible.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: EmptyView(
-                        icon: Icons.search_off,
-                        title: 'No matching cards',
-                        message: 'Try a different search or filter.',
-                        action: OutlinedButton(
-                          onPressed: () => setState(() {
-                            _search.clear();
-                            _filter = CardStatusFilter.all;
-                          }),
-                          child: const Text('Clear filters'),
+                    );
+                  }
+                  final visible = filterCards(
+                    all,
+                    query: _search.text,
+                    status: _filter,
+                  );
+                  return RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: _filters(all.length, visible.length),
                         ),
-                      ),
-                    )
-                  else
-                    SliverList.separated(
-                      itemCount: visible.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (_, i) => CardListTile(
-                        card: visible[i],
-                        onTap: () => context.push(Routes.ownerCard(visible[i].id)),
-                      ),
+                        if (visible.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: EmptyView(
+                              icon: Icons.search_off,
+                              title: 'No matching cards',
+                              message: 'Try a different search or filter.',
+                              action: OutlinedButton(
+                                onPressed: () => setState(() {
+                                  _search.clear();
+                                  _filter = CardStatusFilter.all;
+                                }),
+                                child: const Text('Clear filters'),
+                              ),
+                            ),
+                          )
+                        else
+                          SliverList.separated(
+                            itemCount: visible.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (_, i) => CardListTile(
+                              card: visible[i],
+                              onTap: () =>
+                                  context.push(Routes.ownerCard(visible[i].id)),
+                            ),
+                          ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: AppSpacing.lg),
+                        ),
+                      ],
                     ),
-                  const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-                ],
+                  );
+                },
               ),
-            );
-          },
-        ),
       ),
     );
   }
 
   Widget _filters(int total, int shown) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        AppSpacing.sm,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -218,7 +238,13 @@ class _CardsListScreenState extends ConsumerState<CardsListScreen> {
 
 /// One row: avatar, name, designation, status + visibility chips.
 class CardListTile extends StatelessWidget {
-  const CardListTile({super.key, required this.card, this.onTap, this.leading, this.trailing});
+  const CardListTile({
+    super.key,
+    required this.card,
+    this.onTap,
+    this.leading,
+    this.trailing,
+  });
 
   final CardModel card;
   final VoidCallback? onTap;
@@ -228,7 +254,10 @@ class CardListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitleParts = [
-      if (card.title != null && card.staffName != null && card.staffName != card.title) card.staffName,
+      if (card.title != null &&
+          card.staffName != null &&
+          card.staffName != card.title)
+        card.staffName,
       card.designation,
     ].whereType<String>();
     return ListTile(
@@ -250,7 +279,8 @@ class CardListTile extends StatelessWidget {
           ),
         ],
       ),
-      trailing: trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right)),
+      trailing:
+          trailing ?? (onTap == null ? null : const Icon(Icons.chevron_right)),
     );
   }
 }
@@ -261,17 +291,7 @@ class CardAvatar extends StatelessWidget {
   final CardModel card;
 
   @override
-  Widget build(BuildContext context) {
-    final photo = card.profilePhoto;
-    final letter = card.displayTitle.trim().isEmpty
-        ? '?'
-        : card.displayTitle.trim().characters.first.toUpperCase();
-    return ExcludeSemantics(
-      child: CircleAvatar(
-        foregroundImage: photo == null ? null : NetworkImage(photo),
-        onForegroundImageError: photo == null ? null : (_, _) {},
-        child: Text(letter),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: InitialsAvatar(name: card.displayTitle, imageUrl: card.profilePhoto),
+  );
 }

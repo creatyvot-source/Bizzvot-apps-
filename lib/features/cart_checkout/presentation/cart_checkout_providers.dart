@@ -34,7 +34,10 @@ class CartController extends Notifier<List<CartLine>> {
         line.copyWith(quantity: line.quantity.clamp(1, CartLine.maxQuantity)),
       ];
     } else {
-      final merged = (state[i].quantity + line.quantity).clamp(1, CartLine.maxQuantity);
+      final merged = (state[i].quantity + line.quantity).clamp(
+        1,
+        CartLine.maxQuantity,
+      );
       state = [
         for (var j = 0; j < state.length; j++)
           j == i ? state[j].copyWith(quantity: merged) : state[j],
@@ -48,17 +51,34 @@ class CartController extends Notifier<List<CartLine>> {
     state = [for (final l in state) l.key == key ? l.copyWith(quantity: q) : l];
   }
 
-  void remove(String key) => state = [for (final l in state) if (l.key != key) l];
+  void remove(String key) => state = [
+    for (final l in state)
+      if (l.key != key) l,
+  ];
 
   /// Removes lines the server reported as unavailable.
   void removeInvalid(Quote quote) {
     bool bad(CartLine c) =>
-        quote.invalidLines.any((i) =>
-            c.matches(itemId: i.itemId, itemType: i.itemType, variantId: i.variantId)) ||
-        quote.lines.any((q) =>
-            !q.available &&
-            c.matches(itemId: q.itemId, itemType: q.itemType.name, variantId: q.variantId));
-    state = [for (final l in state) if (!bad(l)) l];
+        quote.invalidLines.any(
+          (i) => c.matches(
+            itemId: i.itemId,
+            itemType: i.itemType,
+            variantId: i.variantId,
+          ),
+        ) ||
+        quote.lines.any(
+          (q) =>
+              !q.available &&
+              c.matches(
+                itemId: q.itemId,
+                itemType: q.itemType.name,
+                variantId: q.variantId,
+              ),
+        );
+    state = [
+      for (final l in state)
+        if (!bad(l)) l,
+    ];
   }
 
   void clear() => state = const [];
@@ -69,7 +89,9 @@ final cartProvider = NotifierProvider<CartController, List<CartLine>>(
 );
 
 /// Number of lines, for the app-bar badge.
-final cartCountProvider = Provider<int>((ref) => ref.watch(cartProvider).length);
+final cartCountProvider = Provider<int>(
+  (ref) => ref.watch(cartProvider).length,
+);
 
 /// On-demand quote for the cart screen. Any cart change discards it, so a
 /// stale quote can never be shown next to edited lines.
@@ -190,7 +212,10 @@ class CheckoutController extends Notifier<CheckoutState> {
 
   /// Starts (or retries) payment for [orderId]. [newAttempt] mints a new
   /// idempotency key — use it only for a deliberate retry after a failure.
-  Future<PaymentSession> startPayment(String orderId, {bool newAttempt = false}) async {
+  Future<PaymentSession> startPayment(
+    String orderId, {
+    bool newAttempt = false,
+  }) async {
     final keys = _paymentKeys.putIfAbsent(
       orderId,
       () => AttemptKey(ref.read(idempotencyKeyFactoryProvider)),
@@ -201,7 +226,9 @@ class CheckoutController extends Notifier<CheckoutState> {
         .startPayment(orderId, idempotencyKey: keys.keyFor(orderId));
     final uri = session.safeCheckoutUri;
     if (uri != null) {
-      state = CheckoutState(checkoutUris: {...state.checkoutUris, orderId: uri});
+      state = CheckoutState(
+        checkoutUris: {...state.checkoutUris, orderId: uri},
+      );
     }
     return session;
   }
@@ -220,9 +247,8 @@ class CheckoutController extends Notifier<CheckoutState> {
   bool isCartOrder(String orderId) => _cartOrders.contains(orderId);
 }
 
-final checkoutControllerProvider = NotifierProvider<CheckoutController, CheckoutState>(
-  CheckoutController.new,
-);
+final checkoutControllerProvider =
+    NotifierProvider<CheckoutController, CheckoutState>(CheckoutController.new);
 
 // ---------------------------------------------------------------------------
 // Payment status (bounded polling of GET /orders/:id)
@@ -251,13 +277,12 @@ class PaymentStatusState {
     bool? timedOut,
     Object? error,
     bool clearError = false,
-  }) =>
-      PaymentStatusState(
-        order: order ?? this.order,
-        polling: polling ?? this.polling,
-        timedOut: timedOut ?? this.timedOut,
-        error: clearError ? null : (error ?? this.error),
-      );
+  }) => PaymentStatusState(
+    order: order ?? this.order,
+    polling: polling ?? this.polling,
+    timedOut: timedOut ?? this.timedOut,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
 /// Polls the order until the **server** reports a terminal payment state.
@@ -325,7 +350,8 @@ class PaymentStatusController extends Notifier<PaymentStatusState> {
 
   void _onTerminal(Order order) {
     final checkout = ref.read(checkoutControllerProvider.notifier);
-    if (order.paymentOutcome == PaymentOutcome.paid && checkout.isCartOrder(orderId)) {
+    if (order.paymentOutcome == PaymentOutcome.paid &&
+        checkout.isCartOrder(orderId)) {
       ref.read(cartProvider.notifier).clear();
     }
     checkout.finishAttempt(orderId);
@@ -343,5 +369,5 @@ class PaymentStatusController extends Notifier<PaymentStatusState> {
 
 final paymentStatusProvider = NotifierProvider.autoDispose
     .family<PaymentStatusController, PaymentStatusState, String>(
-  PaymentStatusController.new,
-);
+      PaymentStatusController.new,
+    );

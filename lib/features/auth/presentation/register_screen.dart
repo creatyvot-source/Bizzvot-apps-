@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
 import '../../../core/auth/auth_repository.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utilities/validators.dart';
 import '../data/auth_flow_repository.dart';
@@ -35,6 +37,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Map<String, String> _fieldErrors = const {};
   String? _error;
+  bool _acceptedTerms = false;
 
   @override
   void dispose() {
@@ -51,6 +54,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  /// Opens a legal document from server config (https only); falls back to
+  /// the in-app legal screen when the URL is missing, unsafe or can't open.
+  Future<void> _openLegal(String? url) async {
+    final uri = url == null ? null : Uri.tryParse(url);
+    if (uri != null && uri.scheme == 'https' && Validators.isSafeWebUrl(url!)) {
+      try {
+        if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+      } catch (_) {}
+    }
+    if (mounted) context.push(Routes.legal);
+  }
+
   Future<void> _submit() async {
     if (_cooldown.active) return;
     setState(() {
@@ -61,7 +76,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     FocusScope.of(context).unfocus();
     final phone = _phone.text.trim();
     try {
-      await ref.read(authFlowRepositoryProvider).register(
+      await ref
+          .read(authFlowRepositoryProvider)
+          .register(
             RegisterRequest(
               organizationName: _org.text.trim(),
               name: _name.text.trim(),
@@ -80,7 +97,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             _cooldown.startFrom(e);
           case AppErrorKind.conflict:
             // Neutral wording: does not confirm the email is registered.
-            _error = 'We couldn’t create an account with these details. If you '
+            _error =
+                'We couldn’t create an account with these details. If you '
                 'already have an account, sign in or reset your password.';
           case AppErrorKind.validation when e.fieldErrors.isNotEmpty:
             _fieldErrors = e.fieldErrors;
@@ -95,6 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     const gap = SizedBox(height: AppSpacing.md);
+    final config = ref.watch(currentConfigProvider);
     return AuthPage(
       title: 'Create organization',
       heading: 'Set up your organization',
@@ -177,6 +196,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   v != _password.text ? 'Passwords don’t match' : null,
               onFieldSubmitted: (_) => _submit(),
             ),
+            gap,
+            _TermsField(
+              value: _acceptedTerms,
+              onChanged: (v) => setState(() => _acceptedTerms = v),
+              onOpenTerms: () => _openLegal(config.termsUrl),
+              onOpenPrivacy: () => _openLegal(config.privacyPolicyUrl),
+            ),
             const SizedBox(height: AppSpacing.lg),
             CooldownSubmitButton(
               label: 'Create organization',
@@ -197,6 +223,74 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Required agreement to the Terms of Service and Privacy Policy. The links
+/// are full-size buttons (48dp) rather than inline text spans.
+class _TermsField extends StatelessWidget {
+  const _TermsField({
+    required this.value,
+    required this.onChanged,
+    required this.onOpenTerms,
+    required this.onOpenPrivacy,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onOpenTerms;
+  final VoidCallback onOpenPrivacy;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return FormField<bool>(
+      initialValue: value,
+      validator: (_) =>
+          value ? null : 'You need to agree to the Terms and Privacy Policy',
+      builder: (field) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CheckboxListTile(
+            value: value,
+            onChanged: (v) {
+              onChanged(v ?? false);
+              field.didChange(v ?? false);
+            },
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: const Text(
+              'I agree to the Terms of Service and Privacy Policy',
+            ),
+          ),
+          Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              TextButton.icon(
+                onPressed: onOpenTerms,
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Terms of Service'),
+              ),
+              TextButton.icon(
+                onPressed: onOpenPrivacy,
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('Privacy Policy'),
+              ),
+            ],
+          ),
+          if (field.hasError)
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                field.errorText!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

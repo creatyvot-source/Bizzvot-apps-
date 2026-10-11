@@ -18,7 +18,8 @@ class DeleteAccountScreen extends ConsumerStatefulWidget {
   const DeleteAccountScreen({super.key});
 
   @override
-  ConsumerState<DeleteAccountScreen> createState() => _DeleteAccountScreenState();
+  ConsumerState<DeleteAccountScreen> createState() =>
+      _DeleteAccountScreenState();
 }
 
 class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
@@ -47,7 +48,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final ok = await confirmAction(
       context,
       title: 'Delete account permanently?',
-      message: 'Your organization, staff logins, digital cards, reviews and '
+      message:
+          'Your organization, staff logins, digital cards, reviews and '
           'analytics will be removed. Active subscriptions are cancelled. '
           'This cannot be undone.',
       confirmLabel: 'Delete',
@@ -55,10 +57,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     );
     if (!ok || !mounted) return;
     try {
-      await ref.read(accountRepositoryProvider).deleteAccount(
-            password: _password.text,
-            reason: _reason.text,
-          );
+      await ref
+          .read(accountRepositoryProvider)
+          .deleteAccount(password: _password.text, reason: _reason.text);
       if (!mounted) return;
       showMessage(context, 'Your account has been deleted.');
       await ref.read(sessionControllerProvider.notifier).logout();
@@ -79,7 +80,8 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
         body: EmptyView(
           icon: Icons.manage_accounts_outlined,
           title: 'Your account is managed by your organization',
-          message: 'Ask your organization owner to remove you from Bizzvot. '
+          message:
+              'Ask your organization owner to remove you from Bizzvot. '
               'Removing you also deletes your staff login and card.'
               '${config.supportEmail != null ? '\n\nYou can also contact ${config.supportEmail}.' : ''}',
           action: config.supportEmail == null
@@ -87,11 +89,15 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
               : OutlinedButton.icon(
                   icon: const Icon(Icons.email_outlined),
                   label: const Text('Contact support'),
-                  onPressed: () => launchUrl(Uri(
-                    scheme: 'mailto',
-                    path: config.supportEmail,
-                    queryParameters: {'subject': 'Staff account deletion request'},
-                  )),
+                  onPressed: () => launchUrl(
+                    Uri(
+                      scheme: 'mailto',
+                      path: config.supportEmail,
+                      queryParameters: {
+                        'subject': 'Staff account deletion request',
+                      },
+                    ),
+                  ),
                 ),
         ),
       );
@@ -112,8 +118,10 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: theme.colorScheme.onErrorContainer),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Text(
@@ -121,7 +129,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                           'logins and digital cards, reviews, analytics and saved '
                           'settings. Shared card links and QR codes stop working. '
                           'Invoices may be kept where the law requires it.',
-                          style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                          style: TextStyle(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
                         ),
                       ),
                     ],
@@ -146,12 +156,15 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                   labelText: 'Current password',
                   suffixIcon: IconButton(
                     tooltip: _obscure ? 'Show password' : 'Hide password',
-                    icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                    icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off,
+                    ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Enter your password to confirm' : null,
+                validator: (v) => (v == null || v.isEmpty)
+                    ? 'Enter your password to confirm'
+                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
               TextFormField(
@@ -160,8 +173,9 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Type DELETE to confirm',
                 ),
-                validator: (v) =>
-                    v?.trim() == 'DELETE' ? null : 'Type DELETE in capital letters',
+                validator: (v) => v?.trim() == 'DELETE'
+                    ? null
+                    : 'Type DELETE in capital letters',
               ),
               const SizedBox(height: AppSpacing.lg),
               BusyButton(

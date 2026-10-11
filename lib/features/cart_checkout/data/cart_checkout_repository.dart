@@ -17,10 +17,12 @@ class CartCheckoutRepository {
 
   /// `POST /cart/quote` `{ lines: [{itemType,itemId,variantId?,addOnIds?,quantity}] }`.
   Future<Quote> quote(List<CartLine> lines) => _api.post(
-        Endpoints.cartQuote,
-        body: {'lines': [for (final l in lines) l.toRequestJson()]},
-        parse: Quote.fromJson,
-      );
+    Endpoints.cartQuote,
+    body: {
+      'lines': [for (final l in lines) l.toRequestJson()],
+    },
+    parse: Quote.fromJson,
+  );
 
   /// `POST /orders` — creates a pending order from the quoted lines.
   /// The server re-prices; [quoteId] only lets it detect a stale quote.
@@ -28,30 +30,28 @@ class CartCheckoutRepository {
     required List<CartLine> lines,
     required String idempotencyKey,
     String? quoteId,
-  }) =>
-      _api.post(
-        Endpoints.orders,
-        body: {
-          'quoteId': ?quoteId,
-          'lines': [for (final l in lines) l.toRequestJson()],
-          'termsAccepted': true,
-        },
-        headers: {idempotencyHeader: idempotencyKey},
-        parse: Order.fromJson,
-      );
+  }) => _api.post(
+    Endpoints.orders,
+    body: {
+      'quoteId': ?quoteId,
+      'lines': [for (final l in lines) l.toRequestJson()],
+      'termsAccepted': true,
+    },
+    headers: {idempotencyHeader: idempotencyKey},
+    parse: Order.fromJson,
+  );
 
   /// `POST /orders/:id/payment` — starts a payment attempt and returns the
   /// hosted checkout URL. Not proof of payment.
   Future<PaymentSession> startPayment(
     String orderId, {
     required String idempotencyKey,
-  }) =>
-      _api.post(
-        Endpoints.orderPayment(orderId),
-        body: const <String, dynamic>{},
-        headers: {idempotencyHeader: idempotencyKey},
-        parse: PaymentSession.fromJson,
-      );
+  }) => _api.post(
+    Endpoints.orderPayment(orderId),
+    body: const <String, dynamic>{},
+    headers: {idempotencyHeader: idempotencyKey},
+    parse: PaymentSession.fromJson,
+  );
 
   /// `GET /orders/:id`.
   Future<Order> order(String id) =>

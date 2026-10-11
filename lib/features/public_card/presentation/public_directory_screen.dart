@@ -69,7 +69,9 @@ class PublicDirectoryScreen extends ConsumerWidget {
                         children: [
                           if (dir.organizationLogo != null)
                             Padding(
-                              padding: const EdgeInsets.only(right: AppSpacing.md),
+                              padding: const EdgeInsets.only(
+                                right: AppSpacing.md,
+                              ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: SafeNetworkImage(
@@ -105,7 +107,9 @@ class PublicDirectoryScreen extends ConsumerWidget {
                             : OutlinedButton(
                                 onPressed: () async {
                                   try {
-                                    await ref.read(provider.notifier).loadMore();
+                                    await ref
+                                        .read(provider.notifier)
+                                        .loadMore();
                                   } catch (e) {
                                     if (context.mounted) showError(context, e);
                                   }
@@ -117,12 +121,17 @@ class PublicDirectoryScreen extends ConsumerWidget {
                   );
                 }
                 final entry = list.items[idx];
-                final subtitle = [entry.designation, entry.company]
-                    .whereType<String>()
-                    .join(' · ');
+                final subtitle = [
+                  entry.designation,
+                  entry.company,
+                ].whereType<String>().join(' · ');
                 return ContentWidth(
                   child: ListTile(
-                    leading: PersonAvatar(name: entry.name, url: entry.photo, size: 48),
+                    leading: PersonAvatar(
+                      name: entry.name,
+                      url: entry.photo,
+                      size: 48,
+                    ),
                     title: Text(entry.name),
                     subtitle: subtitle.isEmpty ? null : Text(subtitle),
                     trailing: const Icon(Icons.chevron_right),

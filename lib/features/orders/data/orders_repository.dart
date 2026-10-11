@@ -16,15 +16,14 @@ class OrdersRepository {
 
   /// `GET /orders?status=&page=&limit=`.
   Future<Paged<Order>> orders({OrderStatus? status, int page = 1}) => _api.get(
-        Endpoints.orders,
-        query: {
-          'status': status?.wire,
-          'page': page,
-          'limit': pageSize,
-        },
-        parse: (d) => Paged.parse(d, Order.fromJson,
-            listKeys: const ['orders', 'items', 'docs', 'results', 'data']),
-      );
+    Endpoints.orders,
+    query: {'status': status?.wire, 'page': page, 'limit': pageSize},
+    parse: (d) => Paged.parse(
+      d,
+      Order.fromJson,
+      listKeys: const ['orders', 'items', 'docs', 'results', 'data'],
+    ),
+  );
 
   /// `GET /orders/:id` — authoritative order + payment state.
   Future<Order> order(String id) =>
@@ -32,11 +31,14 @@ class OrdersRepository {
 
   /// `GET /invoices?page=&limit=`.
   Future<Paged<Invoice>> invoices({int page = 1}) => _api.get(
-        Endpoints.invoices,
-        query: {'page': page, 'limit': pageSize},
-        parse: (d) => Paged.parse(d, Invoice.fromJson,
-            listKeys: const ['invoices', 'items', 'docs', 'results', 'data']),
-      );
+    Endpoints.invoices,
+    query: {'page': page, 'limit': pageSize},
+    parse: (d) => Paged.parse(
+      d,
+      Invoice.fromJson,
+      listKeys: const ['invoices', 'items', 'docs', 'results', 'data'],
+    ),
+  );
 
   /// `GET /invoices/:id`.
   Future<Invoice> invoice(String id) =>

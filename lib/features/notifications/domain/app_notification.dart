@@ -26,14 +26,14 @@ class AppNotification {
   bool get isRead => readAt != null;
 
   AppNotification markedRead(DateTime at) => AppNotification(
-        id: id,
-        type: type,
-        title: title,
-        body: body,
-        payload: payload,
-        readAt: readAt ?? at,
-        createdAt: createdAt,
-      );
+    id: id,
+    type: type,
+    title: title,
+    body: body,
+    payload: payload,
+    readAt: readAt ?? at,
+    createdAt: createdAt,
+  );
 
   factory AppNotification.fromJson(Object? raw) {
     final j = asJson(raw);
@@ -45,13 +45,17 @@ class AppNotification {
       title: strOr(j['title'] ?? payload['title'], _defaultTitle(type)),
       body: str(j['body'] ?? j['message'] ?? payload['message']),
       payload: payload,
-      readAt: dateOrNull(j['readAt']) ??
-          (boolOr(j['read'] ?? j['isRead']) ? DateTime.fromMillisecondsSinceEpoch(0) : null),
+      readAt:
+          dateOrNull(j['readAt']) ??
+          (boolOr(j['read'] ?? j['isRead'])
+              ? DateTime.fromMillisecondsSinceEpoch(0)
+              : null),
       createdAt: dateOrNull(j['createdAt']),
     );
   }
 
-  static String _defaultTitle(String type) => humanize(type, fallback: 'Notification');
+  static String _defaultTitle(String type) =>
+      humanize(type, fallback: 'Notification');
 
   /// Category used for the icon and the deep link.
   NotificationKind get kind => NotificationKind.of(type);
@@ -79,7 +83,9 @@ class AppNotification {
         return i == null ? Routes.ownerInvoices : Routes.ownerInvoice(i);
       case NotificationKind.subscription:
         final s = id(const ['subscriptionId', 'subscription', 'id']);
-        return s == null ? Routes.ownerSubscriptions : Routes.ownerSubscription(s);
+        return s == null
+            ? Routes.ownerSubscriptions
+            : Routes.ownerSubscription(s);
       case NotificationKind.billing:
         return Routes.ownerBilling;
       case NotificationKind.review:
@@ -116,7 +122,10 @@ enum NotificationKind {
     if (starts('subscription') || starts('renewal')) {
       return NotificationKind.subscription;
     }
-    if (starts('billing') || starts('seat') || starts('seats') || starts('trial')) {
+    if (starts('billing') ||
+        starts('seat') ||
+        starts('seats') ||
+        starts('trial')) {
       return NotificationKind.billing;
     }
     if (starts('review')) return NotificationKind.review;

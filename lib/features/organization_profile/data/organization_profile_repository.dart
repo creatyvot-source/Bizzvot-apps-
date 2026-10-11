@@ -38,5 +38,5 @@ class OrganizationProfileRepository {
 
 final organizationProfileRepositoryProvider =
     Provider<OrganizationProfileRepository>(
-  (ref) => OrganizationProfileRepository(ref.watch(apiClientProvider)),
-);
+      (ref) => OrganizationProfileRepository(ref.watch(apiClientProvider)),
+    );

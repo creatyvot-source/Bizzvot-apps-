@@ -15,13 +15,13 @@ class StaffRepository {
 
   /// `GET /organization/staff`. Accepts a bare list or `{ staff | items | … }`.
   Future<List<StaffMember>> list() => _api.get(
-        Endpoints.staff,
-        parse: (data) => Paged.parse(
-          data,
-          StaffMember.fromJson,
-          listKeys: const ['staff', 'items', 'docs', 'results', 'members', 'data'],
-        ).items.where((m) => m.id.isNotEmpty).toList(),
-      );
+    Endpoints.staff,
+    parse: (data) => Paged.parse(
+      data,
+      StaffMember.fromJson,
+      listKeys: const ['staff', 'items', 'docs', 'results', 'members', 'data'],
+    ).items.where((m) => m.id.isNotEmpty).toList(),
+  );
 
   /// `POST /organization/staff`. Returns the created member when the
   /// response includes it.
@@ -29,8 +29,11 @@ class StaffRepository {
       _api.post(Endpoints.staff, body: body, parse: parseStaffMutation);
 
   /// `PATCH /organization/staff/:id`.
-  Future<StaffMember?> update(String id, Json changes) =>
-      _api.patch(Endpoints.staffMember(id), body: changes, parse: parseStaffMutation);
+  Future<StaffMember?> update(String id, Json changes) => _api.patch(
+    Endpoints.staffMember(id),
+    body: changes,
+    parse: parseStaffMutation,
+  );
 
   /// `DELETE /organization/staff/:id`.
   Future<void> delete(String id) =>
@@ -42,8 +45,8 @@ class StaffRepository {
     final nested = j['staff'] is Map
         ? asJson(j['staff'])
         : j['user'] is Map
-            ? asJson(j['user'])
-            : null;
+        ? asJson(j['user'])
+        : null;
     final member = nested == null
         ? j
         : {

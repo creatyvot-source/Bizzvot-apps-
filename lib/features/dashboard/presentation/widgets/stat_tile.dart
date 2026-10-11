@@ -40,77 +40,6 @@ class ResponsiveGrid extends StatelessWidget {
   }
 }
 
-/// A labelled metric on the dashboard.
-class StatTile extends StatelessWidget {
-  const StatTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.value,
-    this.caption,
-    this.semanticsLabel,
-    this.iconColor,
-    this.highlight = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String? caption;
-  final String? semanticsLabel;
-  final Color? iconColor;
-
-  /// Emphasises the tile, e.g. when every paid seat is in use.
-  final bool highlight;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Semantics(
-      container: true,
-      label: semanticsLabel ?? '$label: $value',
-      excludeSemantics: true,
-      child: Card(
-        color: highlight ? scheme.tertiaryContainer : null,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(icon, size: 20, color: iconColor ?? scheme.primary),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(value, style: theme.textTheme.headlineSmall),
-              if (caption != null) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  caption!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Large tappable shortcut on the dashboard.
 class QuickActionTile extends StatelessWidget {
   const QuickActionTile({
@@ -144,7 +73,18 @@ class QuickActionTile extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(icon, color: theme.colorScheme.primary),
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(label, style: theme.textTheme.titleSmall),

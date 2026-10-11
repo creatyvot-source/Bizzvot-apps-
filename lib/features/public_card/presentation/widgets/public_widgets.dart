@@ -20,10 +20,10 @@ class UnavailableView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmptyView(
-        icon: Icons.contact_page_outlined,
-        title: title,
-        message: 'Check the link, or ask the person who shared it for a new one.',
-      );
+    icon: Icons.contact_page_outlined,
+    title: title,
+    message: 'Check the link, or ask the person who shared it for a new one.',
+  );
 }
 
 /// Network image restricted to http(s) URLs with a graceful fallback.
@@ -48,7 +48,8 @@ class SafeNetworkImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final u = url;
-    final fb = fallback ??
+    final fb =
+        fallback ??
         ColoredBox(
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           child: SizedBox(width: width, height: height),
@@ -82,7 +83,11 @@ class PersonAvatar extends StatelessWidget {
   final Color? ringColor;
 
   static String initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     final first = parts.first.characters.first;
     final last = parts.length > 1 ? parts.last.characters.first : '';

@@ -31,12 +31,12 @@ class CardsRepository {
 
   /// `GET /organization/cards`
   Future<List<CardModel>> listCards() => _api.get(
-        Endpoints.cards,
-        parse: (data) => _list(data, const ['cards', 'items', 'docs', 'results'])
-            .map(CardModel.fromJson)
-            .where((c) => c.id.isNotEmpty)
-            .toList(growable: false),
-      );
+    Endpoints.cards,
+    parse: (data) => _list(data, const ['cards', 'items', 'docs', 'results'])
+        .map(CardModel.fromJson)
+        .where((c) => c.id.isNotEmpty)
+        .toList(growable: false),
+  );
 
   /// `GET /organization/cards/:id`
   Future<CardModel> getCard(String id) =>
@@ -58,10 +58,10 @@ class CardsRepository {
   /// Activation outside the trial consumes a paid slot; the server answers
   /// 403/409 (or 402) when no eligible slot exists.
   Future<void> setStatus(List<String> cardIds, CardStatus status) => _api.patch(
-        Endpoints.cardStatus,
-        body: {'cardIds': cardIds, 'status': status.name},
-        parse: (_) {},
-      );
+    Endpoints.cardStatus,
+    body: {'cardIds': cardIds, 'status': status.name},
+    parse: (_) {},
+  );
 
   /// `DELETE /organization/cards/:id`
   Future<void> deleteCard(String id) =>
@@ -74,23 +74,30 @@ class CardsRepository {
     final json = _tryDecodeJson(bytes);
     if (json != _notJson) {
       final data = ApiClient.unwrapEnvelope(json);
-      final entries = _list(data, const ['qrcodes', 'qrCodes', 'items', 'cards'])
-          .map(QrCodeEntry.fromJson)
-          .where((e) => e.hasImage)
-          .toList(growable: false);
+      final entries =
+          _list(data, const ['qrcodes', 'qrCodes', 'items', 'cards'])
+              .map(QrCodeEntry.fromJson)
+              .where((e) => e.hasImage)
+              .toList(growable: false);
       return QrEntryList(entries);
     }
     final mime = MediaRules.sniffMime(bytes);
     return switch (mime) {
-      'application/zip' =>
-        QrArchive(bytes, mimeType: 'application/zip', extension: 'zip'),
-      'application/pdf' =>
-        QrArchive(bytes, mimeType: 'application/pdf', extension: 'pdf'),
+      'application/zip' => QrArchive(
+        bytes,
+        mimeType: 'application/zip',
+        extension: 'zip',
+      ),
+      'application/pdf' => QrArchive(
+        bytes,
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+      ),
       'image/png' => QrArchive(bytes, mimeType: 'image/png', extension: 'png'),
       _ => throw const AppException(
-          AppErrorKind.unknown,
-          'QR codes could not be prepared. Please try again.',
-        ),
+        AppErrorKind.unknown,
+        'QR codes could not be prepared. Please try again.',
+      ),
     };
   }
 
@@ -120,7 +127,10 @@ class CardsRepository {
         : QrCodeEntry.fromJson(data);
     final image = await qrEntryImage(entry);
     if (image == null || image.isEmpty) {
-      throw const AppException(AppErrorKind.unknown, 'The QR code could not be loaded.');
+      throw const AppException(
+        AppErrorKind.unknown,
+        'The QR code could not be loaded.',
+      );
     }
     return image;
   }
@@ -148,8 +158,14 @@ class CardsRepository {
     required String mimeType,
     void Function(double progress)? onProgress,
     CancelToken? cancelToken,
-  }) =>
-      _upload(Endpoints.mediaUpload, bytes, filename, mimeType, onProgress, cancelToken);
+  }) => _upload(
+    Endpoints.mediaUpload,
+    bytes,
+    filename,
+    mimeType,
+    onProgress,
+    cancelToken,
+  );
 
   /// `POST /cards/:id/media` (multipart field `file`) → URL of the stored
   /// document. Used for PDFs so they are associated with the card library.
@@ -159,22 +175,21 @@ class CardsRepository {
     required String filename,
     void Function(double progress)? onProgress,
     CancelToken? cancelToken,
-  }) =>
-      _upload(
-        Endpoints.cardMedia(cardId),
-        bytes,
-        filename,
-        'application/pdf',
-        onProgress,
-        cancelToken,
-      );
+  }) => _upload(
+    Endpoints.cardMedia(cardId),
+    bytes,
+    filename,
+    'application/pdf',
+    onProgress,
+    cancelToken,
+  );
 
   /// `DELETE /cards/:id/library` with body `{url}`.
   Future<void> removeLibraryFile(String cardId, String url) => _api.delete(
-        Endpoints.cardLibrary(cardId),
-        body: {'url': url},
-        parse: (_) {},
-      );
+    Endpoints.cardLibrary(cardId),
+    body: {'url': url},
+    parse: (_) {},
+  );
 
   // ---------------------------------------------------------------- staff
 
@@ -199,7 +214,10 @@ class CardsRepository {
     if (updated != null) return updated;
     final fresh = await staffCard();
     if (fresh == null) {
-      throw const AppException(AppErrorKind.notFound, 'Your card could not be found.');
+      throw const AppException(
+        AppErrorKind.notFound,
+        'Your card could not be found.',
+      );
     }
     return fresh;
   }
@@ -213,29 +231,28 @@ class CardsRepository {
     String mimeType,
     void Function(double progress)? onProgress,
     CancelToken? cancelToken,
-  ) =>
-      _api.upload(
-        path,
-        form: FormData.fromMap({
-          'file': MultipartFile.fromBytes(
-            bytes,
-            filename: filename,
-            contentType: DioMediaType.parse(mimeType),
-          ),
-        }),
-        onProgress: onProgress,
-        cancelToken: cancelToken,
-        parse: (data) {
-          final url = uploadedUrl(data);
-          if (url == null) {
-            throw const AppException(
-              AppErrorKind.unknown,
-              'The upload finished but no file link was returned.',
-            );
-          }
-          return url;
-        },
-      );
+  ) => _api.upload(
+    path,
+    form: FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: filename,
+        contentType: DioMediaType.parse(mimeType),
+      ),
+    }),
+    onProgress: onProgress,
+    cancelToken: cancelToken,
+    parse: (data) {
+      final url = uploadedUrl(data);
+      if (url == null) {
+        throw const AppException(
+          AppErrorKind.unknown,
+          'The upload finished but no file link was returned.',
+        );
+      }
+      return url;
+    },
+  );
 
   /// Finds the stored file URL in an upload response: a bare string,
   /// `{url|secure_url|location|path}`, nested under `file|media|data`, or a
@@ -244,7 +261,14 @@ class CardsRepository {
     if (data is String) return data.isEmpty ? null : data;
     final j = asJson(data);
     if (j.isEmpty) return null;
-    for (final k in const ['url', 'secure_url', 'secureUrl', 'location', 'fileUrl', 'path']) {
+    for (final k in const [
+      'url',
+      'secure_url',
+      'secureUrl',
+      'location',
+      'fileUrl',
+      'path',
+    ]) {
       final v = str(j[k]);
       if (v != null) return v;
     }
@@ -265,7 +289,10 @@ class CardsRepository {
   static CardModel _card(Object? data) {
     final c = _cardOrNull(data);
     if (c == null) {
-      throw const AppException(AppErrorKind.notFound, 'This card could not be found.');
+      throw const AppException(
+        AppErrorKind.notFound,
+        'This card could not be found.',
+      );
     }
     return c;
   }
