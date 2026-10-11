@@ -90,6 +90,7 @@ void main() {
 
   testWidgets('filter chips refetch and filter locally', (tester) async {
     await pump(tester, const ReviewsScreen(), owner);
+    await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Hidden'));
     await tester.tap(find.widgetWithText(ChoiceChip, 'Hidden'));
     await tester.pumpAndSettle();
     expect(repo.fetches.last, (ReviewScope.owner, ReviewStatus.hidden));
