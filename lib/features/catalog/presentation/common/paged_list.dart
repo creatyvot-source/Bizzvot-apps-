@@ -60,8 +60,9 @@ abstract class PagedNotifier<T> extends AsyncNotifier<PagedList<T>> {
 
   Future<void> loadMore() async {
     final cur = state.value;
-    if (cur == null || !cur.hasMore || cur.loadingMore || state.isLoading)
+    if (cur == null || !cur.hasMore || cur.loadingMore || state.isLoading) {
       return;
+    }
     state = AsyncData(cur.copyWith(loadingMore: true, clearError: true));
     try {
       final next = await fetchPage(cur.page + 1);
@@ -133,8 +134,9 @@ class PagedListView<T> extends StatelessWidget {
           child: ErrorView(error: e, onRetry: onRefresh),
         ),
         data: (page) {
-          if (page.items.isEmpty)
+          if (page.items.isEmpty) {
             return _Scrollable(header: header, child: empty);
+          }
           final hasHeader = header != null;
           final cols = columns < 1 ? 1 : columns;
           final rows = (page.items.length + cols - 1) ~/ cols;

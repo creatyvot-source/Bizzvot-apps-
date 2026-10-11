@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import 'public_card_providers.dart';
 import 'widgets/public_widgets.dart';
 
@@ -20,6 +22,13 @@ class PublicDirectoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Remote kill-switch: when the directory feature is off, don't fetch.
+    if (!ref.watch(currentConfigProvider).isEnabled(Flags.directory)) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Team directory')),
+        body: const UnavailableView(title: "This directory isn't available"),
+      );
+    }
     final provider = publicDirectoryProvider(orgSlug);
     final async = ref.watch(provider);
     final title = async.value?.organizationName ?? 'Team directory';
@@ -35,7 +44,7 @@ class PublicDirectoryScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(title)),
       body: async.when(
         skipLoadingOnRefresh: true,
-        loading: () => const LoadingView(label: 'Loading directory'),
+        loading: () => const SkeletonList(),
         error: (e, _) => isUnavailableError(e)
             ? const UnavailableView(title: "This directory isn't available")
             : ErrorView(error: e, onRetry: () => ref.invalidate(provider)),

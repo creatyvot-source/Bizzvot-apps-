@@ -21,8 +21,9 @@ card visitors, plus the Bizzvot Services & Shop. Talks only to the Bizzvot REST 
 
 ```bash
 flutter pub get
-flutter run --dart-define=BIZZVOT_ENV=development            # http://10.0.2.2:5000/api/v1
+flutter run --dart-define=BIZZVOT_ENV=development            # http://10.0.2.2:3000/api/v1 (local Coglink portal, Android emulator)
 flutter run --dart-define=BIZZVOT_ENV=staging
+flutter run --dart-define=BIZZVOT_ENV=production   # https://www.bizzvot.com/api/v1 (Bizzvot web portal)
 flutter run --dart-define=BIZZVOT_API_BASE=https://my-api/api/v1 --dart-define=BIZZVOT_WEB_HOST=my-web
 ```
 
@@ -49,7 +50,7 @@ lib/features/  auth, dashboard, organization_profile, staff, cards, directory_vi
 ## Release checklist (not yet done)
 - Backend sign-off on every item in the API gap register (notably native auth tokens, AUTH-1).
 - Production signing (Android keystore, iOS team/provisioning) and app icons.
-- iOS Associated Domains entitlement (`applinks:bizzvot.com`) and the web host's
+- iOS Associated Domains entitlement (`applinks:www.bizzvot.com`, `applinks:bizzvot.com`) and the web host's
   `apple-app-site-association` / `assetlinks.json` for `/card/*` deep links.
 - App Store / Play payment-policy classification for every purchasable item (plan §12.6).
 - Crash reporting with PII scrubbing; store privacy disclosures.

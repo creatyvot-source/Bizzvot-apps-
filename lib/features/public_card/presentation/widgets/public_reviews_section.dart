@@ -7,6 +7,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/theme.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../shared/widgets/feedback.dart';
+import '../../../../shared/widgets/ui_kit.dart';
 import '../../domain/public_card.dart';
 import '../../domain/public_review.dart';
 import '../public_card_providers.dart';
@@ -53,13 +54,14 @@ class PublicReviewsSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         reviews.when(
           skipLoadingOnRefresh: true,
-          loading: () => Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Center(
-              child: Semantics(
-                label: 'Loading reviews',
-                child: const CircularProgressIndicator(),
-              ),
+          loading: () => Semantics(
+            label: 'Loading reviews',
+            child: const Column(
+              children: [
+                SkeletonBox(height: 96, radius: AppRadius.lg),
+                SizedBox(height: AppSpacing.sm + 4),
+                SkeletonBox(height: 96, radius: AppRadius.lg),
+              ],
             ),
           ),
           error: (e, _) => _InlineError(
@@ -80,7 +82,7 @@ class PublicReviewsSection extends ConsumerWidget {
               children: [
                 for (final r in list.items) ...[
                   PublicReviewTile(review: r),
-                  const Divider(height: AppSpacing.lg),
+                  const SizedBox(height: AppSpacing.sm + 4),
                 ],
                 if (list.hasMore)
                   Center(
@@ -155,55 +157,85 @@ class PublicReviewTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final date = review.createdAt;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.xs,
-          crossAxisAlignment: WrapCrossAlignment.center,
+    return Card(
+      child: Padding(
+        padding: AppSpacing.page,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(review.reviewerName, style: theme.textTheme.titleSmall),
-            if (date != null)
-              Text(
-                DateFormat.yMMMd().format(date),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        StarRating(rating: review.rating.toDouble()),
-        if (review.comment != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(review.comment!, style: theme.textTheme.bodyMedium),
-        ],
-        if (review.reply != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.md - 4),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
               children: [
-                Text(
-                  'Response from the business',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+                ExcludeSemantics(
+                  child: InitialsAvatar(name: review.reviewerName, radius: 20),
+                ),
+                const SizedBox(width: AppSpacing.sm + 4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        review.reviewerName,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      if (date != null)
+                        Text(
+                          DateFormat.yMMMd().format(date),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(review.reply!.text, style: theme.textTheme.bodyMedium),
+                StarRating(rating: review.rating.toDouble(), size: 16),
               ],
             ),
-          ),
-        ],
-      ],
+            if (review.comment != null) ...[
+              const SizedBox(height: AppSpacing.sm + 4),
+              Text(review.comment!, style: theme.textTheme.bodyMedium),
+            ],
+            if (review.reply != null) ...[
+              const SizedBox(height: AppSpacing.sm + 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.sm + 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer.withValues(
+                    alpha: 0.35,
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.reply_rounded,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            'Response from the business',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(review.reply!.text, style: theme.textTheme.bodyMedium),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

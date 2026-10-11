@@ -3,11 +3,18 @@ import 'dart:ui';
 
 import 'package:bizzvot/app/theme.dart';
 import 'package:bizzvot/features/public_card/data/external_actions.dart';
+import 'package:bizzvot/features/public_card/data/public_card_repository.dart';
+import 'package:bizzvot/features/public_card/domain/public_card.dart';
+import 'package:bizzvot/features/public_card/domain/public_directory.dart';
+import 'package:bizzvot/features/public_card/domain/public_review.dart';
+import 'package:bizzvot/shared/models/paged.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../helpers/fake_api.dart';
 
 /// Pumps [home] at `/` inside a GoRouter-backed app. Any other location
 /// renders a placeholder showing the path, so navigation can be asserted.
@@ -58,4 +65,45 @@ class FakeExternalActions implements ExternalActions {
     String? subject,
     Rect? origin,
   }) async => sharedFiles.add(fileName);
+}
+
+/// Scriptable public repository for widget tests.
+class FakePublicRepo extends PublicCardRepository {
+  FakePublicRepo() : super(FakeApi().client);
+
+  Future<PublicCard> Function(String slug)? onCard;
+  Future<Paged<PublicReview>> Function(String slug, int page)? onReviews;
+  Future<ReviewSubmissionResult> Function(ReviewSubmission r)? onSubmit;
+  Future<PublicDirectoryPage> Function(String org, int page)? onDirectory;
+
+  final tracked = <String>[];
+  final submissions = <ReviewSubmission>[];
+  int vcardFetches = 0;
+
+  @override
+  Future<PublicCard> fetchCard(String slug) => onCard!(slug);
+
+  @override
+  Future<Paged<PublicReview>> fetchReviews(String slug, {int page = 1}) =>
+      onReviews?.call(slug, page) ?? Future.value(const Paged(items: []));
+
+  @override
+  Future<ReviewSubmissionResult> submitReview(String slug, ReviewSubmission review) {
+    submissions.add(review);
+    return onSubmit!(review);
+  }
+
+  @override
+  Future<void> trackClick({required String slug, required String type, String? target}) async =>
+      tracked.add(type);
+
+  @override
+  Future<Uint8List> fetchVcard(String cardId) async {
+    vcardFetches++;
+    return Uint8List.fromList('BEGIN:VCARD'.codeUnits);
+  }
+
+  @override
+  Future<PublicDirectoryPage> fetchDirectory(String orgSlug, {int page = 1}) =>
+      onDirectory!(orgSlug, page);
 }

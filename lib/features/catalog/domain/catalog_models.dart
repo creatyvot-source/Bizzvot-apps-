@@ -2,6 +2,7 @@ import '../../../core/utilities/json.dart';
 import '../../../core/utilities/validators.dart';
 import 'formatting.dart';
 import 'money.dart';
+import 'physical_models.dart';
 
 /// Catalogue section. [wire] is the path segment used by
 /// `GET /catalog/:type/:id` and `Routes.ownerShopItem(type, id)`.
@@ -253,6 +254,8 @@ class CatalogItem {
     this.paymentPolicy = PaymentPolicy.externalDigitalService,
     this.policyDeclared = false,
     this.maxQuantity,
+    this.personalization = PersonalizationSpec.none,
+    this.requiresShipping = false,
   });
 
   final String id;
@@ -289,6 +292,12 @@ class CatalogItem {
   /// False when [paymentPolicy] is the per-type stop-gap default.
   final bool policyDeclared;
   final int? maxQuantity;
+
+  /// NFC/print personalisation inputs this item needs.
+  final PersonalizationSpec personalization;
+
+  /// Physical goods that need a delivery address.
+  final bool requiresShipping;
 
   bool get purchasable =>
       active && inStock && !contactOnly && !paymentPolicy.blocksCheckout;
@@ -364,6 +373,15 @@ class CatalogItem {
       paymentPolicy: declared ?? PaymentPolicy.defaultFor(resolvedType),
       policyDeclared: declared != null,
       maxQuantity: intOrNull(j['maxQuantity']),
+      personalization: PersonalizationSpec.fromItemJson(j),
+      requiresShipping:
+          boolOrNull(
+            j['requiresShipping'] ??
+                j['shippingRequired'] ??
+                asJson(j['shipping'])['required'],
+          ) ??
+          (declared ?? PaymentPolicy.defaultFor(resolvedType)) ==
+              PaymentPolicy.physical,
     );
   }
 

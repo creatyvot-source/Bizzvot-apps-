@@ -167,12 +167,12 @@ void main() {
     testWidgets('requires agreeing to the terms', (tester) async {
       await tester.pumpWidget(authHarness(const RegisterScreen(), auth: auth));
       await fill(tester);
-      await tapText(tester, 'Create organization');
+      await tapButton(tester, 'Create organization');
       expect(auth.calls, isEmpty);
       expect(find.text('You need to agree to the Terms and Privacy Policy'), findsOneWidget);
 
       await tapText(tester, 'I agree to the Terms of Service and Privacy Policy');
-      await tapText(tester, 'Create organization');
+      await tapButton(tester, 'Create organization');
       expect(auth.calls, ['register']);
       expect(auth.lastRegister?.organizationName, 'Acme');
       expect(auth.lastRegister?.phone, isNull);
@@ -187,7 +187,7 @@ void main() {
       await tester.pumpWidget(authHarness(const RegisterScreen(), auth: auth));
       await fill(tester);
       await tapText(tester, 'I agree to the Terms of Service and Privacy Policy');
-      await tapText(tester, 'Create organization');
+      await tapButton(tester, 'Create organization');
       expect(find.textContaining('already registered'), findsNothing);
       expect(find.textContaining('couldn’t create an account'), findsOneWidget);
     });

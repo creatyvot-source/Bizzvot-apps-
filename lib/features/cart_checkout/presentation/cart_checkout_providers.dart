@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +11,10 @@ import '../../catalog/domain/idempotency.dart';
 import '../../catalog/domain/polling.dart';
 import '../../orders/presentation/orders_providers.dart';
 import '../../subscriptions_renewals/presentation/subscriptions_providers.dart';
+import '../../catalog/domain/physical_models.dart';
+import '../data/address_store.dart';
 import '../data/cart_checkout_repository.dart';
+import '../data/personalization_repository.dart';
 
 // ---------------------------------------------------------------------------
 // Cart
@@ -49,6 +53,13 @@ class CartController extends Notifier<List<CartLine>> {
     if (quantity < 1) return remove(key);
     final q = quantity.clamp(1, CartLine.maxQuantity);
     state = [for (final l in state) l.key == key ? l.copyWith(quantity: q) : l];
+  }
+
+  /// Stores NFC/print details for a line (kept in step with quantity).
+  void setPersonalization(String key, LinePersonalization p) {
+    state = [
+      for (final l in state) l.key == key ? l.copyWith(personalization: p) : l,
+    ];
   }
 
   void remove(String key) => state = [
@@ -121,12 +132,104 @@ final cartQuoteProvider = AsyncNotifierProvider<CartQuoteController, Quote?>(
   CartQuoteController.new,
 );
 
-/// Fresh quote whenever checkout opens (auto-disposed when it closes).
+/// Whether any cart line is a physical item needing delivery.
+final cartNeedsShippingProvider = Provider<bool>(
+  (ref) => ref.watch(cartProvider).any((l) => l.requiresShipping),
+);
+
+// ---------------------------------------------------------------------------
+// Delivery address & GST details
+// ---------------------------------------------------------------------------
+
+/// Saved delivery addresses for the signed-in user (device-local, secure).
+class AddressBookController extends AsyncNotifier<List<ShippingAddress>> {
+  static const maxSaved = 5;
+
+  @override
+  Future<List<ShippingAddress>> build() async {
+    final key = ref.watch(sessionKeyProvider);
+    if (key == null) return const [];
+    return ref.watch(addressStoreProvider).load(key);
+  }
+
+  /// Saves (or moves to the top) [address].
+  Future<void> save(ShippingAddress address) async {
+    final key = ref.read(sessionKeyProvider);
+    if (key == null) return;
+    final current = state.value ?? await future;
+    final next = [
+      address,
+      for (final a in current)
+        if (a.dedupeKey != address.dedupeKey) a,
+    ].take(maxSaved).toList(growable: false);
+    state = AsyncData(next);
+    await ref.read(addressStoreProvider).save(key, next);
+  }
+
+  Future<void> remove(ShippingAddress address) async {
+    final key = ref.read(sessionKeyProvider);
+    if (key == null) return;
+    final next = [
+      for (final a in state.value ?? const <ShippingAddress>[])
+        if (a.dedupeKey != address.dedupeKey) a,
+    ];
+    state = AsyncData(next);
+    await ref.read(addressStoreProvider).save(key, next);
+  }
+}
+
+final addressBookProvider =
+    AsyncNotifierProvider<AddressBookController, List<ShippingAddress>>(
+      AddressBookController.new,
+    );
+
+class CheckoutDetails {
+  const CheckoutDetails({this.address, this.gst = const GstDetails()});
+  final ShippingAddress? address;
+  final GstDetails gst;
+}
+
+/// Delivery address + GST details chosen for this checkout (session-scoped).
+class CheckoutDetailsController extends Notifier<CheckoutDetails> {
+  @override
+  CheckoutDetails build() {
+    ref.watch(sessionKeyProvider);
+    return const CheckoutDetails();
+  }
+
+  void setAddress(ShippingAddress? a) =>
+      state = CheckoutDetails(address: a, gst: state.gst);
+
+  void setGst(GstDetails g) =>
+      state = CheckoutDetails(address: state.address, gst: g);
+}
+
+final checkoutDetailsProvider =
+    NotifierProvider<CheckoutDetailsController, CheckoutDetails>(
+      CheckoutDetailsController.new,
+    );
+
+/// Org cards an NFC product can open.
+final linkableCardsProvider = FutureProvider.autoDispose<List<LinkableCard>>((
+  ref,
+) {
+  ref.watch(sessionKeyProvider);
+  return ref.watch(personalizationRepositoryProvider).cards();
+});
+
+/// Fresh quote whenever checkout opens (auto-disposed when it closes) and
+/// whenever the delivery address / GST details change — shipping and tax
+/// come only from this server quote.
 final checkoutQuoteProvider = FutureProvider.autoDispose<Quote?>((ref) {
   ref.watch(sessionKeyProvider);
   final lines = ref.watch(cartProvider);
   if (lines.isEmpty) return null;
-  return ref.watch(cartCheckoutRepositoryProvider).quote(lines);
+  final details = ref.watch(checkoutDetailsProvider);
+  return ref.watch(cartCheckoutRepositoryProvider).quote(
+    lines,
+    shippingAddress: details.address,
+    gst: details.gst,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -171,9 +274,21 @@ class CheckoutController extends Notifier<CheckoutState> {
     return const CheckoutState();
   }
 
-  static String fingerprintOf(Quote quote, List<CartLine> lines) {
-    final cart = [for (final l in lines) '${l.key}x${l.quantity}']..sort();
-    return '${quote.id ?? ''}#${cart.join(';')}';
+  /// Identity of what is being bought. Any change (lines, personalisation,
+  /// address, GST) makes the next order a new attempt with a new key.
+  static String fingerprintOf(
+    Quote quote,
+    List<CartLine> lines, {
+    ShippingAddress? address,
+    GstDetails? gst,
+  }) {
+    final cart = [for (final l in lines) jsonEncode(l.toRequestJson())]..sort();
+    return [
+      quote.id ?? '',
+      cart.join(';'),
+      if (address != null) jsonEncode(address.toJson()),
+      if (gst != null) jsonEncode(gst.toJson()),
+    ].join('#');
   }
 
   /// Current order key (for tests/diagnostics; never logged).
@@ -185,9 +300,11 @@ class CheckoutController extends Notifier<CheckoutState> {
   Future<CheckoutResult> placeOrder({
     required Quote quote,
     required List<CartLine> lines,
+    ShippingAddress? shippingAddress,
+    GstDetails? gst,
   }) async {
     final repo = ref.read(cartCheckoutRepositoryProvider);
-    final fp = fingerprintOf(quote, lines);
+    final fp = fingerprintOf(quote, lines, address: shippingAddress, gst: gst);
     String orderId;
     if (_createdOrderId != null && _createdFingerprint == fp) {
       // Order exists from an earlier try of this attempt; only payment failed.
@@ -196,6 +313,8 @@ class CheckoutController extends Notifier<CheckoutState> {
       final order = await repo.createOrder(
         lines: lines,
         quoteId: quote.id,
+        shippingAddress: shippingAddress,
+        gst: gst,
         idempotencyKey: _orderKey.keyFor(fp),
       );
       if (order.id.isEmpty) {

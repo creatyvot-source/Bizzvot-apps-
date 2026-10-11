@@ -37,7 +37,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   bool _ratingTouched = false;
   bool _submitting = false;
   bool _alreadyReviewed = false;
-  DateTime? _cooldownUntil;
+  int _cooldownSeconds = 0;
   Timer? _ticker;
   ReviewSubmissionResult? _result;
   Map<String, String> _fieldErrors = const {};
@@ -50,26 +50,22 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
     super.dispose();
   }
 
-  Duration get _cooldownLeft {
-    final until = _cooldownUntil;
-    if (until == null) return Duration.zero;
-    final left = until.difference(DateTime.now());
-    return left.isNegative ? Duration.zero : left;
-  }
+  Duration get _cooldownLeft => Duration(seconds: _cooldownSeconds);
 
   bool get _blocked => _alreadyReviewed || _cooldownLeft > Duration.zero;
 
   void _startCooldown(Duration d) {
     _ticker?.cancel();
-    setState(() => _cooldownUntil = DateTime.now().add(d));
+    // Round up so a 1.5 s Retry-After never unlocks early.
+    final secs = (d.inMilliseconds / 1000).ceil().clamp(1, 24 * 3600);
+    setState(() => _cooldownSeconds = secs);
     _ticker = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return t.cancel();
-      if (_cooldownLeft == Duration.zero) {
-        t.cancel();
-        setState(() => _cooldownUntil = null);
-      } else {
-        setState(() {});
-      }
+      setState(
+        () =>
+            _cooldownSeconds = _cooldownSeconds > 0 ? _cooldownSeconds - 1 : 0,
+      );
+      if (_cooldownSeconds == 0) t.cancel();
     });
   }
 
@@ -251,7 +247,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   }
 
   static String _fmt(Duration d) {
-    final s = d.inSeconds + (d.inMilliseconds % 1000 > 0 ? 1 : 0);
+    final s = d.inSeconds;
     final m = s ~/ 60;
     final r = s % 60;
     return '$m:${r.toString().padLeft(2, '0')}';

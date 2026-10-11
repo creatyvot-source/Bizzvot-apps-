@@ -2,6 +2,7 @@ import '../../../core/utilities/json.dart';
 import 'catalog_models.dart';
 import 'formatting.dart';
 import 'money.dart';
+import 'physical_models.dart';
 
 // ---------------------------------------------------------------------------
 // Cart (client side — identifiers and quantities only, never prices)
@@ -19,6 +20,9 @@ class CartLine {
     this.variantLabel,
     this.addOnIds = const [],
     this.paymentPolicy,
+    this.personalization,
+    this.requiresShipping = false,
+    this.lineId,
   });
 
   final CatalogItemType itemType;
@@ -32,24 +36,46 @@ class CartLine {
   /// Classification captured when added; the quote's value wins if present.
   final PaymentPolicy? paymentPolicy;
 
+  /// NFC/print details for physical items (null = none needed).
+  final LinePersonalization? personalization;
+
+  /// Physical goods: checkout must collect a delivery address.
+  final bool requiresShipping;
+
+  /// Local id that keeps personalised lines from merging with each other.
+  final String? lineId;
+
   static const maxQuantity = 99;
 
   /// Identity of the purchasable configuration (same key = merge lines).
   String get key {
     final addOns = [...addOnIds]..sort();
-    return '${itemType.wire}|$itemId|${variantId ?? ''}|${addOns.join(',')}';
+    final base = '${itemType.wire}|$itemId|${variantId ?? ''}|${addOns.join(',')}';
+    return lineId == null ? base : '$base|$lineId';
   }
 
-  CartLine copyWith({int? quantity}) => CartLine(
-    itemType: itemType,
-    itemId: itemId,
-    variantId: variantId,
-    variantLabel: variantLabel,
-    addOnIds: addOnIds,
-    quantity: quantity ?? this.quantity,
-    titleSnapshot: titleSnapshot,
-    paymentPolicy: paymentPolicy,
-  );
+  /// Personalisation problem that blocks checkout, or null.
+  String? get personalizationProblem => personalization?.problem(quantity);
+
+  CartLine copyWith({
+    int? quantity,
+    LinePersonalization? personalization,
+  }) {
+    final q = quantity ?? this.quantity;
+    return CartLine(
+      itemType: itemType,
+      itemId: itemId,
+      variantId: variantId,
+      variantLabel: variantLabel,
+      addOnIds: addOnIds,
+      quantity: q,
+      titleSnapshot: titleSnapshot,
+      paymentPolicy: paymentPolicy,
+      personalization: (personalization ?? this.personalization)?.resized(q),
+      requiresShipping: requiresShipping,
+      lineId: lineId,
+    );
+  }
 
   /// Body for `POST /cart/quote` and `POST /orders`. No amounts, no titles.
   Json toRequestJson() => compact({
@@ -58,6 +84,7 @@ class CartLine {
     'variantId': variantId,
     if (addOnIds.isNotEmpty) 'addOnIds': addOnIds,
     'quantity': quantity,
+    if (personalization != null) 'personalization': personalization!.toJson(),
   });
 
   bool matches({required String itemId, String? itemType, String? variantId}) =>
@@ -222,6 +249,7 @@ class Quote {
     this.checkoutAllowed,
     this.termsUrl,
     this.notes = const [],
+    this.requiresShipping,
   });
 
   final String? id;
@@ -241,6 +269,9 @@ class Quote {
   final bool? checkoutAllowed;
   final String? termsUrl;
   final List<String> notes;
+
+  /// Server says a delivery address is needed (null = not sent).
+  final bool? requiresShipping;
 
   bool get hasUnavailable =>
       invalidLines.isNotEmpty || lines.any((l) => !l.available);
@@ -304,6 +335,7 @@ class Quote {
       ),
       termsUrl: str(j['termsUrl']),
       notes: strList(j['notes'] ?? j['messages']),
+      requiresShipping: boolOrNull(j['requiresShipping'] ?? j['shippingRequired']),
     );
   }
 }
@@ -529,6 +561,9 @@ class Order {
     this.createdAt,
     this.updatedAt,
     this.failureReason,
+    this.fulfilment,
+    this.shippingAddress,
+    this.gst,
   });
 
   final String id;
@@ -558,6 +593,11 @@ class Order {
 
   /// Safe, user-facing failure reason from the server, if any.
   final String? failureReason;
+
+  /// Physical-goods fulfilment timeline and shipment tracking.
+  final Fulfilment? fulfilment;
+  final ShippingAddress? shippingAddress;
+  final GstDetails? gst;
 
   String get displayNumber =>
       orderNumber ?? (id.length > 8 ? id.substring(id.length - 8) : id);
@@ -661,6 +701,11 @@ class Order {
       createdAt: dateOrNull(j['createdAt']),
       updatedAt: dateOrNull(j['updatedAt']),
       failureReason: str(j['failureReason'] ?? payment['failureReason']),
+      fulfilment: Fulfilment.tryParse(j),
+      shippingAddress: ShippingAddress.tryParse(
+        j['shippingAddress'] ?? asJson(j['shippingSnapshot'])['address'] ?? j['shippingSnapshot'],
+      ),
+      gst: GstDetails.tryParse(j['gst'] ?? j['billingDetails'] ?? j['taxSnapshot']),
     );
   }
 }
@@ -758,6 +803,8 @@ class Invoice {
     this.dueAt,
     this.fileUrl,
     this.taxId,
+    this.buyerGstin,
+    this.placeOfSupply,
   });
 
   final String id;
@@ -779,6 +826,10 @@ class Invoice {
 
   /// Seller/buyer GST/VAT registration shown on the invoice, if any.
   final String? taxId;
+
+  /// Buyer GSTIN and place of supply printed on a GST invoice.
+  final String? buyerGstin;
+  final String? placeOfSupply;
 
   String get displayNumber => invoiceNumber ?? id;
   String get statusLabel => humanize(status, fallback: 'Issued');
@@ -825,7 +876,9 @@ class Invoice {
       issuedAt: dateOrNull(j['issuedAt'] ?? j['createdAt']),
       dueAt: dateOrNull(j['dueAt'] ?? j['dueDate']),
       fileUrl: str(j['fileUrl'] ?? j['pdfUrl'] ?? j['url']),
-      taxId: str(j['taxId'] ?? j['gstin']),
+      taxId: str(j['sellerGstin'] ?? j['taxId']),
+      buyerGstin: str(j['buyerGstin'] ?? j['gstin'] ?? asJson(j['buyer'])['gstin']),
+      placeOfSupply: str(j['placeOfSupply'] ?? asJson(j['gst'])['placeOfSupply']),
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../../app/theme.dart';
 import '../../../core/auth/session_controller.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../shared/widgets/state_views.dart';
+import '../../../shared/widgets/ui_kit.dart';
 import '../domain/analytics_models.dart';
 import 'analytics_providers.dart';
 
@@ -140,11 +141,13 @@ class _KpiGrid extends StatelessWidget {
         'Views',
         _v(views, (v) => _number.format(v.total)),
         Icons.visibility_outlined,
+        null,
       ),
       (
         'Unique visitors',
         _v(views, (v) => v.unique == null ? '—' : _number.format(v.unique)),
         Icons.person_outline,
+        AppColors.accent,
       ),
       (
         'Avg rating',
@@ -155,11 +158,13 @@ class _KpiGrid extends StatelessWidget {
               : r.average!.toStringAsFixed(1),
         ),
         Icons.star_outline,
+        AppColors.warning,
       ),
       (
         'Total reviews',
         _v(reviews, (r) => _number.format(r.total)),
         Icons.reviews_outlined,
+        AppColors.success,
       ),
     ];
     return LayoutBuilder(
@@ -173,54 +178,16 @@ class _KpiGrid extends StatelessWidget {
             for (final t in tiles)
               SizedBox(
                 width: w,
-                child: _KpiTile(label: t.$1, value: t.$2, icon: t.$3),
+                child: StatTile(
+                  label: t.$1,
+                  value: t.$2,
+                  icon: t.$3,
+                  color: t.$4,
+                ),
               ),
           ],
         );
       },
-    );
-  }
-}
-
-class _KpiTile extends StatelessWidget {
-  const _KpiTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final spoken = value == '…'
-        ? 'loading'
-        : (value == '—' ? 'not available' : value);
-    return Semantics(
-      label: '$label: $spoken',
-      excludeSemantics: true,
-      child: Card(
-        child: Padding(
-          padding: AppSpacing.page,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 20, color: theme.colorScheme.primary),
-              const SizedBox(height: AppSpacing.sm),
-              Text(value, style: theme.textTheme.headlineSmall),
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -256,14 +223,9 @@ class _Section<T> extends StatelessWidget {
         ],
       );
     } else {
-      body = Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Center(
-          child: Semantics(
-            label: 'Loading $title',
-            child: const CircularProgressIndicator(),
-          ),
-        ),
+      body = Semantics(
+        label: 'Loading $title',
+        child: const SkeletonBox(height: 140, radius: AppRadius.md),
       );
     }
     return Card(

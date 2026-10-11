@@ -38,16 +38,19 @@ class Env {
       _ => AppFlavor.development,
     };
     final (api, web) = switch (flavor) {
+      // The Bizzvot web portal (Coglink) serves the API on the same host.
       AppFlavor.production => (
-          'https://api.bizzvot.com/api/v1',
-          'bizzvot.com',
+          'https://www.bizzvot.com/api/v1',
+          'www.bizzvot.com',
         ),
+      // Staging host is not confirmed yet; override with
+      // --dart-define=BIZZVOT_API_BASE / BIZZVOT_WEB_HOST.
       AppFlavor.staging => (
-          'https://staging-api.bizzvot.com/api/v1',
+          'https://staging.bizzvot.com/api/v1',
           'staging.bizzvot.com',
         ),
       AppFlavor.development => (
-          'http://10.0.2.2:5000/api/v1',
+          'http://10.0.2.2:3000/api/v1',
           'localhost:3000',
         ),
     };

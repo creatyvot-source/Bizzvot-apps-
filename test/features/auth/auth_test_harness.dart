@@ -93,3 +93,12 @@ Future<void> tapText(WidgetTester tester, String text) async {
   await tester.pump();
   await tester.pump();
 }
+
+Future<void> tapButton(WidgetTester tester, String label) async {
+  final f = find.widgetWithText(FilledButton, label);
+  await tester.ensureVisible(f);
+  await tester.pump();
+  await tester.tap(f);
+  await tester.pump();
+  await tester.pump();
+}

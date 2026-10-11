@@ -56,6 +56,7 @@ class _CardDetailScreenState extends ConsumerState<CardDetailScreen> {
               e.kind == AppErrorKind.conflict ||
               e.statusCode == 402);
       if (seatProblem) {
+        setState(() => _busy = false);
         await _showSeatDialog(e.message);
       } else {
         showError(context, e);

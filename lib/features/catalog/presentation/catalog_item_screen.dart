@@ -12,6 +12,8 @@ import '../../cart_checkout/presentation/widgets/cart_button.dart';
 import '../data/link_launcher.dart';
 import '../domain/catalog_models.dart';
 import '../domain/commerce_models.dart';
+import '../domain/idempotency.dart';
+import '../domain/physical_models.dart';
 import 'catalog_providers.dart';
 import 'common/commerce_widgets.dart';
 import 'common/feature_gate.dart';
@@ -102,6 +104,16 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                         ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ..._statusNotices(item),
+                if (!item.personalization.isNone && item.purchasable) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  NoticeCard(
+                    title: 'Personalised NFC product',
+                    message: item.personalization.perUnit
+                        ? 'After adding to cart, link each unit to a card and add the details to print — or choose “assign later”.'
+                        : 'After adding to cart, choose what the NFC tag opens and the details to print — or choose “assign later”.',
+                    icon: Icons.nfc,
+                  ),
+                ],
                 if (item.summary != null) ...[
                   const SizedBox(height: AppSpacing.md),
                   Text(item.summary!, style: theme.textTheme.bodyLarge),
@@ -260,6 +272,12 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
           quantity: _quantity,
           titleSnapshot: item.title,
           paymentPolicy: item.paymentPolicy,
+          requiresShipping: item.requiresShipping,
+          // Personalised lines never merge: each holds its own unit details.
+          lineId: item.personalization.isNone ? null : uuidV4(),
+          personalization: item.personalization.isNone
+              ? null
+              : LinePersonalization(spec: item.personalization).resized(_quantity).withAtLeastOne(),
         ));
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

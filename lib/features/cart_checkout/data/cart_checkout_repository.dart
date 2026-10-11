@@ -5,6 +5,7 @@ import '../../../core/api/endpoints.dart';
 import '../../../core/providers.dart';
 import '../../catalog/domain/commerce_models.dart';
 import '../../catalog/domain/idempotency.dart';
+import '../../catalog/domain/physical_models.dart';
 
 /// PROPOSED cart/checkout endpoints (plan §12.3, §12.5).
 ///
@@ -15,11 +16,19 @@ class CartCheckoutRepository {
 
   final ApiClient _api;
 
-  /// `POST /cart/quote` `{ lines: [{itemType,itemId,variantId?,addOnIds?,quantity}] }`.
-  Future<Quote> quote(List<CartLine> lines) => _api.post(
+  /// `POST /cart/quote` `{ lines: [{itemType,itemId,variantId?,addOnIds?,
+  /// quantity,personalization?}], shippingAddress?, gst? }`. The address and
+  /// GST details let the server compute shipping and place-of-supply tax.
+  Future<Quote> quote(
+    List<CartLine> lines, {
+    ShippingAddress? shippingAddress,
+    GstDetails? gst,
+  }) => _api.post(
     Endpoints.cartQuote,
     body: {
       'lines': [for (final l in lines) l.toRequestJson()],
+      'shippingAddress': ?shippingAddress?.toJson(),
+      if (gst != null && !gst.isEmpty) 'gst': gst.toJson(),
     },
     parse: Quote.fromJson,
   );
@@ -30,11 +39,15 @@ class CartCheckoutRepository {
     required List<CartLine> lines,
     required String idempotencyKey,
     String? quoteId,
+    ShippingAddress? shippingAddress,
+    GstDetails? gst,
   }) => _api.post(
     Endpoints.orders,
     body: {
       'quoteId': ?quoteId,
       'lines': [for (final l in lines) l.toRequestJson()],
+      'shippingAddress': ?shippingAddress?.toJson(),
+      if (gst != null && !gst.isEmpty) 'gst': gst.toJson(),
       'termsAccepted': true,
     },
     headers: {idempotencyHeader: idempotencyKey},

@@ -27,15 +27,18 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Public card deep links: https://bizzvot.com/card/{slug}.
+            <!-- Public card deep links: https://www.bizzvot.com/card/{slug} (and bizzvot.com).
                  Requires /.well-known/assetlinks.json on the web host. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="true"/>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="https" android:host="bizzvot.com" android:pathPrefix="/card/"/>
-                <data android:scheme="https" android:host="bizzvot.com" android:pathPrefix="/directory/"/>
+                <data android:scheme="https"/>
+                <data android:host="www.bizzvot.com"/>
+                <data android:host="bizzvot.com"/>
+                <data android:pathPrefix="/card/"/>
+                <data android:pathPrefix="/directory/"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
