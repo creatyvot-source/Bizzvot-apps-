@@ -51,7 +51,8 @@ class CatalogItemCard extends StatelessWidget {
     final unavailable = !item.active || !item.inStock;
     return Semantics(
       button: true,
-      label: '${item.title}, $price${unavailable ? ', unavailable' : ''}',
+      label:
+          '${item.title}, $price${item.includesNote == null ? '' : ', ${item.includesNote}'}${unavailable ? ', unavailable' : ''}',
       excludeSemantics: true,
       child: Card(
         child: InkWell(
@@ -113,6 +114,15 @@ class CatalogItemCard extends StatelessWidget {
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (item.includesNote != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        item.includesNote!,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     ],
                     const SizedBox(height: AppSpacing.sm),

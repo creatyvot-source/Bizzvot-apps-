@@ -57,7 +57,10 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
           onRetry: () => ref.invalidate(catalogItemProvider(_key)),
           data: _body,
         ),
-        bottomNavigationBar: item == null ? null : _bottomBar(item),
+        // Items not purchasable in-app get no purchase/contact CTA at all.
+        bottomNavigationBar: item == null || !item.checkoutAllowed
+            ? null
+            : _bottomBar(item),
       ),
     );
   }
@@ -108,6 +111,14 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
+                if (item.includesNote != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  StatusChip(
+                    item.includesNote!,
+                    tone: StatusTone.info,
+                    icon: Icons.badge_outlined,
+                  ),
+                ],
                 ..._statusNotices(item),
                 if (!item.personalization.isNone && item.purchasable) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -201,12 +212,14 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                       children: [Text(f.answer)],
                     ),
                 ],
-                const SectionHeader('Need help?'),
-                OutlinedButton.icon(
-                  onPressed: () => _contact(item),
-                  icon: const Icon(Icons.support_agent_outlined),
-                  label: const Text('Contact support'),
-                ),
+                if (item.checkoutAllowed) ...[
+                  const SectionHeader('Need help?'),
+                  OutlinedButton.icon(
+                    onPressed: () => _contact(item),
+                    icon: const Icon(Icons.support_agent_outlined),
+                    label: const Text('Contact support'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -221,10 +234,14 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
       const SizedBox(height: AppSpacing.md),
       NoticeCard(title: title, message: msg, tone: tone),
     ]);
-    if (item.paymentPolicy.blocksCheckout) {
+    if (!item.checkoutAllowed) {
+      // Anti-steering (App Store 3.1.1 / Play Payments): neutral status
+      // copy only — no link, no "buy elsewhere" call to action.
       add(
-        'Purchase not available in app yet',
-        'This item can’t be bought in the app yet. Contact us to purchase it.',
+        'Not available in the app',
+        item.type == CatalogItemType.plan
+            ? 'Manage your plan from your Bizzvot account.'
+            : 'This item can’t be purchased in the app.',
         StatusTone.info,
       );
     } else if (!item.active) {
@@ -249,13 +266,13 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
     final variant = _variant(item);
     final variantBlocked = item.variants.isNotEmpty && variant == null;
     Widget action;
-    if (isPlan && !item.paymentPolicy.blocksCheckout) {
+    if (isPlan) {
       action = FilledButton.icon(
         onPressed: () => context.push(Routes.ownerSeats),
         icon: const Icon(Icons.event_seat_outlined),
         label: const Text('Choose seats'),
       );
-    } else if (item.contactOnly || item.paymentPolicy.blocksCheckout) {
+    } else if (item.contactOnly) {
       action = FilledButton.icon(
         onPressed: () => _contact(item),
         icon: const Icon(Icons.mail_outline),
@@ -314,6 +331,7 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
             quantity: _quantity,
             titleSnapshot: item.title,
             paymentPolicy: item.paymentPolicy,
+            purchaseChannels: item.purchaseChannels,
             requiresShipping: item.requiresShipping,
             // Personalised lines never merge: each holds its own unit details.
             lineId: item.personalization.isNone ? null : uuidV4(),

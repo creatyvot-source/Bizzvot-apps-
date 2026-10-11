@@ -177,8 +177,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen>
                         const NoticeCard(
                           title: 'Purchase not available in app yet',
                           message:
-                              'One or more items are digital features that can’t be '
-                              'bought in the app yet. Remove them to continue, or contact us.',
+                              'One or more items can’t be purchased in the app. '
+                              'Remove them from your cart to continue.',
                           tone: StatusTone.warning,
                         ),
                         const SizedBox(height: AppSpacing.md),

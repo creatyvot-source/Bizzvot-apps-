@@ -9,6 +9,7 @@ import 'package:bizzvot/core/utilities/json.dart';
 import 'package:bizzvot/features/cards/data/cards_repository.dart';
 import 'package:bizzvot/features/cards/data/media_picker.dart';
 import 'package:bizzvot/features/cards/data/share_service.dart';
+import 'package:bizzvot/features/cards/domain/card_capabilities.dart';
 import 'package:bizzvot/features/cards/domain/qr_codes.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -125,6 +126,8 @@ AuthUser staffUser({
   permissions: permissions,
 );
 
+/// A card document in the backend shape (`lib/models/Card.ts`), plus the
+/// PROPOSED fields (visibility, private details) so gated UI can be tested.
 Json cardJson({
   String id = 'c1',
   String slug = 'asha-rao',
@@ -132,24 +135,36 @@ Json cardJson({
   String visibility = 'inherit',
   bool disabledByBilling = false,
   Map<String, dynamic> extra = const {},
-}) => {
-  '_id': id,
-  'slug': slug,
-  'title': 'Asha Rao',
-  'designation': 'Sales Lead',
-  'company': 'Acme',
-  'email': 'asha@example.com',
-  'phone': '+91 98765 43210',
-  'status': status,
-  'visibility': visibility,
-  'disabledByBilling': disabledByBilling,
-  'template': 'corporate',
-  'brandColor': '#1F4FD8',
-  'bloodGroup': 'O+',
-  'fatherName': 'Ravi Rao',
-  'motherName': 'Meena Rao',
-  ...extra,
-};
+}) =>
+    {
+      '_id': id,
+      'slug': slug,
+      'title': 'Asha Rao',
+      'designation': 'Sales Lead',
+      'companyName': 'Acme',
+      'email': 'asha@example.com',
+      'phone': '+91 98765 43210',
+      'status': status,
+      'visibility': visibility,
+      'disabledByBilling': disabledByBilling,
+      'theme': {'templateId': 'corporate', 'primaryColor': '#1F4FD8'},
+      'displayOptions': {'showBio': true, 'showReviews': true},
+      'vcardEnabled': true,
+      'bloodGroup': 'O+',
+      'fatherName': 'Ravi Rao',
+      'motherName': 'Meena Rao',
+      ...extra,
+    };
+
+/// `GET /organization/cards` page envelope.
+Json cardsPage(List<Json> items, {bool hasMore = false}) => {
+      'items': items,
+      'page': 1,
+      'limit': 100,
+      'total': items.length,
+      'totalPages': 1,
+      'hasMore': hasMore,
+    };
 
 /// Paths pushed by screens; each renders a `route:<location>` marker.
 const stubPaths = [
@@ -175,6 +190,7 @@ Future<GoRouter> pumpScreen(
   FakeMediaPicker? picker,
   List<Override> extra = const [],
   bool pushed = false,
+  CardCapabilities capabilities = CardCapabilities.backend,
   Size size = const Size(800, 2400),
   double textScale = 1,
 }) async {
@@ -214,6 +230,7 @@ Future<GoRouter> pumpScreen(
         currentConfigProvider.overrideWithValue(AppConfig.defaults),
         shareServiceProvider.overrideWithValue(share ?? FakeShareService()),
         mediaPickerProvider.overrideWithValue(picker ?? FakeMediaPicker()),
+        cardCapabilitiesProvider.overrideWithValue(capabilities),
         ...extra,
       ],
       child: MaterialApp.router(

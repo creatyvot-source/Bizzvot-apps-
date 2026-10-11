@@ -19,11 +19,9 @@ import 'widgets/catalog_item_card.dart';
 class ShopHomeScreen extends StatelessWidget {
   const ShopHomeScreen({super.key});
 
-  static const _tabs = [
-    CatalogItemType.service,
-    CatalogItemType.product,
-    CatalogItemType.plan,
-  ];
+  /// Digital seats/plans are status-only in v1 (App Store 3.1.1 / Play
+  /// Payments), so they are not offered in the shop; see Billing.
+  static const _tabs = [CatalogItemType.product, CatalogItemType.service];
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +38,7 @@ class ShopHomeScreen extends StatelessWidget {
               SizedBox(width: AppSpacing.xs),
             ],
             bottom: const TabBar(
-              tabs: [
-                Tab(text: 'Services'),
-                Tab(text: 'Products'),
-                Tab(text: 'Plans'),
-              ],
+              tabs: [Tab(text: 'Products'), Tab(text: 'Services')],
             ),
           ),
           body: TabBarView(
@@ -149,8 +143,7 @@ class _CatalogTabState extends ConsumerState<_CatalogTab>
                     selected: _category,
                     onSelected: (v) => setState(() => _category = v),
                   ),
-                if (isPlans) const _PlansIntro(),
-                Expanded(
+                  Expanded(
                   child: PagedListView(
                     value: list,
                     columns: columns,
@@ -224,39 +217,6 @@ class _CategoryChips extends ConsumerWidget {
               onSelected: (on) => onSelected(on ? c.filterValue : null),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _PlansIntro extends StatelessWidget {
-  const _PlansIntro();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        0,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              'Plans add active-card seats to your organization.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.push(Routes.ownerSeats),
-            child: const Text('Buy seats'),
-          ),
         ],
       ),
     );

@@ -28,6 +28,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _org = TextEditingController();
+  final _industry = TextEditingController();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _phone = TextEditingController();
@@ -41,7 +42,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
-    for (final c in [_org, _name, _email, _phone, _password, _confirm]) {
+    for (final c in [_org, _industry, _name, _email, _phone, _password, _confirm]) {
       c.dispose();
     }
     _cooldown.dispose();
@@ -75,6 +76,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
     final phone = _phone.text.trim();
+    final industry = _industry.text.trim();
     try {
       await ref
           .read(authFlowRepositoryProvider)
@@ -85,6 +87,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               email: _email.text,
               password: _password.text,
               phone: phone.isEmpty ? null : phone,
+              industry: industry.isEmpty ? null : industry,
             ),
           );
       TextInput.finishAutofillContext();
@@ -139,6 +142,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               decoration: const InputDecoration(
                 labelText: 'Organization name',
                 prefixIcon: Icon(Icons.business_outlined),
+              ),
+            ),
+            gap,
+            TextFormField(
+              controller: _industry,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.sentences,
+              forceErrorText: _fieldErrors['industry'],
+              onChanged: (_) => _clearFieldError('industry'),
+              decoration: const InputDecoration(
+                labelText: 'Industry (optional)',
+                hintText: 'e.g. Real estate, Healthcare',
+                prefixIcon: Icon(Icons.category_outlined),
               ),
             ),
             gap,
