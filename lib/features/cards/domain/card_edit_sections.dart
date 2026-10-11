@@ -40,8 +40,9 @@ enum CardEditSection {
   /// Owners edit everything.
   static const ownerSections = {...CardEditSection.values};
 
-  /// Sections a staff member may edit on their own card. The backend is the
-  /// authority; this only decides what the editor shows and sends.
+  /// Sections a staff member may edit on their own card. The backend
+  /// requires `editCard` for every staff PATCH and additionally
+  /// `manageLinks` when links change, so `manageLinks` alone grants nothing.
   static Set<CardEditSection> forStaff(StaffPermissions p) => {
     if (p.editCard) ...{
       CardEditSection.identity,
@@ -49,8 +50,8 @@ enum CardEditSection {
       CardEditSection.contact,
       CardEditSection.media,
       CardEditSection.appearance,
+      if (p.manageLinks) CardEditSection.links,
     },
-    if (p.manageLinks) CardEditSection.links,
   };
 }
 

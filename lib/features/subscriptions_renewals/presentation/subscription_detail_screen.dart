@@ -21,10 +21,12 @@ class SubscriptionDetailScreen extends ConsumerStatefulWidget {
   final String subscriptionId;
 
   @override
-  ConsumerState<SubscriptionDetailScreen> createState() => _SubscriptionDetailScreenState();
+  ConsumerState<SubscriptionDetailScreen> createState() =>
+      _SubscriptionDetailScreenState();
 }
 
-class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScreen>
+class _SubscriptionDetailScreenState
+    extends ConsumerState<SubscriptionDetailScreen>
     with CooldownState<SubscriptionDetailScreen> {
   late final AppLifecycleListener _lifecycle;
 
@@ -107,15 +109,24 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
             if (s.planVersion != null) 'Version ${s.planVersion}',
             if (s.billingPeriod != null) humanize(s.billingPeriod),
           ].join(' · '),
-          trailing: StatusChip(s.statusLabel, tone: toneForSubscription(s.status)),
+          trailing: StatusChip(
+            s.statusLabel,
+            tone: toneForSubscription(s.status),
+          ),
           child: s.quantity == null
               ? null
-              : Text('${s.quantity} seats', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white)),
+              : Text(
+                  '${s.quantity} seats',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
         ),
         const SizedBox(height: AppSpacing.md),
         NoticeCard(
           title: s.statusLabel,
-          message: s.status == SubscriptionStatus.gracePeriod && s.graceUntil != null
+          message:
+              s.status == SubscriptionStatus.gracePeriod && s.graceUntil != null
               ? '${s.status.explanation} Grace period ends ${formatDate(s.graceUntil)}.'
               : s.status.explanation,
           tone: toneForSubscription(s.status),
@@ -124,7 +135,8 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
           const SizedBox(height: AppSpacing.md),
           NoticeCard(
             title: 'Cancels at period end',
-            message: 'This subscription will end on ${formatDate(s.currentPeriodEnd)} and won’t renew.',
+            message:
+                'This subscription will end on ${formatDate(s.currentPeriodEnd)} and won’t renew.',
             tone: StatusTone.warning,
           ),
         ],
@@ -134,12 +146,22 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
             padding: AppSpacing.page,
             child: Column(
               children: [
-                InfoRow.text('Current period',
-                    '${formatDate(s.currentPeriodStart)} – ${formatDate(s.currentPeriodEnd)}'),
-                InfoRow.text('Next renewal', s.cancelAtPeriodEnd ? 'Won’t renew' : formatDate(s.nextRenewalAt)),
-                if (s.graceUntil != null) InfoRow.text('Grace until', formatDate(s.graceUntil)),
-                if (s.autoRenew != null) InfoRow.text('Auto-renew', s.autoRenew! ? 'On' : 'Off'),
-                if (s.renewalPrice != null) InfoRow.money('Renewal amount', s.renewalPrice),
+                InfoRow.text(
+                  'Current period',
+                  '${formatDate(s.currentPeriodStart)} – ${formatDate(s.currentPeriodEnd)}',
+                ),
+                InfoRow.text(
+                  'Next renewal',
+                  s.cancelAtPeriodEnd
+                      ? 'Won’t renew'
+                      : formatDate(s.nextRenewalAt),
+                ),
+                if (s.graceUntil != null)
+                  InfoRow.text('Grace until', formatDate(s.graceUntil)),
+                if (s.autoRenew != null)
+                  InfoRow.text('Auto-renew', s.autoRenew! ? 'On' : 'Off'),
+                if (s.renewalPrice != null)
+                  InfoRow.money('Renewal amount', s.renewalPrice),
               ],
             ),
           ),
@@ -164,7 +186,11 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
     );
   }
 
-  List<Widget> _renewalSection(Subscription s, RenewalState renewal, bool confirming) {
+  List<Widget> _renewalSection(
+    Subscription s,
+    RenewalState renewal,
+    bool confirming,
+  ) {
     switch (renewal.phase) {
       case RenewalPhase.confirming:
         return [
@@ -191,7 +217,8 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
             message: 'Your renewal payment is taking longer than usual. We’ll notify you once it’s confirmed.',
             tone: StatusTone.warning,
             action: TextButton(
-              onPressed: () => ref.read(renewalProvider(_id).notifier).confirm(),
+              onPressed: () =>
+                  ref.read(renewalProvider(_id).notifier).confirm(),
               child: const Text('Check again'),
             ),
           ),
@@ -211,9 +238,9 @@ class _SubscriptionDetailScreenState extends ConsumerState<SubscriptionDetailScr
     final reason = s.renewable
         ? null
         : s.renewalBlockedReason ??
-            (s.status == SubscriptionStatus.active
-                ? 'Renewal opens closer to your renewal date.'
-                : 'Renewal isn’t available for this subscription right now.');
+              (s.status == SubscriptionStatus.active
+                  ? 'Renewal opens closer to your renewal date.'
+                  : 'Renewal isn’t available for this subscription right now.');
     return [
       BusyButton(
         label: coolingDown ? 'Please wait…' : 'Renew now',

@@ -11,12 +11,12 @@ import '../../catalog/presentation/common/paged_list.dart';
 import 'orders_providers.dart';
 
 StatusTone toneForInvoice(Invoice i) => switch (wireKey(i.status)) {
-      'paid' => StatusTone.success,
-      'void' || 'voided' || 'cancelled' || 'canceled' => StatusTone.neutral,
-      'overdue' || 'failed' => StatusTone.danger,
-      'refunded' || 'credited' => StatusTone.neutral,
-      _ => StatusTone.info,
-    };
+  'paid' => StatusTone.success,
+  'void' || 'voided' || 'cancelled' || 'canceled' => StatusTone.neutral,
+  'overdue' || 'failed' => StatusTone.danger,
+  'refunded' || 'credited' => StatusTone.neutral,
+  _ => StatusTone.info,
+};
 
 class InvoicesScreen extends ConsumerWidget {
   const InvoicesScreen({super.key});
@@ -49,7 +49,10 @@ class InvoicesScreen extends ConsumerWidget {
                 StatusChip(inv.statusLabel, tone: toneForInvoice(inv)),
               ],
             ),
-            trailing: MoneyText(inv.total, style: Theme.of(context).textTheme.titleSmall),
+            trailing: MoneyText(
+              inv.total,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
         ),
       ),

@@ -259,7 +259,9 @@ class _StatusBody extends StatelessWidget {
         if (canRetry) ...[
           const SizedBox(height: AppSpacing.sm),
           BusyButton(
-            label: outcome == PaymentOutcome.pending ? 'Pay now' : 'Retry payment',
+            label: outcome == PaymentOutcome.pending
+                ? 'Pay now'
+                : 'Retry payment',
             icon: Icons.replay,
             onPressed: onRetry,
           ),

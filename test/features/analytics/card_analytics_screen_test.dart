@@ -3,6 +3,7 @@ import 'package:bizzvot/core/auth/session_controller.dart';
 import 'package:bizzvot/core/errors/app_exception.dart';
 import 'package:bizzvot/features/analytics/data/analytics_repository.dart';
 import 'package:bizzvot/features/analytics/domain/analytics_models.dart';
+import 'package:bizzvot/features/analytics/presentation/analytics_providers.dart';
 import 'package:bizzvot/features/analytics/presentation/card_analytics_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -76,6 +77,9 @@ void main() {
               const AuthUser(id: 'o1', email: 'o@x.test', role: UserRole.owner),
         ),
         analyticsRepositoryProvider.overrideWithValue(repo),
+        analyticsClockProvider.overrideWithValue(
+          () => DateTime(2026, 10, 3, 12),
+        ),
       ],
     );
     await tester.pumpAndSettle();
@@ -95,11 +99,16 @@ void main() {
     expect(find.byType(LineChart), findsOneWidget);
     expect(
       find.bySemanticsLabel(
-        RegExp(r'^Views over the last 30 days: 1234 total, 567 unique'),
+        RegExp(
+          r'^Daily views from Oct 1, 2026 to Oct 3, 2026: 50 total, 27 unique visitors\. Busiest day Oct 2, 2026',
+        ),
       ),
       findsOneWidget,
     );
     expect(find.bySemanticsLabel('5 stars: 4 reviews'), findsOneWidget);
+    // Server totals are all-time until the backend honours the range.
+    expect(find.text('All time'), findsNWidgets(4));
+    expect(find.text('Daily data available for 3 of 30 days.'), findsOneWidget);
 
     // Link clicks sorted desc: WhatsApp (9), Social (5), Phone (3).
     final labels = ['WhatsApp', 'Social', 'Phone'];

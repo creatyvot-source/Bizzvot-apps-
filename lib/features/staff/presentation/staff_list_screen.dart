@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
-import '../../../shared/models/organization.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/ui_kit.dart';
 import '../domain/staff_draft.dart';
@@ -32,7 +31,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
 
   Future<void> _refresh() => ref.refresh(staffListProvider.future);
 
-  static bool _matches(StaffMember m, String q) {
+  static bool _matches(StaffEntry m, String q) {
     if (q.isEmpty) return true;
     return [
       m.name,
@@ -54,7 +53,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
       ),
       body: staff.isLoading && !staff.hasValue
           ? const SkeletonList()
-          : AsyncValueView<List<StaffMember>>(
+          : AsyncValueView<List<StaffEntry>>(
               value: staff,
               onRetry: () => ref.invalidate(staffListProvider),
               data: (all) {
@@ -96,7 +95,7 @@ class _StaffListScreenState extends ConsumerState<StaffListScreen> {
                           child: EmptyView(
                             icon: Icons.group_add_outlined,
                             title: 'No staff yet',
-                            message: 'Add your team members. Each one gets their own digital card and staff sign-in.',
+                            message: 'Add your team members. Each one gets a staff sign-in and, optionally, their own digital card.',
                             action: FilledButton.icon(
                               onPressed: () =>
                                   context.push(Routes.ownerStaffNew),
@@ -187,18 +186,20 @@ class _SearchField extends StatelessWidget {
 class _StaffTile extends StatelessWidget {
   const _StaffTile({required this.member});
 
-  final StaffMember member;
+  final StaffEntry member;
 
   @override
   Widget build(BuildContext context) {
     final m = member;
+    final card = m.primaryCard;
+    final cardState = StaffCardState.of(m);
     final secondary = [
-      if (m.designation != null) m.designation!,
+      if (card?.designation != null) card!.designation!,
       if (m.email.isNotEmpty) m.email,
     ].join(' · ');
     return ListTile(
       leading: ExcludeSemantics(
-        child: InitialsAvatar(name: m.name, imageUrl: m.card?.profilePhoto),
+        child: InitialsAvatar(name: m.name, imageUrl: card?.profilePhoto),
       ),
       title: Text(m.name),
       subtitle: Column(
@@ -210,9 +211,19 @@ class _StaffTile extends StatelessWidget {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.xs,
             children: [
-              StaffCardChip(state: StaffCardState.of(m)),
-              if (m.card != null)
-                CardVisibilityChip(visibility: m.card!.visibility),
+              if (m.isSuspended)
+                const StatusChip(
+                  'Sign-in suspended',
+                  tone: StatusTone.danger,
+                  icon: Icons.lock_outline,
+                ),
+              if (cardState != null) StaffCardChip(state: cardState),
+              if (m.cards.length > 1)
+                StatusChip(
+                  '${m.cards.length} cards',
+                  icon: Icons.style_outlined,
+                ),
+              if (card != null) CardVisibilityChip(visibility: card.visibility),
             ],
           ),
         ],

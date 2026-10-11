@@ -58,6 +58,31 @@ void main() {
     expect(r.status, ReviewStatus.pending);
   });
 
+  test('populated cardId object yields card id and title', () async {
+    fake.on(
+      'GET',
+      '/staff/reviews',
+      FakeResponse.ok({
+        'items': [
+          {
+            '_id': 'r1',
+            'reviewerName': 'Ann',
+            'reviewerEmail': 'ann@x.test',
+            'rating': 5,
+            'status': 'approved',
+            'cardId': {'_id': 'card9', 'title': 'Raj Kumar', 'slug': 'raj'},
+          },
+        ],
+        'page': 1,
+        'hasMore': false,
+      }),
+    );
+    final r = (await repo.fetch(ReviewScope.staff)).items.single;
+    expect(r.cardId, 'card9');
+    expect(r.cardTitle, 'Raj Kumar');
+    expect(r.reviewerName, 'Ann');
+  });
+
   test('all filter omits the status param', () async {
     fake.on('GET', '/organization/reviews', FakeResponse.ok([reviewJson('1')]));
     await repo.fetch(ReviewScope.owner);

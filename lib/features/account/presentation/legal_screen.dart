@@ -38,12 +38,37 @@ class LegalScreen extends ConsumerWidget {
               config.privacyPolicyUrl,
             ),
             link(Icons.gavel_outlined, 'Terms of service', config.termsUrl),
+            link(Icons.currency_rupee, 'Refund & returns policy', config.refundPolicyUrl),
+            link(Icons.local_shipping_outlined, 'Shipping policy', config.shippingPolicyUrl),
+            link(Icons.cancel_outlined, 'Cancellation policy', config.cancellationPolicyUrl),
             link(
               Icons.insights_outlined,
               'Analytics & tracking disclosure',
               config.analyticsDisclosureUrl,
               subtitle: 'How card views and link taps are measured',
             ),
+            if (config.grievanceOfficer case final g?)
+              ListTile(
+                leading: const Icon(Icons.support_outlined),
+                title: const Text('Grievance officer'),
+                subtitle: Text(
+                  [g.name, g.email, g.phone, g.address].whereType<String>().join('\n'),
+                ),
+                isThreeLine: true,
+                onTap: g.email == null
+                    ? null
+                    : () => launchUrl(Uri(scheme: 'mailto', path: g.email)),
+              ),
+            if (config.seller case final s?)
+              ListTile(
+                leading: const Icon(Icons.storefront_outlined),
+                title: Text(s.legalName),
+                subtitle: Text(
+                  [s.address, if (s.gstin != null) 'GSTIN ${s.gstin}']
+                      .whereType<String>()
+                      .join('\n'),
+                ),
+              ),
             if (config.supportEmail != null)
               ListTile(
                 leading: const Icon(Icons.support_agent_outlined),

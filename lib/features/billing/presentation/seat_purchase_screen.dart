@@ -50,9 +50,9 @@ class _SeatPurchaseScreenState extends ConsumerState<SeatPurchaseScreen>
       title: 'Continue to payment?',
       message: quote?.total != null
           ? 'Add ${s.quantity} seat${s.quantity == 1 ? '' : 's'} on ${plan.name} for ${quote!.total!.format()}. '
-              'You’ll pay on a secure payment page.'
+                'You’ll pay on a secure payment page.'
           : 'Add ${s.quantity} seat${s.quantity == 1 ? '' : 's'} on ${plan.name}. '
-              'The final amount is shown on the secure payment page before you pay.',
+                'The final amount is shown on the secure payment page before you pay.',
       confirmLabel: 'Continue',
     );
     if (!ok || !mounted) return;
@@ -79,27 +79,36 @@ class _SeatPurchaseScreenState extends ConsumerState<SeatPurchaseScreen>
       appBar: AppBar(title: const Text('Buy seats')),
       body: switch (s.phase) {
         SeatPhase.selecting => plans.when(
-            skipLoadingOnRefresh: true,
-            loading: () => const SkeletonList(count: 3, leadingAvatar: false),
-            error: (e, _) {
-              final ex = AppException.from(e);
-              if (ex.kind == AppErrorKind.notFound || ex.kind == AppErrorKind.gone) {
-                return const EmptyView(
-                  icon: Icons.credit_card_outlined,
-                  title: 'Seat purchases are coming soon',
-                  message: 'Please contact support to add seats for now.',
-                );
-              }
-              return ErrorView(error: ex, onRetry: () => ref.invalidate(purchasePlansProvider));
-            },
-            data: (list) => list.isEmpty
-                ? const EmptyView(
-                    icon: Icons.workspace_premium_outlined,
-                    title: 'No plans available',
-                    message: 'Please contact support to add seats.',
-                  )
-                : _Selection(plans: list, state: s, onContinue: _continue, coolingDown: coolingDown),
-          ),
+          skipLoadingOnRefresh: true,
+          loading: () => const SkeletonList(count: 3, leadingAvatar: false),
+          error: (e, _) {
+            final ex = AppException.from(e);
+            if (ex.kind == AppErrorKind.notFound ||
+                ex.kind == AppErrorKind.gone) {
+              return const EmptyView(
+                icon: Icons.credit_card_outlined,
+                title: 'Seat purchases are coming soon',
+                message: 'Please contact support to add seats for now.',
+              );
+            }
+            return ErrorView(
+              error: ex,
+              onRetry: () => ref.invalidate(purchasePlansProvider),
+            );
+          },
+          data: (list) => list.isEmpty
+              ? const EmptyView(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'No plans available',
+                  message: 'Please contact support to add seats.',
+                )
+              : _Selection(
+                  plans: list,
+                  state: s,
+                  onContinue: _continue,
+                  coolingDown: coolingDown,
+                ),
+        ),
         _ => ContentWidth(child: _Outcome(state: s)),
       },
     );
@@ -124,11 +133,14 @@ class _Selection extends ConsumerWidget {
     final c = ref.read(seatPurchaseProvider.notifier);
     final selected = plans.where((p) => p.id == state.planId).firstOrNull;
     if (selected == null && plans.length == 1) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => c.selectPlan(plans.first.id));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => c.selectPlan(plans.first.id),
+      );
     }
     final quote = state.quote;
     final blocked = selected?.paymentPolicy.blocksCheckout ?? false;
-    final canContinue = selected != null &&
+    final canContinue =
+        selected != null &&
         !blocked &&
         !coolingDown &&
         (state.hasQuote || state.quoteUnsupported);
@@ -140,7 +152,10 @@ class _Selection extends ConsumerWidget {
             child: ListView(
               padding: AppSpacing.page,
               children: [
-                const SectionHeader('Choose a plan', subtitle: 'Seats add active-card slots to your organization'),
+                const SectionHeader(
+                  'Choose a plan',
+                  subtitle: 'Seats add active-card slots to your organization',
+                ),
                 for (final p in plans) ...[
                   _PlanCard(
                     plan: p,
@@ -157,7 +172,8 @@ class _Selection extends ConsumerWidget {
                       min: selected?.minQuantity ?? 1,
                       max: selected?.maxQuantity ?? 999,
                       label: 'Seats',
-                      onChanged: (v) => c.setQuantity(v, max: selected?.maxQuantity ?? 999),
+                      onChanged: (v) =>
+                          c.setQuantity(v, max: selected?.maxQuantity ?? 999),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -178,18 +194,27 @@ class _Selection extends ConsumerWidget {
                 else if (selected != null)
                   switch (quote) {
                     null => OutlinedButton.icon(
-                        onPressed: c.fetchQuote,
-                        icon: const Icon(Icons.request_quote_outlined),
-                        label: const Text('Get price'),
-                      ),
-                    AsyncLoading() => const LoadingView(label: 'Getting price…'),
+                      onPressed: c.fetchQuote,
+                      icon: const Icon(Icons.request_quote_outlined),
+                      label: const Text('Get price'),
+                    ),
+                    AsyncLoading() => const LoadingView(
+                      label: 'Getting price…',
+                    ),
                     AsyncError() when state.quoteUnsupported => NoticeCard(
-                        title: 'Price shown at payment',
-                        message: 'We couldn’t preview the price here. The exact amount, tax and total '
-                            'are shown on the secure payment page before you pay.',
-                        action: TextButton(onPressed: c.fetchQuote, child: const Text('Try again')),
+                      title: 'Price shown at payment',
+                      message:
+                          'We couldn’t preview the price here. The exact amount, tax and total '
+                          'are shown on the secure payment page before you pay.',
+                      action: TextButton(
+                        onPressed: c.fetchQuote,
+                        child: const Text('Try again'),
                       ),
-                    AsyncError(:final error) => ErrorView(error: error, onRetry: c.fetchQuote),
+                    ),
+                    AsyncError(:final error) => ErrorView(
+                      error: error,
+                      onRetry: c.fetchQuote,
+                    ),
                     AsyncData(:final value) => QuoteSummary(quote: value),
                   },
               ],
@@ -211,7 +236,11 @@ class _Selection extends ConsumerWidget {
 }
 
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan, required this.selected, required this.onTap});
+  const _PlanCard({
+    required this.plan,
+    required this.selected,
+    required this.onTap,
+  });
   final Plan plan;
   final bool selected;
   final VoidCallback onTap;
@@ -219,7 +248,11 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final price = priceText(plan.price, label: plan.priceLabel, billingPeriod: plan.billingPeriod);
+    final price = priceText(
+      plan.price,
+      label: plan.priceLabel,
+      billingPeriod: plan.billingPeriod,
+    );
     return Semantics(
       selected: selected,
       inMutuallyExclusiveGroup: true,
@@ -228,7 +261,9 @@ class _PlanCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.card,
           side: BorderSide(
-            color: selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
         ),
@@ -240,8 +275,12 @@ class _PlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                  color: selected ? theme.colorScheme.primary : theme.colorScheme.outline,
+                  selected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.outline,
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
@@ -253,17 +292,23 @@ class _PlanCard extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(plan.name, style: theme.textTheme.titleMedium),
-                          if (plan.recommended) const StatusChip('Popular', tone: StatusTone.info),
+                          if (plan.recommended)
+                            const StatusChip('Popular', tone: StatusTone.info),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         '$price${plan.price != null ? ' per seat' : ''}',
-                        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                       if (plan.description != null) ...[
                         const SizedBox(height: AppSpacing.xs),
-                        Text(plan.description!, style: theme.textTheme.bodySmall),
+                        Text(
+                          plan.description!,
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                       for (final f in plan.features.take(4))
                         Padding(
@@ -292,29 +337,29 @@ class _Outcome extends ConsumerWidget {
     final c = ref.read(seatPurchaseProvider.notifier);
     final (icon, color, title, message) = switch (state.phase) {
       SeatPhase.confirming => (
-          null,
-          theme.colorScheme.primary,
-          'Confirming payment',
-          'Complete the payment on the secure page. We’ll add your seats as soon as the payment is verified.',
-        ),
+        null,
+        theme.colorScheme.primary,
+        'Confirming payment',
+        'Complete the payment on the secure page. We’ll add your seats as soon as the payment is verified.',
+      ),
       SeatPhase.confirmed => (
-          Icons.check_circle,
-          AppColors.success,
-          'Seats added',
-          'Payment confirmed. Your dashboard and cards will refresh with the new seats.',
-        ),
+        Icons.check_circle,
+        AppColors.success,
+        'Seats added',
+        'Payment confirmed. Your dashboard and cards will refresh with the new seats.',
+      ),
       SeatPhase.failed => (
-          Icons.error,
-          theme.colorScheme.error,
-          'Payment failed',
-          'The payment didn’t go through and no seats were added. You can try again.',
-        ),
+        Icons.error,
+        theme.colorScheme.error,
+        'Payment failed',
+        'The payment didn’t go through and no seats were added. You can try again.',
+      ),
       _ => (
-          Icons.schedule,
-          AppColors.warning,
-          'Still processing',
-          'Your payment is taking longer than usual to confirm. We’ll notify you when your seats are added.',
-        ),
+        Icons.schedule,
+        AppColors.warning,
+        'Still processing',
+        'Your payment is taking longer than usual to confirm. We’ll notify you when your seats are added.',
+      ),
     };
     return ListView(
       padding: AppSpacing.page,
@@ -325,18 +370,27 @@ class _Outcome extends ConsumerWidget {
           child: Column(
             children: [
               if (icon == null)
-                const SizedBox.square(dimension: 72, child: CircularProgressIndicator(strokeWidth: 5))
+                const SizedBox.square(
+                  dimension: 72,
+                  child: CircularProgressIndicator(strokeWidth: 5),
+                )
               else
                 Icon(icon, size: 72, color: color),
               const SizedBox(height: AppSpacing.md),
-              Text(title, style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+              Text(
+                title,
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(message, textAlign: TextAlign.center),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        if (state.phase != SeatPhase.confirmed && state.phase != SeatPhase.failed && state.checkoutUri != null)
+        if (state.phase != SeatPhase.confirmed &&
+            state.phase != SeatPhase.failed &&
+            state.checkoutUri != null)
           OutlinedButton.icon(
             onPressed: () => openHostedCheckout(
               context,

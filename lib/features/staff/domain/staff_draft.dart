@@ -141,21 +141,21 @@ class StaffDraft {
   /// `POST /organization/staff`. Permissions are always sent explicitly —
   /// the backend's defaults when omitted are permissive.
   Json toCreateJson() => compact({
-        'name': name,
-        'email': normalizedEmail,
-        'password': password,
-        'phone': phone.isEmpty ? null : phone,
-        'permissions': permissions.toJson(),
-      });
+    'name': name,
+    'email': normalizedEmail,
+    'password': password,
+    'phone': phone.isEmpty ? null : phone,
+    'permissions': permissions.toJson(),
+  });
 
   /// `POST /organization/cards` body for the staff member's own card.
   /// Blank optional fields are omitted (never `null`).
   Json toCardJson() => cardJsonFor(
-        name: name,
-        designation: designation,
-        email: normalizedEmail,
-        phone: phone,
-      );
+    name: name,
+    designation: designation,
+    email: normalizedEmail,
+    phone: phone,
+  );
 }
 
 /// Card body for a staff member's own card.
@@ -164,13 +164,12 @@ Json cardJsonFor({
   String designation = '',
   String email = '',
   String? phone,
-}) =>
-    compact({
-      'title': name,
-      'designation': designation.isEmpty ? null : designation,
-      'email': email.isEmpty ? null : email,
-      'phone': (phone == null || phone.isEmpty) ? null : phone,
-    });
+}) => compact({
+  'title': name,
+  'designation': designation.isEmpty ? null : designation,
+  'email': email.isEmpty ? null : email,
+  'phone': (phone == null || phone.isEmpty) ? null : phone,
+});
 
 /// Editable settings of an existing staff member. The backend's PATCH only
 /// accepts `permissions`, `status` and `assignedCardIds`.
@@ -186,21 +185,20 @@ class StaffSettings {
   final List<String> assignedCardIds;
 
   factory StaffSettings.of(StaffEntry e) => StaffSettings(
-        permissions: e.permissions,
-        status: e.status,
-        assignedCardIds: e.assignedCardIds,
-      );
+    permissions: e.permissions,
+    status: e.status,
+    assignedCardIds: e.assignedCardIds,
+  );
 
   StaffSettings copyWith({
     StaffPermissions? permissions,
     StaffStatus? status,
     List<String>? assignedCardIds,
-  }) =>
-      StaffSettings(
-        permissions: permissions ?? this.permissions,
-        status: status ?? this.status,
-        assignedCardIds: assignedCardIds ?? this.assignedCardIds,
-      );
+  }) => StaffSettings(
+    permissions: permissions ?? this.permissions,
+    status: status ?? this.status,
+    assignedCardIds: assignedCardIds ?? this.assignedCardIds,
+  );
 
   /// `PATCH /organization/staff/:id` body with changed keys only.
   Json changesFrom(StaffEntry original) {

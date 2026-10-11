@@ -392,8 +392,9 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
 
   Future<void> _report(Future<bool> launch) async {
     final ok = await launch;
-    if (!ok && mounted)
+    if (!ok && mounted) {
       showMessage(context, 'Couldn’t open that link on this device.');
+    }
   }
 }
 

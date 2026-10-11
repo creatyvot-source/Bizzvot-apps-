@@ -95,7 +95,11 @@ class _AnalyticsBody extends ConsumerWidget {
                   title: 'Views over time',
                   value: views,
                   onRetry: () => ref.invalidate(viewsStatsProvider(q)),
-                  builder: (v) => ViewsChart(stats: v, range: range),
+                  builder: (v) => ViewsChart(
+                    stats: v,
+                    range: range,
+                    now: ref.watch(analyticsClockProvider)(),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _Section(
@@ -142,12 +146,14 @@ class _KpiGrid extends StatelessWidget {
         _v(views, (v) => _number.format(v.total)),
         Icons.visibility_outlined,
         null,
+        views.value?.allTime ?? false,
       ),
       (
         'Unique visitors',
         _v(views, (v) => v.unique == null ? '—' : _number.format(v.unique)),
         Icons.person_outline,
         AppColors.accent,
+        views.value?.allTime ?? false,
       ),
       (
         'Avg rating',
@@ -159,12 +165,14 @@ class _KpiGrid extends StatelessWidget {
         ),
         Icons.star_outline,
         AppColors.warning,
+        reviews.value?.allTime ?? false,
       ),
       (
         'Total reviews',
         _v(reviews, (r) => _number.format(r.total)),
         Icons.reviews_outlined,
         AppColors.success,
+        reviews.value?.allTime ?? false,
       ),
     ];
     return LayoutBuilder(
@@ -183,6 +191,8 @@ class _KpiGrid extends StatelessWidget {
                   value: t.$2,
                   icon: t.$3,
                   color: t.$4,
+                  // The backend does not yet honour the range for totals.
+                  caption: t.$5 ? 'All time' : null,
                 ),
               ),
           ],
@@ -249,35 +259,45 @@ class _Section<T> extends StatelessWidget {
 
 /// Line chart with a spoken summary and an expandable table fallback.
 class ViewsChart extends StatelessWidget {
-  const ViewsChart({super.key, required this.stats, required this.range});
+  const ViewsChart({
+    super.key,
+    required this.stats,
+    required this.range,
+    required this.now,
+  });
 
   final ViewsStats stats;
   final AnalyticsRange range;
+  final DateTime now;
 
-  String summary() {
-    final s = stats.series;
+  /// Series windowed to [range] on the client (the server ignores range).
+  List<DailyPoint> get points => stats.seriesWithin(range, now);
+
+  String summary(List<DailyPoint> s) {
+    if (s.isEmpty) return 'No views recorded in the last ${range.days} days.';
+    final total = s.fold<int>(0, (a, p) => a + p.count);
+    final fmt = DateFormat.yMMMd();
     final buf = StringBuffer(
-      'Views over the last ${range.days} days: ${stats.total} total',
+      'Daily views from ${fmt.format(s.first.date)} to ${fmt.format(s.last.date)}: $total total',
     );
-    if (stats.unique != null) buf.write(', ${stats.unique} unique visitors');
-    if (s.isNotEmpty) {
-      final peak = s.reduce((a, b) => b.count > a.count ? b : a);
+    if (s.any((p) => p.unique != null)) {
       buf.write(
-        '. Busiest day ${DateFormat.yMMMd().format(peak.date)} with ${peak.count} views',
+        ', ${s.fold<int>(0, (a, p) => a + (p.unique ?? 0))} unique visitors',
       );
     }
+    final peak = s.reduce((a, b) => b.count > a.count ? b : a);
+    buf.write(
+      '. Busiest day ${fmt.format(peak.date)} with ${peak.count} views',
+    );
     return '$buf.';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final series = stats.series;
+    final series = points;
     if (series.isEmpty) {
-      return Text(
-        stats.total == 0 ? 'No views in this period yet.' : summary(),
-        style: theme.textTheme.bodyMedium,
-      );
+      return Text(summary(series), style: theme.textTheme.bodyMedium);
     }
     final hasUnique = series.any((p) => p.unique != null);
     final maxY = series
@@ -377,7 +397,7 @@ class ViewsChart extends StatelessWidget {
       children: [
         Semantics(
           container: true,
-          label: summary(),
+          label: summary(series),
           image: true,
           excludeSemantics: true,
           child: chart,
@@ -393,6 +413,16 @@ class ViewsChart extends StatelessWidget {
             ],
           ),
         ),
+        if (series.length < range.days)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              'Daily data available for ${series.length} of ${range.days} days.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
           title: const Text('View as table'),

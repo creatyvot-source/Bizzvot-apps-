@@ -158,13 +158,12 @@ class PublicCard {
     final stats = asJson(root['stats'] ?? j['stats'] ?? root['reviewSummary']);
 
     final toggles = <String, bool>{};
-    asJson(
-      j['displayOptions'] ?? j['displayToggles'] ?? j['display'],
-    ).forEach((k, v) {
-      final key = normalizeCardKey(k);
-      final b = boolOrNull(v);
-      if (b != null && !_privateKeys.contains(key)) toggles[key] = b;
-    });
+    asJson(j['displayOptions'] ?? j['displayToggles'] ?? j['display'])
+        .forEach((k, v) {
+          final key = normalizeCardKey(k);
+          final b = boolOrNull(v);
+          if (b != null && !_privateKeys.contains(key)) toggles[key] = b;
+        });
 
     final order = <PublicSection>[];
     for (final raw in strList(theme['sectionOrder'] ?? j['sectionOrder'])) {

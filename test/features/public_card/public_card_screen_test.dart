@@ -55,6 +55,8 @@ void main() {
     await tester.pump();
     expect(actions.opened.last.toString(), 'tel:+919876543210');
     expect(repo.tracked.last, TrackType.phone);
+    expect(repo.trackedIds.last, 'card-1');
+    expect(repo.trackedUrls.last, 'tel:+919876543210');
 
     await tester.tap(find.bySemanticsLabel('WhatsApp'));
     await tester.pump();
@@ -67,7 +69,7 @@ void main() {
     await tester.tap(find.text('LinkedIn'));
     await tester.pump();
     expect(actions.opened.last.toString(), 'https://linkedin.com/in/jane');
-    expect(repo.tracked.last, TrackType.social);
+    expect(repo.tracked.last, 'social:linkedin');
   });
 
   testWidgets('save contact downloads the vCard and opens the share sheet', (
@@ -112,6 +114,21 @@ void main() {
     await tester.pump();
     expect(actions.opened.single.toString(), 'https://g.page/r/abc/review');
     expect(repo.tracked.single, TrackType.googleReview);
+  });
+
+  testWidgets('no public card id: actions still work, nothing tracked', (
+    tester,
+  ) async {
+    repo.onCard = (_) async => PublicCard.fromJson({
+      'slug': 'jane-doe',
+      'title': 'Jane',
+      'phone': '+1 555 0100',
+    });
+    await pump(tester);
+    await tester.tap(find.bySemanticsLabel('Call'));
+    await tester.pump();
+    expect(actions.opened.single.toString(), 'tel:+15550100');
+    expect(repo.tracked, isEmpty);
   });
 
   testWidgets('display toggles hide fields and sections', (tester) async {

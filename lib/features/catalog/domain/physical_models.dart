@@ -180,8 +180,9 @@ class LinePersonalization {
   /// First validation problem across units, or null.
   String? problem(int quantity) {
     if (assignLater) return null;
-    if (units.isEmpty)
+    if (units.isEmpty) {
       return 'Add personalisation details or choose “assign later”';
+    }
     if (spec.perUnit && units.length != quantity) {
       return 'Personalise all $quantity units or choose “assign later”';
     }
@@ -506,8 +507,9 @@ class Fulfilment {
       final step = FulfilmentStep.parse(e['step'] ?? e['status'] ?? e['key']);
       if (step == null) continue;
       final done = boolOrNull(e['done'] ?? e['completed']) ?? true;
-      if (done)
+      if (done) {
         reached[step] = dateOrNull(e['at'] ?? e['date'] ?? e['timestamp']);
+      }
     }
     var current = FulfilmentStep.parse(statusRaw);
     for (final s in reached.keys) {

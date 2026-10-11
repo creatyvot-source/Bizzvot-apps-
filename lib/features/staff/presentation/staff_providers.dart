@@ -13,18 +13,18 @@ final staffListProvider = FutureProvider<List<StaffEntry>>((ref) async {
 });
 
 /// One staff member (`GET /organization/staff/:id`).
-final staffMemberProvider =
-    FutureProvider.autoDispose.family<StaffEntry, String>((ref, id) async {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(staffRepositoryProvider).get(id);
-});
+final staffMemberProvider = FutureProvider.autoDispose
+    .family<StaffEntry, String>((ref, id) async {
+      ref.watch(sessionKeyProvider);
+      return ref.watch(staffRepositoryProvider).get(id);
+    });
 
 /// Organization cards for the "assign existing card" picker.
 final staffAssignableCardsProvider =
     FutureProvider.autoDispose<List<CardModel>>((ref) async {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(staffRepositoryProvider).listCards();
-});
+      ref.watch(sessionKeyProvider);
+      return ref.watch(staffRepositoryProvider).listCards();
+    });
 
 /// Result of adding a staff member, including the card step.
 class StaffCreateResult {
@@ -49,30 +49,31 @@ class StaffMutations {
   /// Adds the staff member, then (optionally) creates their card and
   /// assigns it. A card failure does not undo the staff member.
   Future<StaffCreateResult> create(StaffDraft draft) => _refreshAfter(() async {
-        final staff = await _repo.create(draft);
-        if (!draft.createCard) return StaffCreateResult(staff);
-        try {
-          final result = await _createAndAssignCard(staff, draft.toCardJson());
-          return StaffCreateResult(result.$1, card: result.$2);
-        } catch (e) {
-          return StaffCreateResult(staff, cardError: e);
-        }
-      });
+    final staff = await _repo.create(draft);
+    if (!draft.createCard) return StaffCreateResult(staff);
+    try {
+      final result = await _createAndAssignCard(staff, draft.toCardJson());
+      return StaffCreateResult(result.$1, card: result.$2);
+    } catch (e) {
+      return StaffCreateResult(staff, cardError: e);
+    }
+  });
 
   /// Creates a card for an existing staff member and assigns it.
   Future<(StaffEntry, CardModel)> createCardFor(
     StaffEntry staff, {
     String designation = '',
-  }) =>
-      _refreshAfter(() => _createAndAssignCard(
-            staff,
-            cardJsonFor(
-              name: staff.name,
-              designation: designation,
-              email: staff.email,
-              phone: staff.phone,
-            ),
-          ));
+  }) => _refreshAfter(
+    () => _createAndAssignCard(
+      staff,
+      cardJsonFor(
+        name: staff.name,
+        designation: designation,
+        email: staff.email,
+        phone: staff.phone,
+      ),
+    ),
+  );
 
   Future<(StaffEntry, CardModel)> _createAndAssignCard(
     StaffEntry staff,

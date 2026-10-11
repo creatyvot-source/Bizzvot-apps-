@@ -23,7 +23,11 @@ class OrderDetailScreen extends ConsumerWidget {
     final value = ref.watch(orderDetailProvider(orderId));
     return Scaffold(
       appBar: AppBar(
-        title: Text(value.value == null ? 'Order' : 'Order #${value.value!.displayNumber}'),
+        title: Text(
+          value.value == null
+              ? 'Order'
+              : 'Order #${value.value!.displayNumber}',
+        ),
       ),
       body: AsyncValueView(
         value: value,
@@ -55,20 +59,33 @@ class _OrderBody extends StatelessWidget {
           runSpacing: AppSpacing.sm,
           children: [
             StatusChip(o.statusLabel, tone: toneForOrder(o)),
-            StatusChip('Payment: ${o.paymentStatusLabel}', tone: toneForOutcome(outcome)),
+            StatusChip(
+              'Payment: ${o.paymentStatusLabel}',
+              tone: toneForOutcome(outcome),
+            ),
             if (o.refundStatus != null)
-              StatusChip('Refund: ${humanize(o.refundStatus)}', tone: StatusTone.neutral),
+              StatusChip(
+                'Refund: ${humanize(o.refundStatus)}',
+                tone: StatusTone.neutral,
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        Text('Placed ${formatDateTime(o.createdAt)}', style: theme.textTheme.bodySmall),
-        if (outcome == PaymentOutcome.pending || outcome == PaymentOutcome.failed) ...[
+        Text(
+          'Placed ${formatDateTime(o.createdAt)}',
+          style: theme.textTheme.bodySmall,
+        ),
+        if (outcome == PaymentOutcome.pending ||
+            outcome == PaymentOutcome.failed) ...[
           const SizedBox(height: AppSpacing.md),
           NoticeCard(
-            title: outcome == PaymentOutcome.failed ? 'Payment failed' : 'Payment not completed',
-            message: o.failureReason ??
-                'This order is waiting for payment. It will be processed once the payment is confirmed.',
-            tone: outcome == PaymentOutcome.failed ? StatusTone.danger : StatusTone.warning,
+            title: outcome == PaymentOutcome.failed
+                ? 'Payment failed'
+                : 'Payment not completed',
+            message: o.failureReason ?? 'This order is waiting for payment. It will be processed once the payment is confirmed.',
+            tone: outcome == PaymentOutcome.failed
+                ? StatusTone.danger
+                : StatusTone.warning,
             action: o.retryPaymentAllowed
                 ? FilledButton(
                     onPressed: () => context.push(Routes.ownerPayment(o.id)),
@@ -92,7 +109,8 @@ class _OrderBody extends StatelessWidget {
                       placedAt: o.createdAt,
                     ),
                   if (o.shippingAddress != null) ...[
-                    if (o.fulfilment != null) const Divider(height: AppSpacing.lg),
+                    if (o.fulfilment != null)
+                      const Divider(height: AppSpacing.lg),
                     Text('Ship to', style: theme.textTheme.labelLarge),
                     const SizedBox(height: AppSpacing.xs),
                     Text(o.shippingAddress!.name),
@@ -114,19 +132,28 @@ class _OrderBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (o.lines.isEmpty)
-                  Text('Item details are not available.', style: theme.textTheme.bodyMedium),
+                  Text(
+                    'Item details are not available.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 for (final l in o.lines)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         InfoRow(
-                          label: '${l.title}${l.variantLabel == null ? '' : ' · ${l.variantLabel}'} × ${l.quantity}',
+                          label:
+                              '${l.title}${l.variantLabel == null ? '' : ' · ${l.variantLabel}'} × ${l.quantity}',
                           value: MoneyText(l.lineTotal),
                         ),
                         if (l.unitPrice != null)
-                          Text('${l.unitPrice!.format()} each', style: theme.textTheme.bodySmall),
+                          Text(
+                            '${l.unitPrice!.format()} each',
+                            style: theme.textTheme.bodySmall,
+                          ),
                       ],
                     ),
                   ),
@@ -136,10 +163,15 @@ class _OrderBody extends StatelessWidget {
                   InfoRow.money('Discount', o.discountTotal, negative: true),
                 if (o.shipping != null) InfoRow.money('Shipping', o.shipping),
                 for (final t in o.taxLines)
-                  InfoRow.money(t.rate == null ? t.label : '${t.label} (${t.rate})', t.amount),
-                if (o.taxLines.isEmpty && o.taxTotal != null) InfoRow.money('Tax', o.taxTotal),
+                  InfoRow.money(
+                    t.rate == null ? t.label : '${t.label} (${t.rate})',
+                    t.amount,
+                  ),
+                if (o.taxLines.isEmpty && o.taxTotal != null)
+                  InfoRow.money('Tax', o.taxTotal),
                 InfoRow.money('Total', o.total, emphasize: true),
-                if (o.refundedAmount != null) InfoRow.money('Refunded', o.refundedAmount),
+                if (o.refundedAmount != null)
+                  InfoRow.money('Refunded', o.refundedAmount),
               ],
             ),
           ),
@@ -151,9 +183,12 @@ class _OrderBody extends StatelessWidget {
               padding: AppSpacing.page,
               child: Column(
                 children: [
-                  if (o.gst!.gstin != null) InfoRow.text('GSTIN', o.gst!.gstin!),
-                  if (o.gst!.businessName != null) InfoRow.text('Business', o.gst!.businessName!),
-                  if (o.gst!.placeOfSupply != null) InfoRow.text('Place of supply', o.gst!.placeOfSupply!),
+                  if (o.gst!.gstin != null)
+                    InfoRow.text('GSTIN', o.gst!.gstin!),
+                  if (o.gst!.businessName != null)
+                    InfoRow.text('Business', o.gst!.businessName!),
+                  if (o.gst!.placeOfSupply != null)
+                    InfoRow.text('Place of supply', o.gst!.placeOfSupply!),
                 ],
               ),
             ),
@@ -169,7 +204,8 @@ class _OrderBody extends StatelessWidget {
         if (o.subscriptionId != null) ...[
           const SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
-            onPressed: () => context.push(Routes.ownerSubscription(o.subscriptionId!)),
+            onPressed: () =>
+                context.push(Routes.ownerSubscription(o.subscriptionId!)),
             icon: const Icon(Icons.autorenew),
             label: const Text('View linked subscription'),
           ),
@@ -177,7 +213,9 @@ class _OrderBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Text(
           'Prices and taxes are a snapshot from when the order was placed.',
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

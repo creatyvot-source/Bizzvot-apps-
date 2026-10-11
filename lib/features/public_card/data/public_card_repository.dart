@@ -29,7 +29,8 @@ abstract final class TrackType {
   static const video = 'video';
 
   /// `social:<platform>`, e.g. `social:linkedin`.
-  static String social(String platform) => 'social:${platform.trim().toLowerCase()}';
+  static String social(String platform) =>
+      'social:${platform.trim().toLowerCase()}';
 
   /// `custom:<label>`.
   static String custom(String label) => 'custom:${label.trim()}';

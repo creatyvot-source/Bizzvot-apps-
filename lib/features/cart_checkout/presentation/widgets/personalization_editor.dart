@@ -284,8 +284,9 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
         u.cardId = v;
         final card = cards.where((c) => c.id == v).firstOrNull;
         if (card == null) return;
-        if (_spec.printName && u.name.text.trim().isEmpty)
+        if (_spec.printName && u.name.text.trim().isEmpty) {
           u.name.text = card.name;
+        }
         if (_spec.printDesignation && u.designation.text.trim().isEmpty) {
           u.designation.text = card.designation ?? '';
         }

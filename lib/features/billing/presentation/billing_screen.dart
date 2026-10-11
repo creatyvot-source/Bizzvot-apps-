@@ -30,10 +30,14 @@ class BillingScreen extends ConsumerWidget {
         error: (e, _) {
           final ex = AppException.from(e);
           // The billing route is not deployed yet: degrade gracefully.
-          if (ex.kind == AppErrorKind.notFound || ex.kind == AppErrorKind.gone) {
+          if (ex.kind == AppErrorKind.notFound ||
+              ex.kind == AppErrorKind.gone) {
             return const _ComingSoon();
           }
-          return ErrorView(error: ex, onRetry: () => ref.invalidate(billingProvider));
+          return ErrorView(
+            error: ex,
+            onRetry: () => ref.invalidate(billingProvider),
+          );
         },
         data: (b) => RefreshIndicator(
           onRefresh: () => ref.refresh(billingProvider.future),
@@ -54,9 +58,13 @@ class _BillingBody extends StatelessWidget {
     final theme = Theme.of(context);
     final trial = b.trial;
     final subtitle = b.onTrial
-        ? (trial?.endsAt != null ? 'Free trial · ends ${formatDate(trial!.endsAt)}' : 'Free trial')
+        ? (trial?.endsAt != null
+              ? 'Free trial · ends ${formatDate(trial!.endsAt)}'
+              : 'Free trial')
         : b.subscriptionStatusLabel;
-    final seatsValue = b.unlimitedSeats ? 'Unlimited' : (b.paidSeats?.toString() ?? '—');
+    final seatsValue = b.unlimitedSeats
+        ? 'Unlimited'
+        : (b.paidSeats?.toString() ?? '—');
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -65,7 +73,11 @@ class _BillingBody extends StatelessWidget {
         HeroHeader(
           title: b.planName ?? (b.onTrial ? 'Trial' : 'No plan yet'),
           subtitle: subtitle,
-          trailing: const Icon(Icons.workspace_premium_outlined, color: Colors.white, size: 32),
+          trailing: const Icon(
+            Icons.workspace_premium_outlined,
+            color: Colors.white,
+            size: 32,
+          ),
           child: Wrap(
             spacing: AppSpacing.lg,
             runSpacing: AppSpacing.sm,
@@ -88,7 +100,11 @@ class _BillingBody extends StatelessWidget {
         LayoutBuilder(
           builder: (context, c) {
             final tiles = [
-              StatTile(label: 'Paid seats', value: seatsValue, icon: Icons.event_seat_outlined),
+              StatTile(
+                label: 'Paid seats',
+                value: seatsValue,
+                icon: Icons.event_seat_outlined,
+              ),
               StatTile(
                 label: 'Active cards',
                 value: b.activeCards?.toString() ?? '—',
@@ -102,7 +118,9 @@ class _BillingBody extends StatelessWidget {
                 ),
             ];
             final scale = MediaQuery.textScalerOf(context).scale(16) / 16;
-            final cols = scale > 1.3 ? 1 : (c.maxWidth / 160).floor().clamp(1, 3);
+            final cols = scale > 1.3
+                ? 1
+                : (c.maxWidth / 160).floor().clamp(1, 3);
             final w = (c.maxWidth - (cols - 1) * AppSpacing.md) / cols;
             return Wrap(
               spacing: AppSpacing.md,
@@ -125,9 +143,14 @@ class _BillingBody extends StatelessWidget {
                   ),
                 ),
                 if (b.nextRenewalAt != null)
-                  InfoRow.text(b.cancelAtPeriodEnd ? 'Ends on' : 'Next renewal', formatDate(b.nextRenewalAt)),
-                if (b.graceUntil != null) InfoRow.text('Grace period until', formatDate(b.graceUntil)),
-                if (trial?.endsAt != null) InfoRow.text('Trial ends', formatDate(trial!.endsAt)),
+                  InfoRow.text(
+                    b.cancelAtPeriodEnd ? 'Ends on' : 'Next renewal',
+                    formatDate(b.nextRenewalAt),
+                  ),
+                if (b.graceUntil != null)
+                  InfoRow.text('Grace period until', formatDate(b.graceUntil)),
+                if (trial?.endsAt != null)
+                  InfoRow.text('Trial ends', formatDate(trial!.endsAt)),
                 if (b.lastPaymentStatus != null)
                   InfoRow.text('Last payment', b.lastPaymentStatus!.label),
               ],
@@ -142,7 +165,11 @@ class _BillingBody extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.check_circle_outline, size: 20, color: theme.colorScheme.primary),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(child: Text(f)),
                 ],
@@ -156,9 +183,21 @@ class _BillingBody extends StatelessWidget {
           label: const Text('Buy more seats'),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _NavTile(icon: Icons.autorenew, title: 'Subscriptions & renewals', route: Routes.ownerSubscriptions),
-        _NavTile(icon: Icons.description_outlined, title: 'Invoices & receipts', route: Routes.ownerInvoices),
-        _NavTile(icon: Icons.storefront_outlined, title: 'Services & shop', route: Routes.ownerShop),
+        _NavTile(
+          icon: Icons.autorenew,
+          title: 'Subscriptions & renewals',
+          route: Routes.ownerSubscriptions,
+        ),
+        _NavTile(
+          icon: Icons.description_outlined,
+          title: 'Invoices & receipts',
+          route: Routes.ownerInvoices,
+        ),
+        _NavTile(
+          icon: Icons.storefront_outlined,
+          title: 'Services & shop',
+          route: Routes.ownerShop,
+        ),
       ],
     );
   }
@@ -167,7 +206,8 @@ class _BillingBody extends StatelessWidget {
     if (b.onTrial) return StatusTone.info;
     return switch (b.subscriptionStatus) {
       SubscriptionStatus.active => StatusTone.success,
-      SubscriptionStatus.pastDue || SubscriptionStatus.gracePeriod => StatusTone.warning,
+      SubscriptionStatus.pastDue ||
+      SubscriptionStatus.gracePeriod => StatusTone.warning,
       SubscriptionStatus.expired => StatusTone.danger,
       _ => StatusTone.neutral,
     };
@@ -183,55 +223,57 @@ class _AlertBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final b = billing;
     void toSubscription() => context.push(
-          b.subscriptionId == null ? Routes.ownerSubscriptions : Routes.ownerSubscription(b.subscriptionId!),
-        );
+      b.subscriptionId == null
+          ? Routes.ownerSubscriptions
+          : Routes.ownerSubscription(b.subscriptionId!),
+    );
     final (title, message, tone, label, action) = switch (alert) {
       BillingAlert.paymentFailed => (
-          'Payment failed',
-          'Your last payment didn’t go through. Renew to keep your cards active.',
-          StatusTone.danger,
-          'Fix payment',
-          toSubscription,
-        ),
+        'Payment failed',
+        'Your last payment didn’t go through. Renew to keep your cards active.',
+        StatusTone.danger,
+        'Fix payment',
+        toSubscription,
+      ),
       BillingAlert.gracePeriod => (
-          'Grace period',
-          b.graceUntil == null
-              ? 'Your plan has lapsed. Cards stay active for a limited time — renew to avoid interruption.'
-              : 'Your plan has lapsed. Cards stay active until ${formatDate(b.graceUntil)} — renew to avoid interruption.',
-          StatusTone.warning,
-          'Renew now',
-          toSubscription,
-        ),
+        'Grace period',
+        b.graceUntil == null
+            ? 'Your plan has lapsed. Cards stay active for a limited time — renew to avoid interruption.'
+            : 'Your plan has lapsed. Cards stay active until ${formatDate(b.graceUntil)} — renew to avoid interruption.',
+        StatusTone.warning,
+        'Renew now',
+        toSubscription,
+      ),
       BillingAlert.expired => (
-          'Plan expired',
-          'Your plan has expired. Cards beyond your free allowance may be disabled until you renew.',
-          StatusTone.danger,
-          'Renew',
-          toSubscription,
-        ),
+        'Plan expired',
+        'Your plan has expired. Cards beyond your free allowance may be disabled until you renew.',
+        StatusTone.danger,
+        'Renew',
+        toSubscription,
+      ),
       BillingAlert.trialEnding => (
-          'Trial ending soon',
-          b.trial?.endsAt == null
-              ? 'Choose a plan to keep your cards active after the trial.'
-              : 'Your trial ends ${formatDate(b.trial!.endsAt)}. Choose a plan to keep your cards active.',
-          StatusTone.info,
-          'Choose a plan',
-          () => context.push(Routes.ownerSeats),
-        ),
+        'Trial ending soon',
+        b.trial?.endsAt == null
+            ? 'Choose a plan to keep your cards active after the trial.'
+            : 'Your trial ends ${formatDate(b.trial!.endsAt)}. Choose a plan to keep your cards active.',
+        StatusTone.info,
+        'Choose a plan',
+        () => context.push(Routes.ownerSeats),
+      ),
       BillingAlert.trialEnded => (
-          'Trial ended',
-          'Your free trial has ended. Buy seats to re-activate your cards.',
-          StatusTone.warning,
-          'Buy seats',
-          () => context.push(Routes.ownerSeats),
-        ),
+        'Trial ended',
+        'Your free trial has ended. Buy seats to re-activate your cards.',
+        StatusTone.warning,
+        'Buy seats',
+        () => context.push(Routes.ownerSeats),
+      ),
       BillingAlert.cardsDisabled => (
-          'Cards disabled by billing',
-          '${b.disabledByBilling} card${b.disabledByBilling == 1 ? ' is' : 's are'} disabled until more seats are available.',
-          StatusTone.warning,
-          'Buy seats',
-          () => context.push(Routes.ownerSeats),
-        ),
+        'Cards disabled by billing',
+        '${b.disabledByBilling} card${b.disabledByBilling == 1 ? ' is' : 's are'} disabled until more seats are available.',
+        StatusTone.warning,
+        'Buy seats',
+        () => context.push(Routes.ownerSeats),
+      ),
     };
     return NoticeCard(
       title: title,
@@ -243,19 +285,23 @@ class _AlertBanner extends StatelessWidget {
 }
 
 class _NavTile extends StatelessWidget {
-  const _NavTile({required this.icon, required this.title, required this.route});
+  const _NavTile({
+    required this.icon,
+    required this.title,
+    required this.route,
+  });
   final IconData icon;
   final String title;
   final String route;
 
   @override
   Widget build(BuildContext context) => ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon),
-        title: Text(title),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push(route),
-      );
+    contentPadding: EdgeInsets.zero,
+    leading: Icon(icon),
+    title: Text(title),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: () => context.push(route),
+  );
 }
 
 class _ComingSoon extends ConsumerWidget {
@@ -274,8 +320,12 @@ class _ComingSoon extends ConsumerWidget {
           ? null
           : FilledButton.icon(
               onPressed: () async {
-                final ok = await ref.read(linkLauncherProvider).email(email, subject: 'Billing & seats');
-                if (!ok && context.mounted) showMessage(context, 'Couldn’t open your email app.');
+                final ok = await ref
+                    .read(linkLauncherProvider)
+                    .email(email, subject: 'Billing & seats');
+                if (!ok && context.mounted) {
+                  showMessage(context, 'Couldn’t open your email app.');
+                }
               },
               icon: const Icon(Icons.mail_outline),
               label: const Text('Contact support'),
@@ -289,23 +339,23 @@ class _BillingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Loading billing',
-        child: ListView(
-          physics: const NeverScrollableScrollPhysics(),
-          padding: AppSpacing.page,
-          children: const [
-            SkeletonBox(height: 140, radius: AppRadius.xl),
-            SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(child: SkeletonBox(height: 110, radius: AppRadius.lg)),
-                SizedBox(width: AppSpacing.md),
-                Expanded(child: SkeletonBox(height: 110, radius: AppRadius.lg)),
-              ],
-            ),
-            SizedBox(height: AppSpacing.lg),
-            SkeletonBox(height: 160, radius: AppRadius.lg),
+    label: 'Loading billing',
+    child: ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: AppSpacing.page,
+      children: const [
+        SkeletonBox(height: 140, radius: AppRadius.xl),
+        SizedBox(height: AppSpacing.md),
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 110, radius: AppRadius.lg)),
+            SizedBox(width: AppSpacing.md),
+            Expanded(child: SkeletonBox(height: 110, radius: AppRadius.lg)),
           ],
         ),
-      );
+        SizedBox(height: AppSpacing.lg),
+        SkeletonBox(height: 160, radius: AppRadius.lg),
+      ],
+    ),
+  );
 }

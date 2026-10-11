@@ -88,7 +88,7 @@ void main() {
 
     expect(repo.submissions.single.toJson(), {
       'rating': 4,
-      'name': 'Sam',
+      'reviewerName': 'Sam',
       'comment': 'Great help',
     });
     expect(

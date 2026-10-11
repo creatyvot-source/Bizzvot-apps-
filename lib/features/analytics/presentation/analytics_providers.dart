@@ -6,6 +6,11 @@ import '../domain/analytics_models.dart';
 
 Duration? _noRetry(int _, Object _) => null;
 
+/// Clock used to window series client-side; overridable in tests.
+final analyticsClockProvider = Provider<DateTime Function()>(
+  (ref) => DateTime.now,
+);
+
 typedef AnalyticsQuery = ({String cardId, AnalyticsRange range});
 
 class AnalyticsRangeController extends Notifier<AnalyticsRange> {

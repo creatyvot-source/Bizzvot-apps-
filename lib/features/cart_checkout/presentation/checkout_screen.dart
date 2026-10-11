@@ -472,8 +472,9 @@ class _TermsTile extends ConsumerWidget {
           TextButton.icon(
             onPressed: () async {
               final ok = await ref.read(linkLauncherProvider).openWeb(url);
-              if (!ok && context.mounted)
+              if (!ok && context.mounted) {
                 showMessage(context, 'Couldn’t open the terms page.');
+              }
             },
             icon: const Icon(Icons.open_in_new),
             label: const Text('Read the terms'),

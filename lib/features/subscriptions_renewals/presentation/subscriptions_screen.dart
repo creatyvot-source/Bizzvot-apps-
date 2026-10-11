@@ -11,12 +11,15 @@ import '../../catalog/presentation/common/paged_list.dart';
 import 'subscriptions_providers.dart';
 
 StatusTone toneForSubscription(SubscriptionStatus s) => switch (s) {
-      SubscriptionStatus.active || SubscriptionStatus.trialing => StatusTone.success,
-      SubscriptionStatus.pending => StatusTone.info,
-      SubscriptionStatus.pastDue || SubscriptionStatus.gracePeriod => StatusTone.warning,
-      SubscriptionStatus.expired => StatusTone.danger,
-      SubscriptionStatus.cancelled || SubscriptionStatus.unknown => StatusTone.neutral,
-    };
+  SubscriptionStatus.active ||
+  SubscriptionStatus.trialing => StatusTone.success,
+  SubscriptionStatus.pending => StatusTone.info,
+  SubscriptionStatus.pastDue ||
+  SubscriptionStatus.gracePeriod => StatusTone.warning,
+  SubscriptionStatus.expired => StatusTone.danger,
+  SubscriptionStatus.cancelled ||
+  SubscriptionStatus.unknown => StatusTone.neutral,
+};
 
 class SubscriptionsScreen extends ConsumerWidget {
   const SubscriptionsScreen({super.key});
@@ -42,13 +45,15 @@ class SubscriptionsScreen extends ConsumerWidget {
             ),
           ),
           itemBuilder: (context, s) {
-            final when = s.status == SubscriptionStatus.gracePeriod && s.graceUntil != null
+            final when =
+                s.status == SubscriptionStatus.gracePeriod &&
+                    s.graceUntil != null
                 ? 'Grace period ends ${formatDate(s.graceUntil)}'
                 : s.cancelAtPeriodEnd
-                    ? 'Ends ${formatDate(s.currentPeriodEnd)}'
-                    : s.nextRenewalAt != null
-                        ? 'Renews ${formatDate(s.nextRenewalAt)}'
-                        : null;
+                ? 'Ends ${formatDate(s.currentPeriodEnd)}'
+                : s.nextRenewalAt != null
+                ? 'Renews ${formatDate(s.nextRenewalAt)}'
+                : null;
             return ListTile(
               onTap: () => context.push(Routes.ownerSubscription(s.id)),
               leading: const Icon(Icons.workspace_premium_outlined),
@@ -59,7 +64,10 @@ class SubscriptionsScreen extends ConsumerWidget {
                   if (s.quantity != null) Text('${s.quantity} seats'),
                   if (when != null) Text(when),
                   const SizedBox(height: 4),
-                  StatusChip(s.statusLabel, tone: toneForSubscription(s.status)),
+                  StatusChip(
+                    s.statusLabel,
+                    tone: toneForSubscription(s.status),
+                  ),
                 ],
               ),
               trailing: const Icon(Icons.chevron_right),

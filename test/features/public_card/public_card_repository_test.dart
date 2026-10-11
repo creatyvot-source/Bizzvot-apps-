@@ -94,9 +94,10 @@ void main() {
       );
       final result = await repo.submitReview('jane', body);
       expect(result.isApproved, isFalse);
+      // Backend schema requires `reviewerName` (not `name`).
       expect(fake.requests.single.body, {
+        'reviewerName': 'Sam',
         'rating': 4,
-        'name': 'Sam',
         'comment': 'Nice',
       });
       expect(anonymousFlags, [true]);
@@ -147,23 +148,69 @@ void main() {
     });
   });
 
-  test('trackClick posts {slug, type, target} and swallows errors', () async {
-    fake.on('POST', '/public/track-click', FakeResponse.error(500, 'boom'));
-    await repo.trackClick(
-      slug: 'jane',
-      type: TrackType.social,
-      target: 'linkedin',
-    );
-    expect(fake.requests.single.body, {
-      'slug': 'jane',
-      'type': 'social',
-      'target': 'linkedin',
-    });
-    expect(anonymousFlags, [true]);
+  test(
+    'trackClick posts {cardId, linkType, linkUrl} and swallows errors',
+    () async {
+      fake.on(
+        'POST',
+        '/public/track-click',
+        FakeResponse.error(400, 'Required'),
+      );
+      await repo.trackClick(
+        cardId: 'c1',
+        linkType: TrackType.social('LinkedIn'),
+        linkUrl: 'https://linkedin.com/in/jane',
+      );
+      expect(fake.requests.single.body, {
+        'cardId': 'c1',
+        'linkType': 'social:linkedin',
+        'linkUrl': 'https://linkedin.com/in/jane',
+      });
+      expect(anonymousFlags, [true]);
 
-    // Omits empty target.
-    await repo.trackClick(slug: 'jane', type: TrackType.phone);
-    expect(fake.requests.last.body, {'slug': 'jane', 'type': 'phone'});
+      // Omits an empty linkUrl; caps linkType at the backend's 64 chars.
+      await repo.trackClick(
+        cardId: 'c1',
+        linkType: TrackType.custom('x' * 100),
+      );
+      final body = fake.requests.last.body! as Map;
+      expect(body.keys, unorderedEquals(['cardId', 'linkType']));
+      expect((body['linkType'] as String).length, TrackType.maxLength);
+
+      // No card id → nothing sent.
+      await repo.trackClick(cardId: '', linkType: TrackType.phone);
+      expect(fake.requests, hasLength(2));
+    },
+  );
+
+  test('public reviews derive hasMore from page*limit < total', () async {
+    fake.on(
+      'GET',
+      '/public/card/jane/reviews',
+      FakeResponse.ok({
+        'items': [
+          {
+            '_id': '1',
+            'reviewerName': 'A',
+            'rating': 5,
+            'reviewerEmail': 'a@x.test',
+          },
+        ],
+        'total': 11,
+        'page': 1,
+        'limit': 10,
+      }),
+    );
+    final page = await repo.fetchReviews('jane');
+    expect(page.hasMore, isTrue);
+    expect(page.items.single.reviewerName, 'A');
+
+    fake.on(
+      'GET',
+      '/public/card/jane/reviews',
+      FakeResponse.ok({'items': [], 'total': 11, 'page': 2, 'limit': 10}),
+    );
+    expect((await repo.fetchReviews('jane', page: 2)).hasMore, isFalse);
   });
 
   test('fetchVcard downloads bytes anonymously', () async {

@@ -3,6 +3,39 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ViewsStats', () {
+    test('backend shape {views, uniqueVisitors, trend:[{_id,count}]}', () {
+      final v = ViewsStats.fromJson({
+        'views': 340,
+        'uniqueVisitors': 120,
+        'trend': [
+          {'_id': '2026-10-05', 'count': 4},
+          {'_id': '2026-10-07', 'count': 9},
+        ],
+      });
+      expect(v.total, 340);
+      expect(v.unique, 120);
+      expect(v.allTime, isTrue); // range is ignored server-side
+      expect(v.series.map((p) => p.date), [
+        DateTime(2026, 10, 5),
+        DateTime(2026, 10, 7),
+      ]);
+
+      // Client-side window, zero-filled between returned days.
+      final w = v.seriesWithin(AnalyticsRange.week, DateTime(2026, 10, 8));
+      expect(w.map((p) => p.count), [4, 0, 9]);
+      expect(
+        v.seriesWithin(AnalyticsRange.week, DateTime(2026, 10, 30)),
+        isEmpty,
+      );
+    });
+
+    test('a payload with range markers is not all-time', () {
+      expect(
+        ViewsStats.fromJson({'total': 1, 'from': '2026-10-01'}).allTime,
+        isFalse,
+      );
+    });
+
     test('object with totals and series', () {
       final v = ViewsStats.fromJson({
         'total': 120,
@@ -152,6 +185,32 @@ void main() {
         }).counts,
         [(LinkCategory.phone, 4)],
       );
+    });
+
+    test('backend bare list with web linkTypes (social:/custom: prefixes)', () {
+      final l = LinkClicks.fromJson([
+        {'_id': 'social:instagram', 'count': 3},
+        {'_id': 'custom:My phone shop', 'count': 2},
+        {'_id': 'phone', 'count': 2},
+        {'_id': 'address', 'count': 1},
+        {'_id': 'exchange', 'count': 1},
+      ]);
+      expect(l.counts, [
+        (LinkCategory.social, 3),
+        (LinkCategory.phone, 2),
+        (LinkCategory.custom, 2),
+        (LinkCategory.other, 2),
+      ]);
+    });
+
+    test('reviews backend shape {count, average, distribution}', () {
+      final r = ReviewStats.fromJson({
+        'count': 0,
+        'average': 0,
+        'distribution': [],
+      });
+      expect(r.total, 0);
+      expect(r.allTime, isTrue);
     });
 
     test('category parsing', () {

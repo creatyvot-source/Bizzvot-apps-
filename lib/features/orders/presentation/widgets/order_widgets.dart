@@ -10,19 +10,25 @@ import '../../../catalog/domain/physical_models.dart';
 import '../../../catalog/presentation/common/commerce_widgets.dart';
 
 StatusTone toneForOutcome(PaymentOutcome o) => switch (o) {
-      PaymentOutcome.paid => StatusTone.success,
-      PaymentOutcome.failed || PaymentOutcome.cancelled || PaymentOutcome.expired => StatusTone.danger,
-      PaymentOutcome.refunded => StatusTone.neutral,
-      PaymentOutcome.pending || PaymentOutcome.processing => StatusTone.warning,
-    };
+  PaymentOutcome.paid => StatusTone.success,
+  PaymentOutcome.failed ||
+  PaymentOutcome.cancelled ||
+  PaymentOutcome.expired => StatusTone.danger,
+  PaymentOutcome.refunded => StatusTone.neutral,
+  PaymentOutcome.pending || PaymentOutcome.processing => StatusTone.warning,
+};
 
 StatusTone toneForOrder(Order o) => switch (o.status) {
-      OrderStatus.completed || OrderStatus.fulfilled || OrderStatus.paid => StatusTone.success,
-      OrderStatus.processing => StatusTone.info,
-      OrderStatus.paymentFailed || OrderStatus.cancelled || OrderStatus.expired => StatusTone.danger,
-      OrderStatus.pendingPayment || OrderStatus.draft => StatusTone.warning,
-      _ => StatusTone.neutral,
-    };
+  OrderStatus.completed ||
+  OrderStatus.fulfilled ||
+  OrderStatus.paid => StatusTone.success,
+  OrderStatus.processing => StatusTone.info,
+  OrderStatus.paymentFailed ||
+  OrderStatus.cancelled ||
+  OrderStatus.expired => StatusTone.danger,
+  OrderStatus.pendingPayment || OrderStatus.draft => StatusTone.warning,
+  _ => StatusTone.neutral,
+};
 
 class OrderTile extends StatelessWidget {
   const OrderTile({super.key, required this.order, required this.onTap});
@@ -35,8 +41,8 @@ class OrderTile extends StatelessWidget {
     final items = order.lines.isEmpty
         ? null
         : order.lines.length == 1
-            ? order.lines.first.title
-            : '${order.lines.first.title} + ${order.lines.length - 1} more';
+        ? order.lines.first.title
+        : '${order.lines.first.title} + ${order.lines.length - 1} more';
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
@@ -48,7 +54,8 @@ class OrderTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (items != null) Text(items, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (items != null)
+            Text(items, maxLines: 1, overflow: TextOverflow.ellipsis),
           Text(formatDate(order.createdAt)),
           const SizedBox(height: AppSpacing.xs),
           StatusChip(order.statusLabel, tone: toneForOrder(order)),
@@ -62,7 +69,12 @@ class OrderTile extends StatelessWidget {
 /// Placed → paid → design/proof → printing → NFC programmed → shipped →
 /// delivered, with courier/AWB tracking (https links only).
 class FulfilmentTimeline extends ConsumerWidget {
-  const FulfilmentTimeline({super.key, required this.fulfilment, this.paid = false, this.placedAt});
+  const FulfilmentTimeline({
+    super.key,
+    required this.fulfilment,
+    this.paid = false,
+    this.placedAt,
+  });
 
   final Fulfilment fulfilment;
   final bool paid;
@@ -77,7 +89,10 @@ class FulfilmentTimeline extends ConsumerWidget {
         s == FulfilmentStep.placed ||
         (s == FulfilmentStep.paid && paid);
     final steps = FulfilmentStep.values;
-    final lastReached = steps.lastWhere(reached, orElse: () => FulfilmentStep.placed);
+    final lastReached = steps.lastWhere(
+      reached,
+      orElse: () => FulfilmentStep.placed,
+    );
     final tracking = f.safeTrackingUri;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,11 +101,19 @@ class FulfilmentTimeline extends ConsumerWidget {
           _TimelineRow(
             label: steps[i].label,
             done: reached(steps[i]),
-            current: steps[i] == lastReached && steps[i] != FulfilmentStep.delivered,
+            current:
+                steps[i] == lastReached && steps[i] != FulfilmentStep.delivered,
             last: i == steps.length - 1,
-            at: steps[i] == FulfilmentStep.placed ? (f.reached[steps[i]] ?? placedAt) : f.reached[steps[i]],
-            detail: steps[i] == FulfilmentStep.shipped && (f.courier != null || f.awb != null)
-                ? [f.courier, if (f.awb != null) 'AWB ${f.awb}'].whereType<String>().join(' · ')
+            at: steps[i] == FulfilmentStep.placed
+                ? (f.reached[steps[i]] ?? placedAt)
+                : f.reached[steps[i]],
+            detail:
+                steps[i] == FulfilmentStep.shipped &&
+                    (f.courier != null || f.awb != null)
+                ? [
+                    f.courier,
+                    if (f.awb != null) 'AWB ${f.awb}',
+                  ].whereType<String>().join(' · ')
                 : null,
           ),
         if (f.note != null)
@@ -103,8 +126,12 @@ class FulfilmentTimeline extends ConsumerWidget {
             padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: OutlinedButton.icon(
               onPressed: () async {
-                final ok = await ref.read(linkLauncherProvider).openWeb(tracking.toString());
-                if (!ok && context.mounted) showMessage(context, 'Couldn’t open the tracking page.');
+                final ok = await ref
+                    .read(linkLauncherProvider)
+                    .openWeb(tracking.toString());
+                if (!ok && context.mounted) {
+                  showMessage(context, 'Couldn’t open the tracking page.');
+                }
               },
               icon: const Icon(Icons.local_shipping_outlined),
               label: const Text('Track shipment'),
@@ -135,9 +162,12 @@ class _TimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = done ? theme.colorScheme.primary : theme.colorScheme.outlineVariant;
+    final color = done
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outlineVariant;
     return Semantics(
-      label: '$label, ${done ? 'done' : 'pending'}${at != null ? ', ${formatDate(at)}' : ''}',
+      label:
+          '$label, ${done ? 'done' : 'pending'}${at != null ? ', ${formatDate(at)}' : ''}',
       excludeSemantics: true,
       child: IntrinsicHeight(
         child: Row(
@@ -152,10 +182,7 @@ class _TimelineRow extends StatelessWidget {
                     size: 22,
                     color: color,
                   ),
-                  if (!last)
-                    Expanded(
-                      child: Container(width: 2, color: color),
-                    ),
+                  if (!last) Expanded(child: Container(width: 2, color: color)),
                 ],
               ),
             ),
@@ -174,8 +201,12 @@ class _TimelineRow extends StatelessWidget {
                       ),
                     ),
                     if (at != null)
-                      Text(formatDateTime(at), style: theme.textTheme.bodySmall),
-                    if (detail != null) Text(detail!, style: theme.textTheme.bodySmall),
+                      Text(
+                        formatDateTime(at),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    if (detail != null)
+                      Text(detail!, style: theme.textTheme.bodySmall),
                   ],
                 ),
               ),

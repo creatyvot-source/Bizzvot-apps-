@@ -30,7 +30,9 @@ class InvoiceDetailScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Share invoice link',
               icon: const Icon(Icons.share_outlined),
-              onPressed: () => ref.read(linkLauncherProvider).shareText(
+              onPressed: () => ref
+                  .read(linkLauncherProvider)
+                  .shareText(
                     inv!.safeFileUri.toString(),
                     subject: 'Invoice ${inv.displayNumber}',
                   ),
@@ -75,8 +77,10 @@ class _InvoiceBody extends ConsumerWidget {
                 InfoRow.text('Invoice number', i.displayNumber),
                 InfoRow.text('Issued', formatDate(i.issuedAt)),
                 if (i.dueAt != null) InfoRow.text('Due', formatDate(i.dueAt)),
-                if (i.buyerGstin != null) InfoRow.text('Your GSTIN', i.buyerGstin!),
-                if (i.placeOfSupply != null) InfoRow.text('Place of supply', i.placeOfSupply!),
+                if (i.buyerGstin != null)
+                  InfoRow.text('Your GSTIN', i.buyerGstin!),
+                if (i.placeOfSupply != null)
+                  InfoRow.text('Place of supply', i.placeOfSupply!),
                 if (i.taxId != null) InfoRow.text('Seller GSTIN', i.taxId!),
               ],
             ),
@@ -90,7 +94,10 @@ class _InvoiceBody extends ConsumerWidget {
               child: Column(
                 children: [
                   for (final l in i.lines)
-                    InfoRow(label: '${l.title} × ${l.quantity}', value: MoneyText(l.lineTotal)),
+                    InfoRow(
+                      label: '${l.title} × ${l.quantity}',
+                      value: MoneyText(l.lineTotal),
+                    ),
                 ],
               ),
             ),
@@ -106,8 +113,12 @@ class _InvoiceBody extends ConsumerWidget {
                 if (i.discountTotal != null && !i.discountTotal!.isZero)
                   InfoRow.money('Discount', i.discountTotal, negative: true),
                 for (final t in i.taxDetails)
-                  InfoRow.money(t.rate == null ? t.label : '${t.label} (${t.rate})', t.amount),
-                if (i.taxDetails.isEmpty && i.taxTotal != null) InfoRow.money('Tax', i.taxTotal),
+                  InfoRow.money(
+                    t.rate == null ? t.label : '${t.label} (${t.rate})',
+                    t.amount,
+                  ),
+                if (i.taxDetails.isEmpty && i.taxTotal != null)
+                  InfoRow.money('Tax', i.taxTotal),
                 InfoRow.money('Total', i.total, emphasize: true),
                 if (i.amountPaid != null) InfoRow.money('Paid', i.amountPaid),
               ],
@@ -118,8 +129,12 @@ class _InvoiceBody extends ConsumerWidget {
         if (pdf != null)
           FilledButton.icon(
             onPressed: () async {
-              final ok = await ref.read(linkLauncherProvider).openDocument(pdf.toString());
-              if (!ok && context.mounted) showMessage(context, 'Couldn’t open the invoice PDF.');
+              final ok = await ref
+                  .read(linkLauncherProvider)
+                  .openDocument(pdf.toString());
+              if (!ok && context.mounted) {
+                showMessage(context, 'Couldn’t open the invoice PDF.');
+              }
             },
             icon: const Icon(Icons.picture_as_pdf_outlined),
             label: const Text('Open PDF'),
@@ -140,7 +155,8 @@ class _InvoiceBody extends ConsumerWidget {
         if (i.subscriptionId != null) ...[
           const SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
-            onPressed: () => context.push(Routes.ownerSubscription(i.subscriptionId!)),
+            onPressed: () =>
+                context.push(Routes.ownerSubscription(i.subscriptionId!)),
             icon: const Icon(Icons.autorenew),
             label: const Text('View subscription'),
           ),

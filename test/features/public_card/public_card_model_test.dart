@@ -238,9 +238,64 @@ void main() {
           name: ' Ann ',
           comment: '  ',
         ).toJson(),
-        {'rating': 5, 'name': 'Ann'},
+        {'reviewerName': 'Ann', 'rating': 5},
       );
     });
+  });
+
+  test('backend public DTO fields (companyName, photo, theme, displayOptions, platform)', () {
+    final card = PublicCard.fromJson({
+      '_id': '665f0c',
+      'slug': 'raj',
+      'title': 'Raj Kumar',
+      'companyName': 'Acme Pvt Ltd',
+      'photo': 'https://cdn.test/raj.jpg',
+      'theme': {
+        'templateId': 'modern_dark',
+        'primaryColor': '#5B2C8A',
+        'sectionOrder': ['customLinks', 'bio', 'socials', 'contacts'],
+      },
+      'displayOptions': {
+        'showBio': false,
+        'showWhatsapp': true,
+        'showReviews': false,
+      },
+      'socialLinks': [
+        {'platform': 'instagram', 'url': 'https://instagram.com/raj'},
+      ],
+      'customLinks': [
+        {'label': 'Portfolio', 'url': 'https://raj.dev', 'icon': 'globe'},
+      ],
+      'vcardEnabled': true,
+      'type': 'organization',
+      'status': 'active',
+    });
+    expect(card.id, '665f0c');
+    expect(card.company, 'Acme Pvt Ltd');
+    expect(card.profilePhoto, 'https://cdn.test/raj.jpg');
+    expect(card.template, CardTemplate.modernDark);
+    expect(card.brandColor, '#5B2C8A');
+    expect(card.sectionOrder.take(4), [
+      PublicSection.links,
+      PublicSection.about,
+      PublicSection.social,
+      PublicSection.contact,
+    ]);
+    expect(card.showsSection(PublicSection.about), isFalse);
+    expect(card.showsSection(PublicSection.reviews), isFalse);
+    expect(card.shows(['whatsapp']), isTrue);
+    expect(card.socialLinks.single.type, 'instagram');
+    expect(card.customLinks.single.label, 'Portfolio');
+    expect(card.canSaveContact, isTrue);
+  });
+
+  test('templates the backend lacks fall back gracefully', () {
+    expect(
+      PublicCard.fromJson({
+        'theme': {'templateId': 'neon_future'},
+      }).template,
+      CardTemplate.minimal,
+    );
   });
 
   group('ContactLinks', () {

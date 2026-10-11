@@ -207,7 +207,8 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   maxLength: WriteReviewScreen.nameMaxLength,
                   decoration: const InputDecoration(labelText: 'Your name'),
                   validator: (v) {
-                    if ((_fieldErrors['reviewerName'] ?? _fieldErrors['name']) case final e?) {
+                    if ((_fieldErrors['reviewerName'] ?? _fieldErrors['name'])
+                        case final e?) {
                       return e;
                     }
                     if (v == null || v.trim().isEmpty) {

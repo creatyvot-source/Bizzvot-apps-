@@ -51,7 +51,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           children: [
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               child: Row(
                 children: [
                   for (final (status, label) in _filters) ...[
@@ -72,8 +75,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 onLoadMore: notifier.loadMore,
                 empty: EmptyView(
                   icon: Icons.receipt_long_outlined,
-                  title: _status == null ? 'No orders yet' : 'No orders with this status',
-                  message: _status == null ? 'Orders you place in the shop appear here.' : null,
+                  title: _status == null
+                      ? 'No orders yet'
+                      : 'No orders with this status',
+                  message: _status == null
+                      ? 'Orders you place in the shop appear here.'
+                      : null,
                   action: _status == null
                       ? FilledButton(
                           onPressed: () => context.push(Routes.ownerShop),

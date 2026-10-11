@@ -95,12 +95,19 @@ class FakePublicRepo extends PublicCardRepository {
     return onSubmit!(review);
   }
 
+  final trackedUrls = <String?>[];
+  final trackedIds = <String>[];
+
   @override
   Future<void> trackClick({
-    required String slug,
-    required String type,
-    String? target,
-  }) async => tracked.add(type);
+    required String cardId,
+    required String linkType,
+    String? linkUrl,
+  }) async {
+    trackedIds.add(cardId);
+    tracked.add(linkType);
+    trackedUrls.add(linkUrl);
+  }
 
   @override
   Future<Uint8List> fetchVcard(String cardId) async {

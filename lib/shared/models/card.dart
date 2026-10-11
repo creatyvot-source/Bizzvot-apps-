@@ -508,11 +508,21 @@ abstract final class CardWire {
   /// `buildCardPatch`) into a backend PATCH body. [edited] supplies the full
   /// values for objects the backend replaces wholesale (`theme`,
   /// `displayOptions`). [staff] omits `status` (forbidden for staff).
-  static Json encodePatch(Json appPatch, CardModel edited, {bool staff = false}) {
+  /// [enabled] lists [unsupportedFields] the server has announced support
+  /// for (feature flags); those are sent under their app names.
+  static Json encodePatch(
+    Json appPatch,
+    CardModel edited, {
+    bool staff = false,
+    Set<String> enabled = const {},
+  }) {
     final body = <String, dynamic>{};
     var theme = false;
     for (final MapEntry(:key, :value) in appPatch.entries) {
-      if (unsupportedFields.contains(key)) continue;
+      if (unsupportedFields.contains(key)) {
+        if (enabled.contains(key)) body[key] = value;
+        continue;
+      }
       switch (key) {
         case 'title':
           final t = value is String ? value.trim() : null;

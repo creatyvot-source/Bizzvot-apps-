@@ -116,12 +116,14 @@ class SeatPurchaseController extends Notifier<SeatPurchaseState> {
     );
     try {
       final q = await _repo.quoteSeats(planId: planId, quantity: qty);
-      if (!ref.mounted || state.planId != planId || state.quantity != qty)
+      if (!ref.mounted || state.planId != planId || state.quantity != qty) {
         return;
+      }
       state = state.copyWith(quote: AsyncData(q), quoteUnsupported: false);
     } catch (e, st) {
-      if (!ref.mounted || state.planId != planId || state.quantity != qty)
+      if (!ref.mounted || state.planId != planId || state.quantity != qty) {
         return;
+      }
       final ex = AppException.from(e);
       final unsupported =
           ex.kind == AppErrorKind.notFound || ex.kind == AppErrorKind.gone;

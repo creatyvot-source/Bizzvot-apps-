@@ -40,6 +40,17 @@ class CardCapabilities {
 
   static const backend = CardCapabilities();
 
+  /// `CardWire.unsupportedFields` that may be sent because the server
+  /// announced support.
+  Set<String> get enabledFields => {
+        if (privateDetails) ...{'bloodGroup', 'fatherName', 'motherName'},
+        if (companyPhone) 'companyPhone',
+        if (media) ...{'gallery', 'videos'},
+        if (documents) 'pdfs',
+        if (visibility) 'visibility',
+        if (googleReview) 'googleReviewUrl',
+      };
+
   static const all = CardCapabilities(
     privateDetails: true,
     companyPhone: true,

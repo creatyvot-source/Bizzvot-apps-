@@ -558,20 +558,16 @@ class BrandColorPicker extends StatelessWidget {
   }
 }
 
-/// Reorderable list of public sections with show/hide switches.
+/// Reorderable list of public-card sections (`theme.sectionOrder`).
 class SectionOrderEditor extends StatelessWidget {
   const SectionOrderEditor({
     super.key,
     required this.order,
-    required this.toggles,
     required this.onReorder,
-    required this.onToggle,
   });
 
   final List<String> order;
-  final Map<String, bool> toggles;
   final ValueChanged<List<String>> onReorder;
-  final void Function(String key, bool visible) onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -587,7 +583,6 @@ class SectionOrderEditor extends StatelessWidget {
       },
       itemBuilder: (context, i) {
         final key = order[i];
-        final visible = DisplaySections.isVisible(toggles, key);
         return ListTile(
           key: ValueKey('section-$key'),
           contentPadding: EdgeInsets.zero,
@@ -602,8 +597,11 @@ class SectionOrderEditor extends StatelessWidget {
             ),
           ),
           title: Text(DisplaySections.label(key)),
-          subtitle: Text(visible ? 'Shown' : 'Hidden'),
-          trailing: Switch(value: visible, onChanged: (v) => onToggle(key, v)),
+          trailing: Text(
+            '${i + 1}',
+            style: Theme.of(context).textTheme.labelLarge,
+            semanticsLabel: 'Position ${i + 1} of ${order.length}',
+          ),
         );
       },
     );
@@ -673,6 +671,47 @@ class VisibilitySelector extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Marks a section or field whose backend support is not live yet. Inputs
+/// next to it are read-only and nothing is sent for them.
+class ComingSoonNote extends StatelessWidget {
+  const ComingSoonNote({super.key, this.message});
+
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      container: true,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondaryContainer,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.schedule, size: 18, color: theme.colorScheme.onSecondaryContainer),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                message ??
+                    'Coming soon. These details can’t be saved yet — they will '
+                        'become editable once your account supports them.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

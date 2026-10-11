@@ -236,9 +236,7 @@ class LinksSection extends StatelessWidget {
     IconData iconOf(CardLink l) => social ? _platformIcon(l.type) : Icons.link;
     void tap(CardLink l, Uri uri) => onOpen(
       uri,
-      social
-          ? TrackType.social(l.type)
-          : TrackType.custom(l.label ?? uri.host),
+      social ? TrackType.social(l.type) : TrackType.custom(l.label ?? uri.host),
     );
 
     if (hub) {

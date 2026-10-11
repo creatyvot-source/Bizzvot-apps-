@@ -50,9 +50,11 @@ class NotificationsScreen extends ConsumerWidget {
             empty: const EmptyView(
               icon: Icons.notifications_none,
               title: 'You’re all caught up',
-              message: 'Order, payment, renewal and review updates appear here.',
+              message:
+                  'Order, payment, renewal and review updates appear here.',
             ),
-            itemBuilder: (context, n) => _NotificationTile(n: n, onTap: () => open(n)),
+            itemBuilder: (context, n) =>
+                _NotificationTile(n: n, onTap: () => open(n)),
           ),
         ),
       ),
@@ -66,16 +68,16 @@ class _NotificationTile extends StatelessWidget {
   final VoidCallback onTap;
 
   static IconData _icon(NotificationKind k) => switch (k) {
-        NotificationKind.order => Icons.receipt_long_outlined,
-        NotificationKind.payment => Icons.payments_outlined,
-        NotificationKind.invoice => Icons.description_outlined,
-        NotificationKind.subscription => Icons.autorenew,
-        NotificationKind.billing => Icons.credit_card_outlined,
-        NotificationKind.review => Icons.reviews_outlined,
-        NotificationKind.card => Icons.badge_outlined,
-        NotificationKind.staff => Icons.group_outlined,
-        NotificationKind.other => Icons.notifications_outlined,
-      };
+    NotificationKind.order => Icons.receipt_long_outlined,
+    NotificationKind.payment => Icons.payments_outlined,
+    NotificationKind.invoice => Icons.description_outlined,
+    NotificationKind.subscription => Icons.autorenew,
+    NotificationKind.billing => Icons.credit_card_outlined,
+    NotificationKind.review => Icons.reviews_outlined,
+    NotificationKind.card => Icons.badge_outlined,
+    NotificationKind.staff => Icons.group_outlined,
+    NotificationKind.other => Icons.notifications_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +87,9 @@ class _NotificationTile extends StatelessWidget {
       label: unread ? 'Unread' : null,
       child: ListTile(
         onTap: onTap,
-        tileColor: unread ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25) : null,
+        tileColor: unread
+            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.25)
+            : null,
         leading: CircleAvatar(
           backgroundColor: theme.colorScheme.surfaceContainerHighest,
           child: Icon(_icon(n.kind), color: theme.colorScheme.primary),
@@ -101,7 +105,10 @@ class _NotificationTile extends StatelessWidget {
             if (n.createdAt != null)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.xxs),
-                child: Text(formatDateTime(n.createdAt), style: theme.textTheme.bodySmall),
+                child: Text(
+                  formatDateTime(n.createdAt),
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
           ],
         ),

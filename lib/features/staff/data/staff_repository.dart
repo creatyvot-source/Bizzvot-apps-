@@ -99,13 +99,13 @@ class StaffRepository {
 
   /// `PATCH /organization/staff/:id`.
   Future<StaffEntry?> update(String id, Json changes) => _api.patch(
-        Endpoints.staffMember(id),
-        body: changes,
-        parse: (d) {
-          final e = StaffEntry.fromJson(d);
-          return e.id.isEmpty ? null : e;
-        },
-      );
+    Endpoints.staffMember(id),
+    body: changes,
+    parse: (d) {
+      final e = StaffEntry.fromJson(d);
+      return e.id.isEmpty ? null : e;
+    },
+  );
 
   /// `DELETE /organization/staff/:id`.
   Future<void> delete(String id) =>
@@ -113,10 +113,10 @@ class StaffRepository {
 
   /// Bare array, or `{ staff | items | … }`.
   static List<StaffEntry> parseStaffList(Object? data) => Paged.parse(
-        data,
-        StaffEntry.fromJson,
-        listKeys: const ['staff', 'items', 'docs', 'results', 'members', 'data'],
-      ).items.where((m) => m.id.isNotEmpty).toList();
+    data,
+    StaffEntry.fromJson,
+    listKeys: const ['staff', 'items', 'docs', 'results', 'members', 'data'],
+  ).items.where((m) => m.id.isNotEmpty).toList();
 
   /// `{ staff: {...}, user: {id, email, name} }` or a flat staff doc.
   static StaffEntry? parseStaffMutation(Object? data) {

@@ -14,6 +14,7 @@ import '../../../shared/models/card.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../data/media_picker.dart';
+import '../domain/card_capabilities.dart';
 import '../domain/card_edit_sections.dart';
 import '../domain/display_sections.dart';
 import '../domain/media_rules.dart';
@@ -142,6 +143,8 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
   late CardVisibility _visibility;
   bool _saving = false;
   int _uploadSeq = 0;
+
+  late final CardCapabilities _caps = ref.read(cardCapabilitiesProvider);
 
   bool _can(CardEditSection s) => widget.sections.contains(s);
 
@@ -452,7 +455,7 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
     setState(() => _saving = true);
     final actions = ref.read(cardActionsProvider);
     try {
-      final saved = await actions.save(widget.target, _baseline.id, patch);
+      final saved = await actions.save(widget.target, _current(), patch);
       final stillUsed = {
         ...saved.gallery,
         ...saved.pdfs,
@@ -460,7 +463,7 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
       final toRemove = _removedLibraryUrls
           .where((u) => !stillUsed.contains(u))
           .toList();
-      final failed = toRemove.isEmpty
+      final failed = toRemove.isEmpty || !_caps.documents
           ? 0
           : await actions.removeLibraryFiles(_baseline.id, toRemove);
       _removedLibraryUrls.clear();
@@ -521,10 +524,12 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
     IconData? icon,
     Iterable<String>? autofill,
     TextCapitalization caps = TextCapitalization.none,
+    bool enabled = true,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.md),
     child: TextFormField(
       controller: _c(key),
+      enabled: enabled && !_saving,
       keyboardType: maxLines > 1 ? TextInputType.multiline : keyboard,
       maxLength: maxLength,
       minLines: maxLines > 1 ? 2 : 1,
@@ -631,7 +636,8 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
       _field(
         'title',
         'Name on card',
-        maxLength: 80,
+        validator: (v) => Validators.required(v, 'Name'),
+        maxLength: 200,
         autofill: const [AutofillHints.name],
         caps: TextCapitalization.words,
       ),
@@ -714,6 +720,8 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
         keyboard: TextInputType.phone,
         icon: Icons.business_outlined,
         validator: Validators.optionalPhone,
+        enabled: _caps.companyPhone,
+        helper: _caps.companyPhone ? null : 'Coming soon',
       ),
       _field(
         'whatsapp',
@@ -765,6 +773,7 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
       icon: Icons.lock_outline,
       color: scheme.surfaceContainerHigh,
       children: [
+        if (!_caps.privateDetails) const ComingSoonNote(),
         Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: DropdownButtonFormField<String?>(
@@ -781,7 +790,9 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
               for (final g in groups)
                 DropdownMenuItem<String?>(value: g, child: Text(g)),
             ],
-            onChanged: (v) => _update(() => _bloodGroup = v),
+            onChanged: _caps.privateDetails
+                ? (v) => _update(() => _bloodGroup = v)
+                : null,
           ),
         ),
         _field(
@@ -789,12 +800,14 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
           'Father’s name (private)',
           maxLength: 80,
           caps: TextCapitalization.words,
+          enabled: _caps.privateDetails,
         ),
         _field(
           'motherName',
           'Mother’s name (private)',
           maxLength: 80,
           caps: TextCapitalization.words,
+          enabled: _caps.privateDetails,
         ),
       ],
     );
@@ -831,6 +844,8 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
         .toList();
     final galleryCount = _gallery.length + galleryUploads.length;
     final pdfCount = _pdfs.length + pdfUploads.length;
+    final media = _caps.media && !_saving;
+    final docs = _caps.documents && !_saving;
     Widget counter(String label, int n, int max) => Row(
       children: [
         Expanded(child: Text(label, style: theme.textTheme.titleSmall)),
@@ -841,6 +856,15 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
       title: 'Gallery, documents & videos',
       icon: Icons.perm_media_outlined,
       children: [
+        if (!_caps.media || !_caps.documents)
+          ComingSoonNote(
+            message: !_caps.media && !_caps.documents
+                ? 'Coming soon. Gallery images, PDF documents and YouTube '
+                      'videos can’t be saved yet.'
+                : !_caps.media
+                ? 'Coming soon: gallery images and YouTube videos can’t be saved yet.'
+                : 'Coming soon: PDF documents can’t be saved yet.',
+          ),
         counter('Gallery', galleryCount, CardLimits.gallery),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
@@ -851,9 +875,9 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
               _GalleryThumb(
                 item: item,
                 index: i,
-                onRemove: _saving
-                    ? null
-                    : () => _removeLibraryItem(item, pdf: false),
+                onRemove: media
+                    ? () => _removeLibraryItem(item, pdf: false)
+                    : null,
               ),
             for (final u in galleryUploads)
               SizedBox.square(
@@ -870,7 +894,7 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: galleryCount >= CardLimits.gallery || _saving
+            onPressed: galleryCount >= CardLimits.gallery || !media
                 ? null
                 : _addGalleryImages,
             icon: const Icon(Icons.add_photo_alternate_outlined),
@@ -897,9 +921,9 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
             trailing: IconButton(
               tooltip: 'Remove document',
               icon: const Icon(Icons.delete_outline),
-              onPressed: _saving
-                  ? null
-                  : () => _removeLibraryItem(item, pdf: true),
+              onPressed: docs
+                  ? () => _removeLibraryItem(item, pdf: true)
+                  : null,
             ),
           ),
         for (final u in pdfUploads)
@@ -914,7 +938,7 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: pdfCount >= CardLimits.pdfs || _saving ? null : _addPdfs,
+            onPressed: pdfCount >= CardLimits.pdfs || !docs ? null : _addPdfs,
             icon: const Icon(Icons.note_add_outlined),
             label: Text(
               pdfCount >= CardLimits.pdfs
@@ -938,14 +962,17 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
             trailing: IconButton(
               tooltip: 'Remove video ${i + 1}',
               icon: const Icon(Icons.delete_outline),
-              onPressed: () =>
-                  _update(() => _videos = [..._videos]..removeAt(i)),
+              onPressed: media
+                  ? () => _update(() => _videos = [..._videos]..removeAt(i))
+                  : null,
             ),
           ),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: _videos.length >= CardLimits.videos ? null : _addVideo,
+            onPressed: _videos.length >= CardLimits.videos || !media
+                ? null
+                : _addVideo,
             icon: const Icon(Icons.add_link),
             label: Text(
               _videos.length >= CardLimits.videos
@@ -986,7 +1013,12 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            for (final t in CardTemplate.values)
+            for (final t in CardTemplate.values.where(
+              (t) =>
+                  _caps.extendedTemplates ||
+                  t.isBackendSupported ||
+                  t == _template,
+            ))
               ChoiceChip(
                 label: Text(t.label),
                 selected: _template == t,
@@ -1004,7 +1036,10 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
           'Google review link',
           keyboard: TextInputType.url,
           validator: MediaRules.optionalHttpsLink,
-          helper: 'Shown as a button on the Review card template.',
+          enabled: _caps.googleReview,
+          helper: _caps.googleReview
+              ? 'Shown as a button on the Review card template.'
+              : 'Coming soon',
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -1014,17 +1049,24 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
           onChanged: (v) => _update(() => _vcard = v),
         ),
         const Divider(height: AppSpacing.lg),
-        Text('Sections', style: Theme.of(context).textTheme.titleSmall),
+        Text('Section order', style: Theme.of(context).textTheme.titleSmall),
         Text(
-          'Drag to change the order on the public card. Switch off to hide a section.',
+          'Drag to change the order on the public card.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         SectionOrderEditor(
           order: _sectionOrder,
-          toggles: _toggles,
           onReorder: (o) => _update(() => _sectionOrder = o),
-          onToggle: _setToggle,
         ),
+        const Divider(height: AppSpacing.lg),
+        Text('Show on card', style: Theme.of(context).textTheme.titleSmall),
+        for (final MapEntry(:key, :value) in DisplaySections.optionLabels.entries)
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(value),
+            value: DisplaySections.isVisible(_toggles, key),
+            onChanged: (v) => _setToggle(key, v),
+          ),
       ],
     );
   }
@@ -1035,9 +1077,16 @@ class _CardEditorFormState extends ConsumerState<CardEditorForm> {
     subtitle:
         'Controls whether this card is listed in your public people directory.',
     children: [
+      if (!_caps.visibility)
+        const ComingSoonNote(
+          message: 'Coming soon: the people directory and per-card '
+              'visibility are not available yet.',
+        ),
       VisibilitySelector(
         value: _visibility,
-        onChanged: (v) => _update(() => _visibility = v),
+        onChanged: _caps.visibility
+            ? (v) => _update(() => _visibility = v)
+            : null,
       ),
     ],
   );

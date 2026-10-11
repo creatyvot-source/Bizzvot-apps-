@@ -149,8 +149,14 @@ class ViewsStats {
     final days = byDay.keys.toList()..sort();
     final hasUnique = byDay.values.any((p) => p.unique != null);
     final out = <DailyPoint>[];
-    for (var d = days.first; !d.isAfter(days.last); d = DateTime(d.year, d.month, d.day + 1)) {
-      out.add(byDay[d] ?? DailyPoint(date: d, count: 0, unique: hasUnique ? 0 : null));
+    for (
+      var d = days.first;
+      !d.isAfter(days.last);
+      d = DateTime(d.year, d.month, d.day + 1)
+    ) {
+      out.add(
+        byDay[d] ?? DailyPoint(date: d, count: 0, unique: hasUnique ? 0 : null),
+      );
     }
     return out;
   }

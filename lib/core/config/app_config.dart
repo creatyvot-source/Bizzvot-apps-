@@ -24,6 +24,12 @@ class AppConfig {
     this.supportPhone,
     this.androidStoreUrl,
     this.iosStoreUrl,
+    this.refundPolicyUrl,
+    this.shippingPolicyUrl,
+    this.cancellationPolicyUrl,
+    this.termsVersion,
+    this.seller,
+    this.grievanceOfficer,
     this.features = const {},
   });
 
@@ -38,6 +44,17 @@ class AppConfig {
   final String? supportPhone;
   final String? androidStoreUrl;
   final String? iosStoreUrl;
+
+  /// Consumer Protection (E-Commerce) Rules 2020 disclosures.
+  final String? refundPolicyUrl;
+  final String? shippingPolicyUrl;
+  final String? cancellationPolicyUrl;
+
+  /// Version of the terms the user accepts at registration (sent to the
+  /// server so consent can be proven — DPDP Act 2023).
+  final String? termsVersion;
+  final SellerInfo? seller;
+  final GrievanceOfficer? grievanceOfficer;
 
   /// Remote feature flags. Unknown flags default to enabled so a missing
   /// key never hides a shipped feature.
@@ -71,7 +88,57 @@ class AppConfig {
       supportPhone: str(support['phone']) ?? str(j['supportPhone']),
       androidStoreUrl: str(store['android']),
       iosStoreUrl: str(store['ios']),
+      refundPolicyUrl: str(links['refundPolicy']),
+      shippingPolicyUrl: str(links['shippingPolicy']),
+      cancellationPolicyUrl: str(links['cancellationPolicy']),
+      termsVersion: str(j['termsVersion']) ?? str(links['termsVersion']),
+      seller: j['seller'] is Map ? SellerInfo.fromJson(j['seller']) : null,
+      grievanceOfficer: j['grievanceOfficer'] is Map
+          ? GrievanceOfficer.fromJson(j['grievanceOfficer'])
+          : null,
       features: asJson(j['features']).map((k, v) => MapEntry(k, boolOr(v, true))),
+    );
+  }
+}
+
+/// Legal seller identity shown on legal screens and invoices.
+class SellerInfo {
+  const SellerInfo({required this.legalName, this.address, this.gstin, this.email, this.phone});
+
+  final String legalName;
+  final String? address;
+  final String? gstin;
+  final String? email;
+  final String? phone;
+
+  factory SellerInfo.fromJson(Object? raw) {
+    final j = asJson(raw);
+    return SellerInfo(
+      legalName: strOr(j['legalName'] ?? j['name']),
+      address: str(j['address']),
+      gstin: str(j['gstin']),
+      email: str(j['email']),
+      phone: str(j['phone']),
+    );
+  }
+}
+
+/// Grievance officer (IT Rules 2011/2021, E-Commerce Rules 2020, DPDP Act).
+class GrievanceOfficer {
+  const GrievanceOfficer({required this.name, this.email, this.phone, this.address});
+
+  final String name;
+  final String? email;
+  final String? phone;
+  final String? address;
+
+  factory GrievanceOfficer.fromJson(Object? raw) {
+    final j = asJson(raw);
+    return GrievanceOfficer(
+      name: strOr(j['name']),
+      email: str(j['email']),
+      phone: str(j['phone']),
+      address: str(j['address']),
     );
   }
 }

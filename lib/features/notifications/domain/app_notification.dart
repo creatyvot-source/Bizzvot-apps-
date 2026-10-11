@@ -134,8 +134,11 @@ enum NotificationKind {
     if (starts('subscription') || starts('renewal')) {
       return NotificationKind.subscription;
     }
-    if (starts('billing') || starts('seat') || starts('seats') ||
-        starts('trial') || starts('plan')) {
+    if (starts('billing') ||
+        starts('seat') ||
+        starts('seats') ||
+        starts('trial') ||
+        starts('plan')) {
       return NotificationKind.billing;
     }
     if (starts('review')) return NotificationKind.review;

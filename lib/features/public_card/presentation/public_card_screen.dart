@@ -76,7 +76,11 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
     unawaited(
       ref
           .read(publicCardRepositoryProvider)
-          .trackClick(cardId: id, linkType: linkType, linkUrl: link?.toString()),
+          .trackClick(
+            cardId: id,
+            linkType: linkType,
+            linkUrl: link?.toString(),
+          ),
     );
   }
 
@@ -342,8 +346,7 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                 items: card.videos,
                 icon: Icons.play_circle_outline,
                 fallbackName: 'Video',
-                onTap: (m) =>
-                    _open(ContactLinks.web(m.url), TrackType.video),
+                onTap: (m) => _open(ContactLinks.web(m.url), TrackType.video),
               )
             : null,
       PublicSection.pdfs =>
@@ -353,8 +356,7 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                 items: card.pdfs,
                 icon: Icons.picture_as_pdf_outlined,
                 fallbackName: 'Document',
-                onTap: (m) =>
-                    _open(ContactLinks.web(m.url), TrackType.pdf),
+                onTap: (m) => _open(ContactLinks.web(m.url), TrackType.pdf),
               )
             : null,
       PublicSection.reviews => PublicReviewsSection(slug: slug, card: card),
