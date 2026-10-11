@@ -129,8 +129,9 @@ class _ReviewsBody extends ConsumerWidget {
                                               .read(provider.notifier)
                                               .loadMore();
                                         } catch (e) {
-                                          if (context.mounted)
+                                          if (context.mounted) {
                                             showError(context, e);
+                                          }
                                         }
                                       },
                                       child: const Text('Load more'),

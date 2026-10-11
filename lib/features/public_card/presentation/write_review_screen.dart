@@ -75,8 +75,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
   String? get _ratingError {
     if (_fieldErrors['rating'] case final e?) return e;
-    if (_ratingTouched && (_rating < 1 || _rating > 5))
+    if (_ratingTouched && (_rating < 1 || _rating > 5)) {
       return 'Choose a rating from 1 to 5 stars';
+    }
     return null;
   }
 
@@ -211,8 +212,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   decoration: const InputDecoration(labelText: 'Your name'),
                   validator: (v) {
                     if (_fieldErrors['name'] case final e?) return e;
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Please enter your name';
+                    }
                     return null;
                   },
                 ),

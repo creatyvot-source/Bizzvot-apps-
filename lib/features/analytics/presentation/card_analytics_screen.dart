@@ -598,8 +598,9 @@ class LinkBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (clicks.counts.isEmpty)
+    if (clicks.counts.isEmpty) {
       return const Text('No link clicks in this period.');
+    }
     final max = clicks.counts.first.$2;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

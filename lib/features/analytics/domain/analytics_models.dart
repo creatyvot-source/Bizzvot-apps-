@@ -232,15 +232,22 @@ enum LinkCategory {
     final t = (raw ?? '').toLowerCase().replaceAll(RegExp('[^a-z]'), '');
     if (t.isEmpty) return other;
     if (t.contains('whatsapp')) return whatsapp;
-    if (t == 'phone' || t == 'call' || t == 'tel' || t.contains('phone'))
+    if (t == 'phone' || t == 'call' || t == 'tel' || t.contains('phone')) {
       return phone;
+    }
     if (t == 'email' || t == 'mail' || t == 'mailto') return email;
-    if (t == 'website' || t == 'web' || t == 'site' || t == 'url')
+    if (t == 'website' || t == 'web' || t == 'site' || t == 'url') {
       return website;
-    if (t.contains('vcard') || t == 'savecontact' || t == 'contact')
+    }
+    if (t.contains('vcard') || t == 'savecontact' || t == 'contact') {
       return vcard;
-    if (t == 'custom' || t == 'customlink' || t == 'customlinks' || t == 'link')
+    }
+    if (t == 'custom' ||
+        t == 'customlink' ||
+        t == 'customlinks' ||
+        t == 'link') {
       return custom;
+    }
     if (_social.contains(t) || t.startsWith('social')) return social;
     return other;
   }
@@ -279,8 +286,9 @@ class LinkClicks {
       if (list == null) {
         const meta = {'total', 'count', 'sum', 'range', 'from', 'to', 'cardid'};
         j.forEach((k, v) {
-          if ((v is num || v is String) && !meta.contains(k.toLowerCase()))
+          if ((v is num || v is String) && !meta.contains(k.toLowerCase())) {
             add(k, v);
+          }
         });
       }
     }

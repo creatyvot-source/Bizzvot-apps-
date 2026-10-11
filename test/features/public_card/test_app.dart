@@ -57,6 +57,5 @@ class FakeExternalActions implements ExternalActions {
     required String mimeType,
     String? subject,
     Rect? origin,
-  }) async =>
-      sharedFiles.add(fileName);
+  }) async => sharedFiles.add(fileName);
 }

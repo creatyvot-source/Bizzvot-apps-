@@ -61,8 +61,9 @@ class ReviewsRepository {
           final j = asJson(data);
           if (j['reply'] != null) return ReviewReply.fromJson(j['reply']);
           final review = asJson(j['review']);
-          if (review['reply'] != null)
+          if (review['reply'] != null) {
             return ReviewReply.fromJson(review['reply']);
+          }
           return null;
         },
       );

@@ -72,7 +72,9 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
   void _track(String type, [String? target]) {
     // Fire-and-forget; the repository swallows failures.
     unawaited(
-      ref.read(publicCardRepositoryProvider).trackClick(slug: slug, type: type, target: target),
+      ref
+          .read(publicCardRepositoryProvider)
+          .trackClick(slug: slug, type: type, target: target),
     );
   }
 
@@ -87,7 +89,9 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
     _track(TrackType.share);
     final url = ref.read(envProvider).publicCardUrl(slug);
     try {
-      await ref.read(externalActionsProvider).shareText(
+      await ref
+          .read(externalActionsProvider)
+          .shareText(
             url,
             subject: card.displayName,
             origin: _originOf(buttonContext),
@@ -106,7 +110,9 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
     try {
       final bytes = await ref.read(publicCardRepositoryProvider).fetchVcard(id);
       if (bytes.isEmpty) throw StateError('empty vcard');
-      await ref.read(externalActionsProvider).shareFile(
+      await ref
+          .read(externalActionsProvider)
+          .shareFile(
             bytes: bytes,
             fileName: vcardFileName(card.name),
             mimeType: 'text/vcard',
@@ -161,7 +167,8 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                 ? Padding(
                     padding: const EdgeInsets.all(AppSpacing.xs),
                     child: IconButton(
-                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                      tooltip: MaterialLocalizations.of(context)
+                          .backButtonTooltip,
                       style: onHero ? barButtonStyle : null,
                       icon: const BackButtonIcon(),
                       onPressed: () => Navigator.of(context).maybePop(),
@@ -205,8 +212,12 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                           const SizedBox(height: AppSpacing.md),
                           FilledButton.icon(
                             key: const ValueKey('google-review'),
-                            onPressed: () => _open(googleReview, TrackType.googleReview),
-                            icon: const Icon(Icons.star_rounded, color: AppColors.star),
+                            onPressed: () =>
+                                _open(googleReview, TrackType.googleReview),
+                            icon: const Icon(
+                              Icons.star_rounded,
+                              color: AppColors.star,
+                            ),
                             label: const Text('Review us on Google'),
                           ),
                         ],
@@ -217,8 +228,11 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                           child: Text(
                             'Digital card by Bizzvot',
                             textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                           ),
                         ),
@@ -235,9 +249,15 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
   }
 
   Widget _quickActions() {
-    final call = card.shows(const ['phone']) ? ContactLinks.tel(card.phone) : null;
-    final wa = card.shows(const ['whatsapp']) ? ContactLinks.whatsapp(card.whatsapp) : null;
-    final mail = card.shows(const ['email']) ? ContactLinks.mailto(card.email) : null;
+    final call = card.shows(const ['phone'])
+        ? ContactLinks.tel(card.phone)
+        : null;
+    final wa = card.shows(const ['whatsapp'])
+        ? ContactLinks.whatsapp(card.whatsapp)
+        : null;
+    final mail = card.shows(const ['email'])
+        ? ContactLinks.mailto(card.email)
+        : null;
     return QuickActionsRow(
       children: [
         if (call != null)
@@ -275,53 +295,66 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
 
   List<Widget> _section(PublicSection section) {
     final hub = card.template == CardTemplate.profileHub;
-    bool anySafe(List<MediaItem> items) => items.any((m) => ContactLinks.web(m.url) != null);
+    bool anySafe(List<MediaItem> items) =>
+        items.any((m) => ContactLinks.web(m.url) != null);
     final Widget? child = switch (section) {
       PublicSection.contact =>
-        hasContactDetails(card) ? ContactSection(card: card, onOpen: _open) : null,
-      PublicSection.about => card.bio == null
-          ? null
-          : CardSection(
-              title: 'About',
-              children: [Text(card.bio!, style: Theme.of(context).textTheme.bodyLarge)],
-            ),
-      PublicSection.social => !hasSafeLinks(card.socialLinks)
-          ? null
-          : LinksSection(
-              title: 'Social',
-              links: card.socialLinks,
-              hub: hub,
-              social: true,
-              onOpen: _open,
-            ),
-      PublicSection.links => !hasSafeLinks(card.customLinks)
-          ? null
-          : LinksSection(
-              title: 'Links',
-              links: card.customLinks,
-              hub: hub,
-              social: false,
-              onOpen: _open,
-            ),
-      PublicSection.gallery => anySafe(card.gallery) ? GallerySection(images: card.gallery) : null,
-      PublicSection.videos => anySafe(card.videos)
-          ? MediaListSection(
-              title: 'Videos',
-              items: card.videos,
-              icon: Icons.play_circle_outline,
-              fallbackName: 'Video',
-              onTap: (m) => _open(ContactLinks.web(m.url), TrackType.video, m.name),
-            )
-          : null,
-      PublicSection.pdfs => anySafe(card.pdfs)
-          ? MediaListSection(
-              title: 'Documents',
-              items: card.pdfs,
-              icon: Icons.picture_as_pdf_outlined,
-              fallbackName: 'Document',
-              onTap: (m) => _open(ContactLinks.web(m.url), TrackType.pdf, m.name),
-            )
-          : null,
+        hasContactDetails(card)
+            ? ContactSection(card: card, onOpen: _open)
+            : null,
+      PublicSection.about =>
+        card.bio == null
+            ? null
+            : CardSection(
+                title: 'About',
+                children: [
+                  Text(card.bio!, style: Theme.of(context).textTheme.bodyLarge),
+                ],
+              ),
+      PublicSection.social =>
+        !hasSafeLinks(card.socialLinks)
+            ? null
+            : LinksSection(
+                title: 'Social',
+                links: card.socialLinks,
+                hub: hub,
+                social: true,
+                onOpen: _open,
+              ),
+      PublicSection.links =>
+        !hasSafeLinks(card.customLinks)
+            ? null
+            : LinksSection(
+                title: 'Links',
+                links: card.customLinks,
+                hub: hub,
+                social: false,
+                onOpen: _open,
+              ),
+      PublicSection.gallery =>
+        anySafe(card.gallery) ? GallerySection(images: card.gallery) : null,
+      PublicSection.videos =>
+        anySafe(card.videos)
+            ? MediaListSection(
+                title: 'Videos',
+                items: card.videos,
+                icon: Icons.play_circle_outline,
+                fallbackName: 'Video',
+                onTap: (m) =>
+                    _open(ContactLinks.web(m.url), TrackType.video, m.name),
+              )
+            : null,
+      PublicSection.pdfs =>
+        anySafe(card.pdfs)
+            ? MediaListSection(
+                title: 'Documents',
+                items: card.pdfs,
+                icon: Icons.picture_as_pdf_outlined,
+                fallbackName: 'Document',
+                onTap: (m) =>
+                    _open(ContactLinks.web(m.url), TrackType.pdf, m.name),
+              )
+            : null,
       PublicSection.reviews => PublicReviewsSection(slug: slug, card: card),
     };
     if (child == null) return const [];

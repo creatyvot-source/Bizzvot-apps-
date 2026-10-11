@@ -137,8 +137,9 @@ class PublicDirectoryController extends AsyncNotifier<PublicDirectoryState> {
 
   Future<void> loadMore() async {
     final current = state.value;
-    if (current == null || current.list.loadingMore || !current.list.hasMore)
+    if (current == null || current.list.loadingMore || !current.list.hasMore) {
       return;
+    }
     PublicDirectoryState withList(PagedList<DirectoryEntry> l) =>
         PublicDirectoryState(
           organizationName: current.organizationName,
@@ -168,8 +169,9 @@ class PublicDirectoryController extends AsyncNotifier<PublicDirectoryState> {
         ),
       );
     } catch (_) {
-      if (ref.mounted)
+      if (ref.mounted) {
         state = AsyncData(withList(current.list.copyWith(loadingMore: false)));
+      }
       rethrow;
     }
   }
