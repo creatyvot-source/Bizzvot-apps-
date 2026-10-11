@@ -153,17 +153,21 @@ class PublicCard {
     final j = root['card'] is Map ? asJson(root['card']) : root;
     final org = asJson(root['organization'] ?? j['organization'] ?? j['org']);
     final media = asJson(j['media']);
+    // Backend nests template, color and section order under `theme`.
+    final theme = asJson(j['theme']);
     final stats = asJson(root['stats'] ?? j['stats'] ?? root['reviewSummary']);
 
     final toggles = <String, bool>{};
-    asJson(j['displayToggles'] ?? j['display']).forEach((k, v) {
+    asJson(
+      j['displayOptions'] ?? j['displayToggles'] ?? j['display'],
+    ).forEach((k, v) {
       final key = normalizeCardKey(k);
       final b = boolOrNull(v);
       if (b != null && !_privateKeys.contains(key)) toggles[key] = b;
     });
 
     final order = <PublicSection>[];
-    for (final raw in strList(j['sectionOrder'])) {
+    for (final raw in strList(theme['sectionOrder'] ?? j['sectionOrder'])) {
       final s = PublicSection.parse(raw);
       if (s != null && !order.contains(s)) order.add(s);
     }
@@ -177,10 +181,13 @@ class PublicCard {
       slug: strOr(j['slug']),
       name: str(j['title']) ?? str(j['name']) ?? str(j['fullName']),
       designation: str(j['designation']),
-      company: str(j['company']),
+      company: str(j['companyName']) ?? str(j['company']),
       pronouns: str(j['pronouns']),
       bio: str(j['bio']),
-      profilePhoto: str(j['profilePhoto']) ?? str(media['profilePhoto']),
+      profilePhoto:
+          str(j['photo']) ??
+          str(j['profilePhoto']) ??
+          str(media['profilePhoto']),
       coverImage: str(j['coverImage']) ?? str(media['coverImage']),
       logo: str(j['logo']) ?? str(media['logo']),
       phone: str(j['phone']),
@@ -195,8 +202,10 @@ class PublicCard {
       gallery: _media(j['gallery'] ?? media['gallery']),
       pdfs: _media(j['pdfs'] ?? j['documents'] ?? media['pdfs']),
       videos: _media(j['videos'] ?? j['youtubeVideos'] ?? media['videos']),
-      template: CardTemplate.parse(j['template']),
-      brandColor: str(j['brandColor']) ?? str(j['color']),
+      // Unknown template ids fall back to `minimal`.
+      template: CardTemplate.parse(theme['templateId'] ?? j['template']),
+      brandColor:
+          str(theme['primaryColor']) ?? str(j['brandColor']) ?? str(j['color']),
       sectionOrder: List.unmodifiable(order),
       displayToggles: Map.unmodifiable(toggles),
       vcardEnabled: boolOrNull(j['vcardEnabled']) ?? true,

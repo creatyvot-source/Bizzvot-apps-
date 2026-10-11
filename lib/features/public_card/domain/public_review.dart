@@ -43,7 +43,10 @@ class PublicReview {
   }
 }
 
-/// Body for `POST /public/card/:slug/review`.
+/// Body for `POST /public/card/:slug/review`:
+/// `{reviewerName (1–200), rating (int 1–5), comment? (≤ 5000)}`.
+/// The optional `reviewerEmail` the backend accepts is deliberately never
+/// collected or sent.
 class ReviewSubmission {
   const ReviewSubmission({
     required this.rating,
@@ -51,13 +54,17 @@ class ReviewSubmission {
     this.comment,
   });
 
+  /// Server-side limits (backend zod schema), mirrored in the form.
+  static const nameMaxLength = 200;
+  static const commentMaxLength = 5000;
+
   final int rating;
   final String name;
   final String? comment;
 
   Json toJson() => compact({
+    'reviewerName': name.trim(),
     'rating': rating,
-    'name': name.trim(),
     'comment': (comment?.trim().isEmpty ?? true) ? null : comment!.trim(),
   });
 }

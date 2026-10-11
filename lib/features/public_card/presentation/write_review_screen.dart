@@ -20,8 +20,8 @@ class WriteReviewScreen extends ConsumerStatefulWidget {
 
   final String slug;
 
-  static const nameMaxLength = 60;
-  static const commentMaxLength = 1000;
+  static const nameMaxLength = ReviewSubmission.nameMaxLength;
+  static const commentMaxLength = ReviewSubmission.commentMaxLength;
   static const defaultCooldown = Duration(seconds: 60);
 
   @override
