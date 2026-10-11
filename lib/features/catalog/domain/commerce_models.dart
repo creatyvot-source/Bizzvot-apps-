@@ -991,6 +991,7 @@ class Subscription {
     this.renewalPrice,
     this.renewalInProgress = false,
     this.lastOrderId,
+    this.purchaseChannels,
   });
 
   final String id;
@@ -1018,6 +1019,14 @@ class Subscription {
   /// True while the server reports a renewal payment awaiting verification.
   final bool renewalInProgress;
   final String? lastOrderId;
+
+  /// Server per-platform override for in-app renewal (default: blocked).
+  final PurchaseChannels? purchaseChannels;
+
+  /// Renewal may be paid in-app on this platform. v1 default is false:
+  /// subscriptions are status-only (App Store 3.1.1 / Play Payments).
+  bool get inAppRenewalAllowed =>
+      PaymentPolicy.inAppDigital.allowsCheckout(purchaseChannels);
 
   String get statusLabel =>
       status == SubscriptionStatus.unknown ? humanize(statusRaw) : status.label;
@@ -1083,6 +1092,7 @@ class Subscription {
           renewalState == 'processing' ||
           boolOr(j['renewalPending']),
       lastOrderId: str(j['lastOrderId'] ?? renewal['orderId']),
+      purchaseChannels: PurchaseChannels.tryParse(j['purchaseChannels']),
     );
   }
 }

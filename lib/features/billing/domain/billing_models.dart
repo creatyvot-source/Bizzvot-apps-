@@ -38,6 +38,7 @@ class BillingSummary {
     this.lastPaymentStatus,
     this.plans = const [],
     this.hasSubscription = false,
+    this.purchaseChannels,
   });
 
   final String? planId;
@@ -62,6 +63,13 @@ class BillingSummary {
   /// Plans offered inline by the billing route (fallback for the catalogue).
   final List<Plan> plans;
   final bool hasSubscription;
+
+  /// Server per-platform override for buying seats in-app.
+  final PurchaseChannels? purchaseChannels;
+
+  /// v1 default: seats are digital entitlements → status only, no purchase.
+  bool get seatPurchaseAllowed =>
+      PaymentPolicy.inAppDigital.allowsCheckout(purchaseChannels);
 
   bool get onTrial =>
       trial?.active ?? subscriptionStatus == SubscriptionStatus.trialing;
@@ -180,6 +188,7 @@ class BillingSummary {
           .where((p) => p.id.isNotEmpty)
           .toList(growable: false),
       hasSubscription: sub.isNotEmpty || statusRaw != null,
+      purchaseChannels: PurchaseChannels.tryParse(j['purchaseChannels']),
     );
   }
 }
