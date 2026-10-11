@@ -109,16 +109,18 @@ enum NotificationKind {
   /// `payment_failed`, `review.new`, `card.disabled`.
   static NotificationKind of(String type) {
     final t = wireKey(type);
-    String head(String prefix) => t.startsWith(prefix) ? prefix : '';
-    if (head('order') != '') return NotificationKind.order;
-    if (head('payment') != '') return NotificationKind.payment;
-    if (head('invoice') != '') return NotificationKind.invoice;
-    if (head('subscription') != '' || head('renewal') != '' || head('trial') != '') {
-      return t.startsWith('trial') ? NotificationKind.billing : NotificationKind.subscription;
+    bool starts(String p) => t == p || t.startsWith('${p}_');
+    if (starts('order')) return NotificationKind.order;
+    if (starts('payment')) return NotificationKind.payment;
+    if (starts('invoice')) return NotificationKind.invoice;
+    if (starts('subscription') || starts('renewal')) {
+      return NotificationKind.subscription;
     }
-    if (head('billing') != '' || head('seat') != '') return NotificationKind.billing;
-    if (head('review') != '') return NotificationKind.review;
-    if (head('card') != '') return NotificationKind.card;
+    if (starts('billing') || starts('seat') || starts('seats') || starts('trial')) {
+      return NotificationKind.billing;
+    }
+    if (starts('review')) return NotificationKind.review;
+    if (starts('card')) return NotificationKind.card;
     return NotificationKind.other;
   }
 }
