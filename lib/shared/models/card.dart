@@ -319,47 +319,67 @@ class CardModel {
     bool? disabledByBilling,
     CardVisibility? visibility,
     String? googleReviewUrl,
-  }) =>
-      CardModel(
+    Set<String> clear = const {},
+  }) {
+    // Keys in [clear] (the `toUpdateJson` field names) are reset to null,
+    // which plain `??` copy semantics cannot express.
+    T? pick<T>(String key, T? next, T? current) =>
+        clear.contains(key) ? null : (next ?? current);
+    return CardModel(
         id: id,
         slug: slug,
         staffUserId: staffUserId,
         staffName: staffName,
-        title: title ?? this.title,
-        designation: designation ?? this.designation,
-        company: company ?? this.company,
-        pronouns: pronouns ?? this.pronouns,
-        bio: bio ?? this.bio,
-        profilePhoto: profilePhoto ?? this.profilePhoto,
-        coverImage: coverImage ?? this.coverImage,
-        logo: logo ?? this.logo,
-        phone: phone ?? this.phone,
-        companyPhone: companyPhone ?? this.companyPhone,
-        whatsapp: whatsapp ?? this.whatsapp,
-        email: email ?? this.email,
-        website: website ?? this.website,
-        address: address ?? this.address,
-        mapLink: mapLink ?? this.mapLink,
-        bloodGroup: bloodGroup ?? this.bloodGroup,
-        fatherName: fatherName ?? this.fatherName,
-        motherName: motherName ?? this.motherName,
+        title: pick('title', title, this.title),
+        designation: pick('designation', designation, this.designation),
+        company: pick('company', company, this.company),
+        pronouns: pick('pronouns', pronouns, this.pronouns),
+        bio: pick('bio', bio, this.bio),
+        profilePhoto: pick('profilePhoto', profilePhoto, this.profilePhoto),
+        coverImage: pick('coverImage', coverImage, this.coverImage),
+        logo: pick('logo', logo, this.logo),
+        phone: pick('phone', phone, this.phone),
+        companyPhone: pick('companyPhone', companyPhone, this.companyPhone),
+        whatsapp: pick('whatsapp', whatsapp, this.whatsapp),
+        email: pick('email', email, this.email),
+        website: pick('website', website, this.website),
+        address: pick('address', address, this.address),
+        mapLink: pick('mapLink', mapLink, this.mapLink),
+        bloodGroup: pick('bloodGroup', bloodGroup, this.bloodGroup),
+        fatherName: pick('fatherName', fatherName, this.fatherName),
+        motherName: pick('motherName', motherName, this.motherName),
         socialLinks: socialLinks ?? this.socialLinks,
         customLinks: customLinks ?? this.customLinks,
         gallery: gallery ?? this.gallery,
         pdfs: pdfs ?? this.pdfs,
         videos: videos ?? this.videos,
         template: template ?? this.template,
-        brandColor: brandColor ?? this.brandColor,
+        brandColor: pick('brandColor', brandColor, this.brandColor),
         sectionOrder: sectionOrder ?? this.sectionOrder,
         displayToggles: displayToggles ?? this.displayToggles,
         vcardEnabled: vcardEnabled ?? this.vcardEnabled,
         status: status ?? this.status,
         disabledByBilling: disabledByBilling ?? this.disabledByBilling,
         visibility: visibility ?? this.visibility,
-        googleReviewUrl: googleReviewUrl ?? this.googleReviewUrl,
+        googleReviewUrl: pick('googleReviewUrl', googleReviewUrl, this.googleReviewUrl),
         viewCount: viewCount,
         reviewCount: reviewCount,
         averageRating: averageRating,
         updatedAt: updatedAt,
       );
+  }
+
+  /// Nullable scalar fields that [copyWith] can clear via `clear:`.
+  static const clearableFields = {
+    'title', 'designation', 'company', 'pronouns', 'bio',
+    'profilePhoto', 'coverImage', 'logo',
+    'phone', 'companyPhone', 'whatsapp', 'email', 'website', 'address',
+    'mapLink', 'bloodGroup', 'fatherName', 'motherName', 'brandColor',
+    'googleReviewUrl',
+  };
+
+  /// True when any private detail (blood group, parents' names) is set.
+  /// Private details must never be rendered on public surfaces.
+  bool get hasPrivateDetails =>
+      bloodGroup != null || fatherName != null || motherName != null;
 }
