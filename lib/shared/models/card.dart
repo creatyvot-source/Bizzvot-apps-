@@ -576,13 +576,15 @@ abstract final class CardWire {
   }
 
   /// Full `theme` object (the backend replaces it as a whole).
-  static Json themeOf(CardModel c) => {
-        if (c.template.isBackendSupported) 'templateId': c.template.wire,
-        if (c.brandColor != null) 'primaryColor': c.brandColor,
-        if (c.themeLayout != null) 'layout': c.themeLayout,
-        'sectionOrder':
-            c.sectionOrder.where(sectionKeys.contains).toSet().toList(),
-      };
+  static Json themeOf(CardModel c) {
+    final order = c.sectionOrder.where(sectionKeys.contains).toSet().toList();
+    return {
+      if (c.template.isBackendSupported) 'templateId': c.template.wire,
+      if (c.brandColor != null) 'primaryColor': c.brandColor,
+      if (c.themeLayout != null) 'layout': c.themeLayout,
+      if (order.isNotEmpty) 'sectionOrder': order,
+    };
+  }
 
   /// Full `displayOptions` object; missing keys default to shown.
   static Json displayOptionsOf(CardModel c) => {

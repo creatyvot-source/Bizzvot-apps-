@@ -177,7 +177,6 @@ void main() {
       expect(body['theme'], {
         'templateId': 'corporate',
         'primaryColor': '#00AA00',
-        'sectionOrder': <String>[],
       });
       expect(body['displayOptions'], {
         'showBio': false,

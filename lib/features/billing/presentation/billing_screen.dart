@@ -177,11 +177,20 @@ class _BillingBody extends StatelessWidget {
             ),
         ],
         const SizedBox(height: AppSpacing.lg),
-        FilledButton.icon(
-          onPressed: () => context.push(Routes.ownerSeats),
-          icon: const Icon(Icons.add),
-          label: const Text('Buy more seats'),
-        ),
+        if (b.seatPurchaseAllowed) ...[
+          FilledButton.icon(
+            onPressed: () => context.push(Routes.ownerSeats),
+            icon: const Icon(Icons.add),
+            label: const Text('Buy more seats'),
+          ),
+        ] else
+          // Store compliance: neutral status copy, no link or purchase CTA.
+          Text(
+            'Manage your plan from your Bizzvot account.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         const SizedBox(height: AppSpacing.sm),
         _NavTile(
           icon: Icons.autorenew,
@@ -222,65 +231,62 @@ class _AlertBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = billing;
-    void toSubscription() => context.push(
-      b.subscriptionId == null
-          ? Routes.ownerSubscriptions
-          : Routes.ownerSubscription(b.subscriptionId!),
-    );
-    final (title, message, tone, label, action) = switch (alert) {
+    // Status-only copy (App Store 3.1.1 / Play Payments anti-steering): no
+    // purchase or renewal call to action unless the server enables seat
+    // purchases for this platform.
+    const manage = 'Manage your plan from your Bizzvot account.';
+    final (title, message, tone) = switch (alert) {
       BillingAlert.paymentFailed => (
         'Payment failed',
-        'Your last payment didn’t go through. Renew to keep your cards active.',
+        'Your last payment didn’t go through. $manage',
         StatusTone.danger,
-        'Fix payment',
-        toSubscription,
       ),
       BillingAlert.gracePeriod => (
         'Grace period',
         b.graceUntil == null
-            ? 'Your plan has lapsed. Cards stay active for a limited time — renew to avoid interruption.'
-            : 'Your plan has lapsed. Cards stay active until ${formatDate(b.graceUntil)} — renew to avoid interruption.',
+            ? 'Your plan has lapsed. Cards stay active for a limited time. $manage'
+            : 'Your plan has lapsed. Cards stay active until ${formatDate(b.graceUntil)}. $manage',
         StatusTone.warning,
-        'Renew now',
-        toSubscription,
       ),
       BillingAlert.expired => (
         'Plan expired',
-        'Your plan has expired. Cards beyond your free allowance may be disabled until you renew.',
+        'Your plan has expired. Cards beyond your free allowance may be disabled. $manage',
         StatusTone.danger,
-        'Renew',
-        toSubscription,
       ),
       BillingAlert.trialEnding => (
         'Trial ending soon',
         b.trial?.endsAt == null
-            ? 'Choose a plan to keep your cards active after the trial.'
-            : 'Your trial ends ${formatDate(b.trial!.endsAt)}. Choose a plan to keep your cards active.',
+            ? 'Your free trial ends soon. $manage'
+            : 'Your free trial ends ${formatDate(b.trial!.endsAt)}. $manage',
         StatusTone.info,
-        'Choose a plan',
-        () => context.push(Routes.ownerSeats),
       ),
       BillingAlert.trialEnded => (
         'Trial ended',
-        'Your free trial has ended. Buy seats to re-activate your cards.',
+        'Your free trial has ended. $manage',
         StatusTone.warning,
-        'Buy seats',
-        () => context.push(Routes.ownerSeats),
       ),
       BillingAlert.cardsDisabled => (
         'Cards disabled by billing',
         '${b.disabledByBilling} card${b.disabledByBilling == 1 ? ' is' : 's are'} disabled until more seats are available.',
         StatusTone.warning,
-        'Buy seats',
-        () => context.push(Routes.ownerSeats),
       ),
     };
-    return NoticeCard(
-      title: title,
-      message: message,
-      tone: tone,
-      action: TextButton(onPressed: action, child: Text(label)),
-    );
+    final Widget? action = switch (alert) {
+      BillingAlert.paymentFailed ||
+      BillingAlert.gracePeriod ||
+      BillingAlert.expired when b.subscriptionId != null => TextButton(
+        onPressed: () => context.push(Routes.ownerSubscription(b.subscriptionId!)),
+        child: const Text('View subscription'),
+      ),
+      BillingAlert.cardsDisabled ||
+      BillingAlert.trialEnded ||
+      BillingAlert.trialEnding when b.seatPurchaseAllowed => TextButton(
+        onPressed: () => context.push(Routes.ownerSeats),
+        child: const Text('Buy seats'),
+      ),
+      _ => null,
+    };
+    return NoticeCard(title: title, message: message, tone: tone, action: action);
   }
 }
 
@@ -313,22 +319,23 @@ class _ComingSoon extends ConsumerWidget {
     return EmptyView(
       icon: Icons.credit_card_outlined,
       title: 'Billing is coming soon',
-      message: email == null
-          ? 'In-app billing isn’t available yet. Please contact support to buy or change seats.'
-          : 'In-app billing isn’t available yet. Contact $email to buy or change seats.',
+      // Neutral copy only — no purchase steering (store compliance). The
+      // support button is for billing questions, not purchases.
+      message: 'Your plan and seat details will appear here soon. '
+          'Manage your plan from your Bizzvot account.',
       action: email == null
           ? null
           : FilledButton.icon(
               onPressed: () async {
                 final ok = await ref
                     .read(linkLauncherProvider)
-                    .email(email, subject: 'Billing & seats');
+                    .email(email, subject: 'Billing question');
                 if (!ok && context.mounted) {
                   showMessage(context, 'Couldn’t open your email app.');
                 }
               },
               icon: const Icon(Icons.mail_outline),
-              label: const Text('Contact support'),
+              label: const Text('Billing questions? Contact support'),
             ),
     );
   }
