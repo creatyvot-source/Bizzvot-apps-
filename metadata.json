@@ -1,0 +1,8 @@
+{
+  "name": "Bizzvot - Digital Business Cards & Team Hub",
+  "description": "Next-generation digital business cards, team organization dashboard, public profiles, interactive review management, and NFC card shop for modern organizations.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
