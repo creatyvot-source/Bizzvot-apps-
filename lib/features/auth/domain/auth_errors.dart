@@ -41,8 +41,8 @@ abstract final class AuthMessages {
       'The email or password is incorrect. Check your details and try again.';
   static const adminAccount = 'Use the admin sign-in page';
   static const useStaffLogin =
-      'This sign-in is for organization owners. If you were added by your '
-      'organization as a team member, use staff sign-in instead.';
+      'Team members and staff should sign in on the web portal. '
+      'The mobile app is for organization accounts.';
   static const useOwnerLogin =
       'This sign-in is for team members. If you manage an organization, use '
       'owner sign-in instead.';

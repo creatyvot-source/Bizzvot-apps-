@@ -2,10 +2,10 @@ import 'package:bizzvot/core/auth/session_controller.dart';
 import 'package:bizzvot/core/errors/app_exception.dart';
 import 'package:bizzvot/features/auth/domain/auth_errors.dart';
 import 'package:bizzvot/features/auth/presentation/forgot_password_screen.dart';
+import 'package:bizzvot/features/auth/presentation/login_screen.dart';
 import 'package:bizzvot/features/auth/presentation/owner_login_screen.dart';
 import 'package:bizzvot/features/auth/presentation/register_screen.dart';
 import 'package:bizzvot/features/auth/presentation/reset_password_screen.dart';
-import 'package:bizzvot/features/auth/presentation/staff_login_screen.dart';
 import 'package:bizzvot/features/auth/presentation/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,10 +20,9 @@ void main() {
   setUp(() => auth = FakeAuthFlow());
 
   group('WelcomeScreen', () {
-    testWidgets('offers owner, staff and register choices', (tester) async {
+    testWidgets('offers sign-in and register choices', (tester) async {
       await tester.pumpWidget(authHarness(const WelcomeScreen(), auth: auth));
-      expect(find.text('Owner sign-in'), findsOneWidget);
-      expect(find.text('Staff sign-in'), findsOneWidget);
+      expect(find.text('Sign in'), findsOneWidget);
       expect(find.text('Create an organization'), findsOneWidget);
       expect(find.text('Privacy & legal'), findsOneWidget);
       expect(find.text('You’ve been signed out'), findsNothing);
@@ -43,16 +42,44 @@ void main() {
     });
   });
 
+  group('LoginScreen (normal login)', () {
+    testWidgets('submits credentials to unified login', (tester) async {
+      await tester.pumpWidget(authHarness(const LoginScreen(), auth: auth));
+      expect(find.text('Sign in'), findsWidgets);
+      expect(find.text('Welcome back'), findsOneWidget);
+      expect(find.text('Staff sign-in'), findsNothing);
+      expect(find.text('Owner sign-in'), findsNothing);
+
+      await enterField(tester, 'Email', 'user@x.com');
+      await enterField(tester, 'Password', 'secret123');
+      await tapButton(tester, 'Sign in');
+      expect(auth.calls, ['login']);
+    });
+
+    testWidgets('shows dismissible session expiry banner on login screen',
+        (tester) async {
+      await tester.pumpWidget(authHarness(
+        const LoginScreen(),
+        auth: auth,
+        session: const SignedOut(expired: true),
+      ));
+      expect(find.text('You’ve been signed out'), findsOneWidget);
+      await tester.tap(find.byTooltip('Dismiss'));
+      await tester.pump();
+      expect(find.text('You’ve been signed out'), findsNothing);
+    });
+  });
+
   group('OwnerLoginScreen', () {
     Future<void> submit(WidgetTester tester) async {
       await enterField(tester, 'Email', 'owner@x.com');
       await enterField(tester, 'Password', 'secret123');
-      await tapText(tester, 'Sign in');
+      await tapButton(tester, 'Sign in');
     }
 
     testWidgets('validates before calling the API', (tester) async {
       await tester.pumpWidget(authHarness(const OwnerLoginScreen(), auth: auth));
-      await tapText(tester, 'Sign in');
+      await tapButton(tester, 'Sign in');
       expect(find.text('Email is required'), findsOneWidget);
       expect(find.text('Password is required'), findsOneWidget);
       expect(auth.calls, isEmpty);
@@ -66,12 +93,12 @@ void main() {
       );
       await tester.pumpWidget(authHarness(const OwnerLoginScreen(), auth: auth));
       await submit(tester);
-      expect(auth.calls, ['loginOwner']);
+      expect(auth.calls, ['login']);
       expect(find.text(AuthMessages.invalidCredentials), findsOneWidget);
       expect(find.textContaining('locked'), findsNothing);
     });
 
-    testWidgets('guides staff accounts to staff sign-in', (tester) async {
+    testWidgets('guides staff accounts to web sign-in message', (tester) async {
       auth.error = const AppException(
         AppErrorKind.forbidden,
         'x',
@@ -81,7 +108,7 @@ void main() {
       await tester.pumpWidget(authHarness(const OwnerLoginScreen(), auth: auth));
       await submit(tester);
       expect(find.text(AuthMessages.useStaffLogin), findsOneWidget);
-      expect(find.text('Go to staff sign-in'), findsOneWidget);
+      expect(find.text('Go to staff sign-in'), findsNothing);
     });
 
     testWidgets('super_admin sees the admin sign-in message', (tester) async {
@@ -114,14 +141,6 @@ void main() {
       await tester.pump(const Duration(seconds: 6));
       expect(_button(tester, 'Sign in').onPressed, isNotNull);
     });
-  });
-
-  testWidgets('StaffLoginScreen uses the staff endpoint', (tester) async {
-    await tester.pumpWidget(authHarness(const StaffLoginScreen(), auth: auth));
-    await enterField(tester, 'Email', 'staff@x.com');
-    await enterField(tester, 'Password', 'secret123');
-    await tapText(tester, 'Sign in');
-    expect(auth.calls, ['loginStaff']);
   });
 
   group('ForgotPasswordScreen', () {

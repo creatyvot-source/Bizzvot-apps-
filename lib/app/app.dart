@@ -11,9 +11,11 @@ class BizzvotApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Bizzvot',
       debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       routerConfig: router,

@@ -73,11 +73,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     setState(() => _sent = true);
   }
 
-  void _close() {
+    void _close() {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go(Routes.welcome);
+      context.go(Routes.login);
     }
   }
 

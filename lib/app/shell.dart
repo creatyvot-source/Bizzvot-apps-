@@ -100,7 +100,12 @@ class MoreScreen extends ConsumerWidget {
         );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
+      appBar: AppBar(
+        title: const Text('More'),
+        actions: const [
+          ThemeToggleActionButton(),
+        ],
+      ),
       body: ContentWidth(
         child: ListView(
           children: [
@@ -118,6 +123,8 @@ class MoreScreen extends ConsumerWidget {
                       .join(' · '),
                 ),
               ),
+            header('Appearance'),
+            const ThemeModeSelector(),
             if (owner) ...[
               header('Organization'),
               tile(Icons.business_outlined, 'Organization profile', Routes.ownerProfile),

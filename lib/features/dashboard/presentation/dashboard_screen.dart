@@ -27,6 +27,7 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          const ThemeToggleActionButton(),
           IconButton(
             tooltip: 'Notifications',
             icon: const Icon(Icons.notifications_outlined),

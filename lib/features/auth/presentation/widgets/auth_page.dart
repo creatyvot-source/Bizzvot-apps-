@@ -12,6 +12,8 @@ class AuthPage extends StatelessWidget {
     required this.child,
     this.heading,
     this.subheading,
+    this.automaticallyImplyLeading,
+    this.actions = const [ThemeToggleActionButton()],
   });
 
   /// App bar title.
@@ -21,6 +23,8 @@ class AuthPage extends StatelessWidget {
   final String? heading;
   final String? subheading;
   final Widget child;
+  final bool? automaticallyImplyLeading;
+  final List<Widget>? actions;
 
   static const maxWidth = 480.0;
 
@@ -28,7 +32,11 @@ class AuthPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        automaticallyImplyLeading: automaticallyImplyLeading ?? true,
+        actions: actions,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

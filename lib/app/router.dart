@@ -9,11 +9,9 @@ import '../features/account/presentation/legal_screen.dart';
 import '../features/analytics/presentation/card_analytics_screen.dart';
 import '../features/auth/presentation/change_password_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
-import '../features/auth/presentation/owner_login_screen.dart';
+import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/presentation/reset_password_screen.dart';
-import '../features/auth/presentation/staff_login_screen.dart';
-import '../features/auth/presentation/welcome_screen.dart';
 import '../features/billing/presentation/billing_screen.dart';
 import '../features/billing/presentation/seat_purchase_screen.dart';
 import '../features/cards/presentation/card_detail_screen.dart';
@@ -61,8 +59,9 @@ String? resolveRedirect(SessionState session, Uri uri) {
       return path == Routes.splash ? null : Routes.splash;
 
     case SignedOut():
+      if (path == Routes.welcome) return Routes.login;
       if (Routes.isAuth(path)) return null;
-      return Routes.welcome;
+      return Routes.login;
 
     case SignedIn(:final user):
       final home = homeFor(user);
@@ -126,9 +125,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       r(Routes.legal, (_) => const LegalScreen()),
 
       // Auth
-      r(Routes.welcome, (_) => const WelcomeScreen()),
-      r(Routes.login, (_) => const OwnerLoginScreen()),
-      r(Routes.staffLogin, (_) => const StaffLoginScreen()),
+      r(Routes.welcome, (_) => const LoginScreen()),
+      r(Routes.login, (_) => const LoginScreen()),
+      r(Routes.staffLogin, (_) => const LoginScreen()),
       r(Routes.register, (_) => const RegisterScreen()),
       r(Routes.forgotPassword, (_) => const ForgotPasswordScreen()),
       r(Routes.resetPassword,

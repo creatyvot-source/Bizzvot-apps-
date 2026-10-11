@@ -3,7 +3,10 @@
 /// Values are injected with `--dart-define`, e.g.
 /// `flutter run --dart-define=BIZZVOT_ENV=staging`
 /// `--dart-define=BIZZVOT_API_BASE=https://staging.api.bizzvot.com/api/v1`.
-///
+library;
+
+import 'package:flutter/foundation.dart';
+
 /// No secrets belong here: everything compiled into the app is public.
 enum AppFlavor { development, staging, production }
 
@@ -54,7 +57,9 @@ class Env {
           'staging.bizzvot.com',
         ),
       AppFlavor.development => (
-          'http://10.0.2.2:3000/api/v1',
+          !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+              ? 'http://10.0.2.2:3000/api/v1'
+              : 'http://127.0.0.1:3000/api/v1',
           'localhost:3000',
         ),
     };

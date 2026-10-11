@@ -65,6 +65,10 @@ class SessionController extends Notifier<SessionState> {
     await _restore();
   }
 
+  /// Single app sign-in: signs into organization account (staff sign-in is web-only).
+  Future<void> login(String email, String password) =>
+      loginOwner(email, password);
+
   Future<void> loginOwner(String email, String password) async {
     final user = await _repo.loginOwner(email, password);
     state = SignedIn(user);

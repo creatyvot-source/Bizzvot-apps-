@@ -32,8 +32,9 @@ void main() {
   });
 
   test('signed out can only see auth screens', () {
-    expect(go(const SignedOut(), Routes.ownerDashboard), Routes.welcome);
-    expect(go(const SignedOut(), Routes.staffCard), Routes.welcome);
+    expect(go(const SignedOut(), Routes.ownerDashboard), Routes.login);
+    expect(go(const SignedOut(), Routes.staffCard), Routes.login);
+    expect(go(const SignedOut(), Routes.welcome), Routes.login);
     expect(go(const SignedOut(), '/reset-password?token=t'), isNull);
     expect(go(const SignedOut(), Routes.login), isNull);
   });

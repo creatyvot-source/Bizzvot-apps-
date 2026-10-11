@@ -133,6 +133,37 @@ void main() {
     expect(state.user.permissions.editCard, isFalse);
   });
 
+  group('unified normal login', () {
+    test('signs in owner via /auth/login', () async {
+      fake
+        ..on('POST', '/auth/login',
+            FakeResponse.ok({'accessToken': 'a1'}))
+        ..on('GET', '/auth/me', FakeResponse.ok({
+          'user': {'_id': 'u1', 'email': 'o@x.com', 'role': 'owner'},
+          'organization': {'_id': 'org1', 'name': 'Acme'},
+        }));
+
+      await repo().login('o@x.com', 'secret123');
+
+      final state = container.read(sessionControllerProvider) as SignedIn;
+      expect(state.user.role, UserRole.owner);
+    });
+
+    test('staff account surfaces staff web guidance', () async {
+      fake.on('POST', '/auth/login',
+          FakeResponse.error(403, 'Staff account', code: 'USE_STAFF_LOGIN'));
+
+      try {
+        await repo().login('s@x.com', 'secret123');
+        fail('expected an error');
+      } catch (e) {
+        final f = classifyLoginError(e, portal: LoginPortal.owner);
+        expect(f.kind, LoginFailureKind.wrongPortal);
+        expect(f.message, AuthMessages.useStaffLogin);
+      }
+    });
+  });
+
   test('register posts the RegisterRequest body', () async {
     fake
       ..on('POST', '/auth/register', FakeResponse.ok({'accessToken': 'a3'}))

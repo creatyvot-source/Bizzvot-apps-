@@ -20,6 +20,10 @@ class AuthFlowRepository {
   SessionController get _session =>
       _ref.read(sessionControllerProvider.notifier);
 
+  /// App sign-in: signs in organization owners (staff sign-in is on the web portal).
+  Future<void> login(String email, String password) =>
+      _session.login(email, password);
+
   /// `POST /auth/login`, then `GET /auth/me`.
   Future<void> loginOwner(String email, String password) =>
       _session.loginOwner(email, password);

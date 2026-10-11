@@ -92,7 +92,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           primaryLabel: 'Request a new link',
           onPrimary: () => context.go(Routes.forgotPassword),
           secondaryLabel: 'Back to sign in',
-          onSecondary: () => context.go(Routes.welcome),
+          onSecondary: () => context.go(Routes.login),
         ),
       );
     }
@@ -106,7 +106,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
           title: 'Password updated',
           message: 'You can now sign in with your new password.',
           primaryLabel: 'Go to sign in',
-          onPrimary: () => context.go(Routes.welcome),
+          onPrimary: () => context.go(Routes.login),
         ),
       );
     }

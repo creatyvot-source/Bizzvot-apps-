@@ -5,21 +5,21 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/theme.dart';
+import '../../../../core/auth/session_controller.dart';
 import '../../../../core/utilities/validators.dart';
 import '../../data/auth_flow_repository.dart';
 import '../../domain/auth_errors.dart';
-import '../auth_providers.dart';
 import 'auth_page.dart';
 import 'callout.dart';
 import 'cooldown.dart';
 import 'password_field.dart';
 
-/// Sign-in form shared by owner and staff portals. On success the session
-/// becomes `SignedIn` and the router redirects to the role's home.
+/// Single sign-in form for the mobile app. Staff accounts sign in via the web
+/// portal; the mobile app is for organization accounts.
 class LoginForm extends ConsumerStatefulWidget {
-  const LoginForm({super.key, required this.portal});
+  const LoginForm({super.key, this.portal});
 
-  final LoginPortal portal;
+  final LoginPortal? portal;
 
   @override
   ConsumerState<LoginForm> createState() => _LoginFormState();
@@ -31,22 +31,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _password = TextEditingController();
   final _passwordFocus = FocusNode();
   final _cooldown = Cooldown();
+  bool _dismissedExpiry = false;
   LoginFailure? _failure;
-
-  bool get _isOwner => widget.portal == LoginPortal.owner;
-
-  @override
-  void initState() {
-    super.initState();
-    // Prefill when guided here from the other portal.
-    final hint = ref.read(loginEmailHintProvider);
-    if (hint != null) {
-      _email.text = hint;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) ref.read(loginEmailHintProvider.notifier).take();
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -64,15 +50,14 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     FocusScope.of(context).unfocus();
     final repo = ref.read(authFlowRepositoryProvider);
     try {
-      if (_isOwner) {
-        await repo.loginOwner(_email.text, _password.text);
-      } else {
-        await repo.loginStaff(_email.text, _password.text);
-      }
+      await repo.login(_email.text, _password.text);
       TextInput.finishAutofillContext();
     } catch (error) {
       if (!mounted) return;
-      final failure = classifyLoginError(error, portal: widget.portal);
+      final failure = classifyLoginError(
+        error,
+        portal: LoginPortal.owner,
+      );
       if (failure.kind == LoginFailureKind.rateLimited) {
         _cooldown.start(failure.retryAfter ?? _cooldown.fallback);
       }
@@ -83,31 +68,33 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     }
   }
 
-  void _switchPortal() {
-    ref
-        .read(loginEmailHintProvider.notifier)
-        .set(_email.text.trim().isEmpty ? null : _email.text.trim());
-    context.pushReplacement(_isOwner ? Routes.staffLogin : Routes.login);
-  }
-
   @override
   Widget build(BuildContext context) {
     final failure = _failure;
-    final otherPortalLabel = _isOwner
-        ? 'Go to staff sign-in'
-        : 'Go to owner sign-in';
+    final session = ref.watch(sessionControllerProvider);
+    final expired =
+        session is SignedOut && session.expired && !_dismissedExpiry;
 
     return AuthPage(
-      title: _isOwner ? 'Owner sign-in' : 'Staff sign-in',
-      heading: _isOwner ? 'Welcome back' : 'Sign in to your card',
-      subheading: _isOwner
-          ? 'Sign in to manage your organization, people and cards.'
-          : 'Use the login email and password your organization gave you.',
+      title: 'Sign in',
+      automaticallyImplyLeading: false,
+      heading: 'Welcome back',
+      subheading: 'Sign in to manage your organization, people and cards.',
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (expired) ...[
+              Callout(
+                tone: CalloutTone.warning,
+                title: 'You’ve been signed out',
+                message:
+                    'Your session ended for security reasons. Please sign in again to continue.',
+                onDismiss: () => setState(() => _dismissedExpiry = true),
+              ),
+              const SizedBox(height: AppSpacing.md),
+            ],
             if (failure != null &&
                 failure.kind != LoginFailureKind.rateLimited) ...[
               Callout(
@@ -115,18 +102,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     ? CalloutTone.info
                     : CalloutTone.error,
                 title: switch (failure.kind) {
-                  LoginFailureKind.wrongPortal => 'Try the other sign-in',
+                  LoginFailureKind.wrongPortal => 'Staff account',
                   LoginFailureKind.adminAccount => 'Admin account',
                   LoginFailureKind.invalidCredentials => 'Couldn’t sign you in',
                   _ => null,
                 },
                 message: failure.message,
-                action: failure.kind == LoginFailureKind.wrongPortal
-                    ? FilledButton.tonal(
-                        onPressed: _switchPortal,
-                        child: Text(otherPortalLabel),
-                      )
-                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
             ],
@@ -159,35 +140,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             const SizedBox(height: AppSpacing.lg),
             const Divider(),
             const SizedBox(height: AppSpacing.sm),
-            if (_isOwner) ...[
-              _FooterLink(
-                prompt: 'Added by your organization?',
-                label: 'Staff sign-in',
-                onPressed: _switchPortal,
-              ),
-              _FooterLink(
-                prompt: 'New to Bizzvot?',
-                label: 'Create an organization',
-                onPressed: () => context.pushReplacement(Routes.register),
-              ),
-            ] else ...[
-              _FooterLink(
-                prompt: 'Manage an organization?',
-                label: 'Owner sign-in',
-                onPressed: _switchPortal,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Text(
-                  'Can’t sign in? Your organization owner can update your '
-                  'login email or reset your password.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
+            _FooterLink(
+              prompt: 'New to Bizzvot?',
+              label: 'Create an organization',
+              onPressed: () => context.push(Routes.register),
+            ),
           ],
         ),
       ),

@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+export 'theme_controller.dart';
+
 /// Bizzvot design system.
 ///
 /// Modern, calm, content-first: Inter typeface, soft tonal surfaces instead

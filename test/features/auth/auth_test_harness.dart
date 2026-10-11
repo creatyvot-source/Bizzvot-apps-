@@ -21,6 +21,12 @@ class FakeAuthFlow implements AuthFlowRepository {
   }
 
   @override
+  Future<void> login(String email, String password) {
+    lastEmail = email;
+    return _run('login');
+  }
+
+  @override
   Future<void> loginOwner(String email, String password) {
     lastEmail = email;
     return _run('loginOwner');

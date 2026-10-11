@@ -65,25 +65,23 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: AppSpacing.xl),
-                      _RoleChoice(
-                        icon: Icons.business_center_outlined,
-                        title: 'I manage an organization',
-                        subtitle: 'Owner sign-in',
-                        onTap: () => context.push(Routes.login),
+                      const SizedBox(height: AppSpacing.xxl),
+                      FilledButton.icon(
+                        onPressed: () => context.push(Routes.login),
+                        icon: const Icon(Icons.login),
+                        label: const Text('Sign in'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      _RoleChoice(
-                        icon: Icons.badge_outlined,
-                        title: 'I’m a team member',
-                        subtitle: 'Staff sign-in',
-                        onTap: () => context.push(Routes.staffLogin),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
                       OutlinedButton.icon(
                         onPressed: () => context.push(Routes.register),
                         icon: const Icon(Icons.add_business_outlined),
                         label: const Text('Create an organization'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(50),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
@@ -107,49 +105,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleChoice extends StatelessWidget {
-  const _RoleChoice({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Semantics(
-        button: true,
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: Icon(icon, color: scheme.onPrimaryContainer),
-          ),
-          title: Text(title),
-          subtitle: Text(subtitle),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: onTap,
         ),
       ),
     );
