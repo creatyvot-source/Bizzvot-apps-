@@ -6,7 +6,8 @@ import '../../../core/providers.dart';
 import '../../../shared/models/paged.dart';
 import '../domain/app_notification.dart';
 
-/// PROPOSED notification endpoints (plan §13.12).
+/// Notification endpoints. The backend (`app/api/v1/notifications`) returns
+/// the latest 50 as a bare list of `{_id, type, message, isRead, createdAt}`.
 class NotificationsRepository {
   NotificationsRepository(this._api);
 
@@ -23,9 +24,9 @@ class NotificationsRepository {
     ),
   );
 
-  /// `POST /notifications/:id/read`.
+  /// EXISTING `PATCH /notifications/:id/read` (sets `isRead: true`).
   Future<void> markRead(String id) =>
-      _api.post(Endpoints.notificationRead(id), parse: (_) {});
+      _api.patch(Endpoints.notificationRead(id), parse: (_) {});
 }
 
 final notificationsRepositoryProvider = Provider<NotificationsRepository>(

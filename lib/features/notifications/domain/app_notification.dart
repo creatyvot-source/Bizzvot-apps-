@@ -2,7 +2,7 @@ import '../../../app/routes.dart';
 import '../../../core/utilities/json.dart';
 import '../../catalog/domain/formatting.dart';
 
-/// In-app notification (PROPOSED `GET /notifications`, plan §13.12).
+/// In-app notification (`GET /notifications`, plan §13.12).
 /// Named `AppNotification` to avoid clashing with Flutter's `Notification`.
 class AppNotification {
   const AppNotification({
@@ -93,6 +93,8 @@ class AppNotification {
       case NotificationKind.card:
         final c = id(const ['cardId', 'card', 'id']);
         return c == null ? Routes.ownerCards : Routes.ownerCard(c);
+      case NotificationKind.staff:
+        return Routes.ownerStaff;
       case NotificationKind.other:
         return null;
     }
@@ -109,12 +111,22 @@ enum NotificationKind {
   billing,
   review,
   card,
+  staff,
   other;
 
   /// Types are dotted or snake-case: `order.paid`, `subscription_renewal_due`,
   /// `payment_failed`, `review.new`, `card.disabled`.
   static NotificationKind of(String type) {
     final t = wireKey(type);
+    // Exact types emitted by the backend today.
+    switch (t) {
+      case 'plan_updated':
+        return NotificationKind.billing;
+      case 'new_review':
+        return NotificationKind.review;
+      case 'staff_added':
+        return NotificationKind.staff;
+    }
     bool starts(String p) => t == p || t.startsWith('${p}_');
     if (starts('order')) return NotificationKind.order;
     if (starts('payment')) return NotificationKind.payment;
@@ -122,14 +134,13 @@ enum NotificationKind {
     if (starts('subscription') || starts('renewal')) {
       return NotificationKind.subscription;
     }
-    if (starts('billing') ||
-        starts('seat') ||
-        starts('seats') ||
-        starts('trial')) {
+    if (starts('billing') || starts('seat') || starts('seats') ||
+        starts('trial') || starts('plan')) {
       return NotificationKind.billing;
     }
     if (starts('review')) return NotificationKind.review;
     if (starts('card')) return NotificationKind.card;
+    if (starts('staff')) return NotificationKind.staff;
     return NotificationKind.other;
   }
 }
