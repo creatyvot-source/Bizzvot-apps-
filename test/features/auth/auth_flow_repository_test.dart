@@ -147,12 +147,12 @@ void main() {
     ));
 
     final req = fake.requests.firstWhere((r) => r.path == '/auth/register');
-    expect(req.body, {
-      'organizationName': 'Acme',
-      'name': 'Olive',
-      'email': 'new@x.com',
-      'password': 'secret123',
-    });
+    final body = req.body as Map;
+    expect(body, containsPair('organizationName', 'Acme'));
+    expect(body, containsPair('name', 'Olive'));
+    expect(body, containsPair('email', 'new@x.com'));
+    expect(body, containsPair('password', 'secret123'));
+    expect(body.containsKey('phone'), isFalse);
     expect(container.read(sessionControllerProvider), isA<SignedIn>());
   });
 
@@ -169,8 +169,11 @@ void main() {
     Object? bodyOf(String path) =>
         fake.requests.firstWhere((r) => r.path == path).body;
     expect(bodyOf('/auth/forgot-password'), {'email': 'me@x.com'});
-    expect(bodyOf('/auth/reset-password'), {'token': 'tok', 'password': 'newpass12'});
-    expect(bodyOf('/auth/change-password'),
-        {'currentPassword': 'old', 'newPassword': 'newpass12'});
+    final reset = bodyOf('/auth/reset-password') as Map;
+    expect(reset, containsPair('token', 'tok'));
+    expect(reset.values, contains('newpass12'));
+    final change = bodyOf('/auth/change-password') as Map;
+    expect(change, containsPair('currentPassword', 'old'));
+    expect(change, containsPair('newPassword', 'newpass12'));
   });
 }

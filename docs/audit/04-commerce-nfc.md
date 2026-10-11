@@ -59,7 +59,7 @@ Products in scope (all physical, INR):
    changed (`cogcard/app/api/v1/cards/[id]/route.ts:53`) and no slug history is kept, so a renamed
    or deleted card breaks the tag. Worse, a released slug can be claimed by another tenant, and
    the physical tag would then open a stranger's card. Instead, write a permanent, unguessable
-   redirect `https://bizzvot.com/t/{tagCode}` (§4). The tag stays re-pointable, and the chip can
+   redirect `https://www.bizzvot.com/t/{tagCode}` (§4). The tag stays re-pointable, and the chip can
    be locked at QC.
 6. **Mobile app commerce design is ahead of the backend and mostly sound.**
    - It sends no prices. It uses `Idempotency-Key`. Its final state comes only from
@@ -119,7 +119,7 @@ or make them clients of the new API.
         ▲                                                        │ approve │ request changes (≤3)
         └──────────────────── changes_requested ◀────────────────┘         ▼
                                                                     proof_approved  (cancel cut-off)
-   printing ─▶ programming (write https://bizzvot.com/t/{tagCode}, record chip UID, lock)
+   printing ─▶ programming (write https://www.bizzvot.com/t/{tagCode}, record chip UID, lock)
            ─▶ qc_passed (tap-test resolves to expected target) ─▶ packed
         ▼
  SHIPMENT  Delhivery: serviceability → create AWB (manual or batch) → label → pickup
@@ -232,7 +232,7 @@ order line expands into N `fulfilmentUnits`.
 
 ## 4. NFC tag design (recommendation)
 
-**URL written to the chip:** `https://bizzvot.com/t/{tagCode}`, or a short domain such as
+**URL written to the chip:** `https://www.bizzvot.com/t/{tagCode}`, or a short domain such as
 `https://bzv.to/{tagCode}` if one is bought. The URL must be HTTPS, and the same string is also
 printed as a QR code on every item.
 
@@ -252,7 +252,7 @@ printed as a QR code on every item.
   - `active` + target `google_review`: 302 to the stored, allow-listed Google review URL.
   - `active` + target `review_page`: 302 to the org's Bizzvot review page.
   - `unclaimed` / `shipped`: "Activate this Bizzvot tag" page with an app universal link
-    `https://bizzvot.com/t/{code}` (the app handles it via App Links / Universal Links) plus a
+    `https://www.bizzvot.com/t/{code}` (the app handles it via App Links / Universal Links) plus a
     store link.
   - `disabled` (lost) or card lapsed: a neutral "This tag is inactive" page. Never 404, and never
     a stranger's content.
@@ -518,6 +518,11 @@ paise plus `currency:"INR"` (COM-2), `Idempotency-Key` on every `POST` that crea
 | **5: App integration** | 2 weeks (APP), overlapping 3–4 | Checkout screen, Razorpay SDK + hosted fallback, PIN check, COD (if D3), order-detail actions (assign, approve proof, cancel, return), tracking events, "My NFC tags" (claim, re-point, disable) via deep link, entitlement display, invoice PDF | Widget/integration tests per plan §20 Commerce; store reviewer notes prepared for D1 |
 | **6: P4 entitlements and seats** | 1 week | Entitlement grant/revoke jobs, seat counter from entitlements, activation-starts-clock, expiry → `disabledByBilling` + inactive tag page, reconciliation job (G24) | Refund of an unactivated P4 revokes the seat; renewal path follows D1 |
 | **7: Migration and retirement** | 1 week | Import landing `db.json` orders (`source:'landing_import'`), point the landing checkout at `/api/v1`, archive `nfcwebsiteecom-` (keep as reference only) | One order store; one invoice series |
+
+Cross-references: the detailed store-policy and NFC-platform rules are in audit 12
+(`12-store-a11y-masvs.md`), and GST, consumer-protection and payments law are in audit 13
+(`13-commerce-tax-legal.md`). The tax and policy positions in §7 and G11 here are working
+assumptions until those audits and the CA confirm them.
 
 Critical-path dependencies: native auth (audit 02) gates Phase 3 for the app. Org-level
 `googleReview` and the `review_card` template (audits 01 and 03) gate the P1/P2 targets.

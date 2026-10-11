@@ -57,7 +57,7 @@ class SubscriptionsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (s.quantity != null) Text('${s.quantity} seats'),
-                  ?when == null ? null : Text(when),
+                  if (when != null) Text(when),
                   const SizedBox(height: 4),
                   StatusChip(s.statusLabel, tone: toneForSubscription(s.status)),
                 ],
