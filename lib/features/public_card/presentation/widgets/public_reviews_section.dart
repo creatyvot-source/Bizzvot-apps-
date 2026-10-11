@@ -11,7 +11,7 @@ import '../../../../shared/widgets/ui_kit.dart';
 import '../../domain/public_card.dart';
 import '../../domain/public_review.dart';
 import '../public_card_providers.dart';
-import 'star_rating.dart';
+import '../../../../shared/widgets/star_rating.dart';
 
 /// Approved reviews with business replies + "Write a review".
 class PublicReviewsSection extends ConsumerWidget {

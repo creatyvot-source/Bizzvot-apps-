@@ -96,13 +96,64 @@ Object? _firstList(Json j, List<String> keys) {
   return null;
 }
 
+/// True when the payload says its totals cover the requested period. The
+/// current backend ignores `range/from/to` and returns all-time totals.
+bool _hasPeriodMarker(Json j) =>
+    j.containsKey('from') ||
+    j.containsKey('range') ||
+    j.containsKey('period') ||
+    j.containsKey('periodTotal');
+
 /// `GET /analytics/card/:id/views`.
+///
+/// Backend shape: `{views, uniqueVisitors, trend: [{_id: "YYYY-MM-DD", count}]}`
+/// where totals are all-time and `trend` covers the last 7 days.
 class ViewsStats {
-  const ViewsStats({required this.total, this.unique, this.series = const []});
+  const ViewsStats({
+    required this.total,
+    this.unique,
+    this.series = const [],
+    this.allTime = true,
+  });
 
   final int total;
   final int? unique;
   final List<DailyPoint> series;
+
+  /// Totals are all-time rather than for the selected range.
+  final bool allTime;
+
+  /// Daily points inside [range] (ending today), zero-filled between the
+  /// first and last returned day. The backend ignores the range, so the
+  /// window is applied here.
+  List<DailyPoint> seriesWithin(AnalyticsRange range, DateTime now) {
+    final to = DateTime(now.year, now.month, now.day);
+    final from = to.subtract(Duration(days: range.days - 1));
+    DateTime day(DateTime d) => DateTime(d.year, d.month, d.day);
+    final byDay = <DateTime, DailyPoint>{};
+    for (final p in series) {
+      final d = day(p.date);
+      if (d.isBefore(from) || d.isAfter(to)) continue;
+      final prev = byDay[d];
+      byDay[d] = prev == null
+          ? DailyPoint(date: d, count: p.count, unique: p.unique)
+          : DailyPoint(
+              date: d,
+              count: prev.count + p.count,
+              unique: (prev.unique == null && p.unique == null)
+                  ? null
+                  : (prev.unique ?? 0) + (p.unique ?? 0),
+            );
+    }
+    if (byDay.isEmpty) return const [];
+    final days = byDay.keys.toList()..sort();
+    final hasUnique = byDay.values.any((p) => p.unique != null);
+    final out = <DailyPoint>[];
+    for (var d = days.first; !d.isAfter(days.last); d = DateTime(d.year, d.month, d.day + 1)) {
+      out.add(byDay[d] ?? DailyPoint(date: d, count: 0, unique: hasUnique ? 0 : null));
+    }
+    return out;
+  }
 
   factory ViewsStats.fromJson(Object? data) {
     if (data is num) return ViewsStats(total: data.toInt());
@@ -114,11 +165,13 @@ class ViewsStats {
             ? series.fold<int>(0, (a, p) => a + (p.unique ?? 0))
             : null,
         series: series,
+        allTime: false,
       );
     }
     final j = asJson(data);
     final series = parseSeries(
       _firstList(j, const [
+        'trend',
         'series',
         'daily',
         'timeline',
@@ -133,7 +186,12 @@ class ViewsStats {
     final unique = intOrNull(
       j['unique'] ?? j['uniqueVisitors'] ?? j['uniqueViews'] ?? j['visitors'],
     );
-    return ViewsStats(total: total, unique: unique, series: series);
+    return ViewsStats(
+      total: total,
+      unique: unique,
+      series: series,
+      allTime: !_hasPeriodMarker(j),
+    );
   }
 }
 
@@ -144,10 +202,14 @@ class ReviewStats {
     this.average,
     this.breakdown = const {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
     this.series = const [],
+    this.allTime = true,
   });
 
   final int total;
   final double? average;
+
+  /// Totals are all-time rather than for the selected range.
+  final bool allTime;
 
   /// Star (1–5) → count.
   final Map<int, int> breakdown;
@@ -192,8 +254,9 @@ class ReviewStats {
       average: average,
       breakdown: breakdown,
       series: parseSeries(
-        _firstList(j, const ['series', 'daily', 'timeline', 'byDay']),
+        _firstList(j, const ['trend', 'series', 'daily', 'timeline', 'byDay']),
       ),
+      allTime: !_hasPeriodMarker(j),
     );
   }
 }
@@ -229,7 +292,12 @@ enum LinkCategory {
   };
 
   static LinkCategory parse(String? raw) {
-    final t = (raw ?? '').toLowerCase().replaceAll(RegExp('[^a-z]'), '');
+    final lower = (raw ?? '').trim().toLowerCase();
+    // Web/app track `social:<platform>` and `custom:<label>`; the label is
+    // free text, so classify by prefix before any keyword matching.
+    if (lower.startsWith('social:')) return social;
+    if (lower.startsWith('custom:')) return custom;
+    final t = lower.replaceAll(RegExp('[^a-z]'), '');
     if (t.isEmpty) return other;
     if (t.contains('whatsapp')) return whatsapp;
     if (t == 'phone' || t == 'call' || t == 'tel' || t.contains('phone')) {

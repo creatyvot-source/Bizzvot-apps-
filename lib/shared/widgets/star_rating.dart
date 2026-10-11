@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../app/theme.dart';
+import '../../app/theme.dart';
 
 /// Read-only star row. Announced as a single "Rated N out of 5" label.
 class StarRating extends StatelessWidget {

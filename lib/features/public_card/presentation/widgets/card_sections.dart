@@ -7,11 +7,7 @@ import '../../domain/contact_links.dart';
 import '../../domain/public_card.dart';
 import 'public_widgets.dart';
 
-typedef OpenLink = Future<void> Function(
-  Uri? uri,
-  String type, [
-  String? target,
-]);
+typedef OpenLink = Future<void> Function(Uri? uri, String linkType);
 
 bool hasSafeLinks(List<CardLink> links) =>
     links.any((l) => ContactLinks.web(l.url) != null);
@@ -148,7 +144,7 @@ class ContactSection extends StatelessWidget {
           'Office',
           card.companyPhone!,
           ContactLinks.tel(card.companyPhone),
-          TrackType.companyPhone,
+          TrackType.phone,
         ),
       if (card.whatsapp != null && card.shows(const ['whatsapp']))
         tile(
@@ -240,8 +236,9 @@ class LinksSection extends StatelessWidget {
     IconData iconOf(CardLink l) => social ? _platformIcon(l.type) : Icons.link;
     void tap(CardLink l, Uri uri) => onOpen(
       uri,
-      social ? TrackType.social : TrackType.custom,
-      social ? l.type : (l.label ?? uri.host),
+      social
+          ? TrackType.social(l.type)
+          : TrackType.custom(l.label ?? uri.host),
     );
 
     if (hub) {

@@ -12,6 +12,9 @@ enum CardTemplate {
   final String wire;
   final String label;
 
+  /// Template ids the backend accepts today (`theme.templateId` enum).
+  bool get isBackendSupported => CardWire.backendTemplates.contains(this);
+
   static CardTemplate parse(Object? v) => CardTemplate.values.firstWhere(
     (t) => t.wire == str(v),
     orElse: () => CardTemplate.minimal,
@@ -50,7 +53,13 @@ abstract final class CardLimits {
 }
 
 class CardLink {
-  const CardLink({required this.type, required this.url, this.label, this.id});
+  const CardLink({
+    required this.type,
+    required this.url,
+    this.label,
+    this.id,
+    this.icon,
+  });
 
   /// e.g. `instagram`, `linkedin`, `facebook`, `x`, `youtube`, `custom`.
   final String type;
@@ -58,18 +67,29 @@ class CardLink {
   final String? label;
   final String? id;
 
+  /// Custom-link icon key (backend `customLinks[].icon`).
+  final String? icon;
+
   factory CardLink.fromJson(Object? raw) {
     final j = asJson(raw);
     return CardLink(
       id: str(j['_id']) ?? str(j['id']),
-      type: strOr(j['type'] ?? j['platform'], 'custom'),
+      type: strOr(j['platform'] ?? j['type'], 'custom'),
       url: strOr(j['url']),
       label: str(j['label']) ?? str(j['title']),
+      icon: str(j['icon']),
     );
   }
 
-  Json toJson() =>
-      compact({'type': type, 'url': url, 'label': label, '_id': id});
+  /// App-level representation (used for change detection). The backend
+  /// shape is produced by [CardWire].
+  Json toJson() => compact({
+        'type': type,
+        'url': url,
+        'label': label,
+        '_id': id,
+        'icon': icon,
+      });
 }
 
 class MediaItem {
@@ -141,6 +161,8 @@ class CardModel {
     this.reviewCount,
     this.averageRating,
     this.updatedAt,
+    this.qrCodeUrl,
+    this.themeLayout,
   });
 
   final String id;
@@ -198,61 +220,19 @@ class CardModel {
   final double? averageRating;
   final DateTime? updatedAt;
 
+  /// Stored QR image as a `data:image/png;base64,…` URL (backend field).
+  final String? qrCodeUrl;
+
+  /// Backend `theme.layout`, preserved so a theme write does not drop it.
+  final String? themeLayout;
+
   bool get isActive => status == CardStatus.active;
   String get displayTitle => title ?? staffName ?? 'Untitled card';
 
-  factory CardModel.fromJson(Object? raw) {
-    final j = asJson(raw);
-    final staff = asJson(j['staff'] ?? j['staffUser']);
-    final media = asJson(j['media']);
-    final toggles = asJson(j['displayToggles'] ?? j['display']);
-    final privateDetails = asJson(j['privateDetails']);
-    return CardModel(
-      id: idOf(j),
-      slug: strOr(j['slug']),
-      staffUserId:
-          str(j['staffUserId']) ?? (staff.isEmpty ? null : idOf(staff)),
-      staffName: str(j['staffName']) ?? str(staff['name']),
-      title: str(j['title']) ?? str(j['name']),
-      designation: str(j['designation']),
-      company: str(j['company']),
-      pronouns: str(j['pronouns']),
-      bio: str(j['bio']),
-      profilePhoto: str(j['profilePhoto']) ?? str(media['profilePhoto']),
-      coverImage: str(j['coverImage']) ?? str(media['coverImage']),
-      logo: str(j['logo']) ?? str(media['logo']),
-      phone: str(j['phone']),
-      companyPhone: str(j['companyPhone']),
-      whatsapp: str(j['whatsapp']),
-      email: str(j['email']),
-      website: str(j['website']),
-      address: str(j['address']),
-      mapLink: str(j['mapLink']),
-      bloodGroup: str(j['bloodGroup']) ?? str(privateDetails['bloodGroup']),
-      fatherName: str(j['fatherName']) ?? str(privateDetails['fatherName']),
-      motherName: str(j['motherName']) ?? str(privateDetails['motherName']),
-      socialLinks: asJsonList(j['socialLinks']).map(CardLink.fromJson).toList(),
-      customLinks: asJsonList(j['customLinks']).map(CardLink.fromJson).toList(),
-      gallery: _media(j['gallery'] ?? media['gallery']),
-      pdfs: _media(j['pdfs'] ?? j['documents'] ?? media['pdfs']),
-      videos: _media(j['videos'] ?? j['youtubeVideos'] ?? media['videos']),
-      template: CardTemplate.parse(j['template']),
-      brandColor: str(j['brandColor']) ?? str(j['color']),
-      sectionOrder: strList(j['sectionOrder']),
-      displayToggles: toggles.map((k, v) => MapEntry(k, boolOr(v, true))),
-      vcardEnabled: boolOrNull(j['vcardEnabled']) ?? true,
-      status: CardStatus.parse(j['status']),
-      disabledByBilling: boolOr(j['disabledByBilling']),
-      visibility: CardVisibility.parse(j['visibility']),
-      googleReviewUrl: str(j['googleReviewUrl']) ?? str(j['googleReviewLink']),
-      viewCount: intOrNull(j['viewCount'] ?? j['views']),
-      reviewCount: intOrNull(j['reviewCount']),
-      averageRating: doubleOrNull(j['averageRating']),
-      updatedAt: dateOrNull(j['updatedAt']),
-    );
-  }
+  /// Decodes a backend card document. See [CardWire] for the field map.
+  factory CardModel.fromJson(Object? raw) => CardWire.decode(raw);
 
-  static List<MediaItem> _media(Object? v) {
+  static List<MediaItem> _mediaList(Object? v) {
     if (v is! List) return const [];
     return v.map(MediaItem.fromJson).where((m) => m.url.isNotEmpty).toList();
   }
@@ -407,4 +387,208 @@ class CardModel {
   /// Private details must never be rendered on public surfaces.
   bool get hasPrivateDetails =>
       bloodGroup != null || fatherName != null || motherName != null;
+}
+
+/// The ONE place that knows the backend card wire format
+/// (`lib/models/Card.ts` + `lib/validation/card.ts` in the API).
+///
+/// * Reads backend names first (`companyName`, `photo`, `theme.*`,
+///   `displayOptions`, `socialLinks[].platform`) and falls back to the
+///   legacy/proposed names so either contract decodes.
+/// * Writes only keys the backend accepts. The staff PATCH schema is
+///   `.strict()` (unknown keys → 400) and the owner PATCH silently strips
+///   unknown keys, so fields the backend does not store yet
+///   ([unsupportedFields]) are never sent.
+///
+/// When the backend adds a field, remove it from [unsupportedFields] and map
+/// it in [encodePatch] / [decode] — nothing else needs to change.
+abstract final class CardWire {
+  static const backendTemplates = {
+    CardTemplate.minimal,
+    CardTemplate.corporate,
+    CardTemplate.modernDark,
+  };
+
+  /// `theme.sectionOrder` enum.
+  static const sectionKeys = ['bio', 'contacts', 'socials', 'customLinks'];
+
+  /// `displayOptions` keys (`.strict()` on the backend).
+  static const displayOptionKeys = [
+    'showBio',
+    'showSocials',
+    'showAddress',
+    'showWhatsapp',
+    'showCustomLinks',
+    'showReviews',
+  ];
+
+  /// App fields with no backend storage yet (PROPOSED in the plan).
+  static const unsupportedFields = {
+    'companyPhone',
+    'bloodGroup',
+    'fatherName',
+    'motherName',
+    'gallery',
+    'pdfs',
+    'videos',
+    'visibility',
+    'googleReviewUrl',
+  };
+
+  static CardModel decode(Object? raw) {
+    final j = asJson(raw);
+    final staff = asJson(j['staff'] ?? j['staffUser']);
+    final media = asJson(j['media']);
+    final theme = asJson(j['theme']);
+    final options = asJson(
+      j['displayOptions'] ?? j['displayToggles'] ?? j['display'],
+    );
+    final privateDetails = asJson(j['privateDetails']);
+    return CardModel(
+      id: idOf(j),
+      slug: strOr(j['slug']),
+      staffUserId:
+          str(j['staffUserId']) ?? (staff.isEmpty ? null : idOf(staff)),
+      staffName: str(j['staffName']) ?? str(staff['name']),
+      title: str(j['title']) ?? str(j['name']),
+      designation: str(j['designation']),
+      company: str(j['companyName']) ?? str(j['company']),
+      pronouns: str(j['pronouns']),
+      bio: str(j['bio']),
+      profilePhoto: str(j['photo']) ??
+          str(j['profilePhoto']) ??
+          str(media['profilePhoto']),
+      coverImage: str(j['coverImage']) ?? str(media['coverImage']),
+      logo: str(j['logo']) ?? str(media['logo']),
+      phone: str(j['phone']),
+      companyPhone: str(j['companyPhone']),
+      whatsapp: str(j['whatsapp']),
+      email: str(j['email']),
+      website: str(j['website']),
+      address: str(j['address']),
+      mapLink: str(j['mapLink']),
+      bloodGroup: str(j['bloodGroup']) ?? str(privateDetails['bloodGroup']),
+      fatherName: str(j['fatherName']) ?? str(privateDetails['fatherName']),
+      motherName: str(j['motherName']) ?? str(privateDetails['motherName']),
+      socialLinks: asJsonList(j['socialLinks'])
+          .map(CardLink.fromJson)
+          .where((l) => l.url.isNotEmpty)
+          .toList(),
+      customLinks: asJsonList(j['customLinks'])
+          .map(CardLink.fromJson)
+          .where((l) => l.url.isNotEmpty)
+          .toList(),
+      gallery: CardModel._mediaList(j['gallery'] ?? media['gallery']),
+      pdfs: CardModel._mediaList(j['pdfs'] ?? j['documents'] ?? media['pdfs']),
+      videos: CardModel._mediaList(
+        j['videos'] ?? j['youtubeVideos'] ?? media['videos'],
+      ),
+      template: CardTemplate.parse(theme['templateId'] ?? j['template']),
+      brandColor: str(theme['primaryColor']) ??
+          str(j['brandColor']) ??
+          str(j['color']),
+      sectionOrder: strList(theme['sectionOrder'] ?? j['sectionOrder']),
+      themeLayout: str(theme['layout']),
+      displayToggles: options.map((k, v) => MapEntry(k, boolOr(v, true))),
+      vcardEnabled: boolOrNull(j['vcardEnabled']) ?? true,
+      status: CardStatus.parse(j['status']),
+      disabledByBilling: boolOr(j['disabledByBilling']),
+      visibility: CardVisibility.parse(j['visibility']),
+      googleReviewUrl:
+          str(j['googleReviewUrl']) ?? str(j['googleReviewLink']),
+      viewCount: intOrNull(j['viewCount'] ?? j['views']),
+      reviewCount: intOrNull(j['reviewCount']),
+      averageRating: doubleOrNull(j['averageRating']),
+      updatedAt: dateOrNull(j['updatedAt']),
+      qrCodeUrl: str(j['qrCodeUrl']),
+    );
+  }
+
+  /// Converts an app-level patch (keys of [CardModel.toUpdateJson], e.g. from
+  /// `buildCardPatch`) into a backend PATCH body. [edited] supplies the full
+  /// values for objects the backend replaces wholesale (`theme`,
+  /// `displayOptions`). [staff] omits `status` (forbidden for staff).
+  static Json encodePatch(Json appPatch, CardModel edited, {bool staff = false}) {
+    final body = <String, dynamic>{};
+    var theme = false;
+    for (final MapEntry(:key, :value) in appPatch.entries) {
+      if (unsupportedFields.contains(key)) continue;
+      switch (key) {
+        case 'title':
+          final t = value is String ? value.trim() : null;
+          if (t != null && t.isNotEmpty) body['title'] = t; // never null
+        case 'company':
+          body['companyName'] = value;
+        case 'profilePhoto':
+          body['photo'] = value;
+        case 'template' || 'brandColor' || 'sectionOrder':
+          theme = true;
+        case 'displayToggles':
+          body['displayOptions'] = displayOptionsOf(edited);
+        case 'socialLinks':
+          body['socialLinks'] = [
+            for (final l in edited.socialLinks)
+              {'platform': l.type == 'custom' ? 'other' : l.type, 'url': l.url},
+          ];
+        case 'customLinks':
+          body['customLinks'] = [
+            for (final l in edited.customLinks)
+              {
+                'label': (l.label?.trim().isNotEmpty ?? false)
+                    ? l.label!.trim()
+                    : (Uri.tryParse(l.url)?.host ?? 'Link'),
+                'url': l.url,
+                if (l.icon != null) 'icon': l.icon,
+              },
+          ];
+        case 'status':
+          if (!staff) body['status'] = value;
+        case 'designation' ||
+              'pronouns' ||
+              'bio' ||
+              'phone' ||
+              'whatsapp' ||
+              'email' ||
+              'website' ||
+              'address' ||
+              'mapLink' ||
+              'logo' ||
+              'coverImage' ||
+              'vcardEnabled':
+          body[key] = value;
+        default:
+          // Unknown app key: never forward (staff schema is strict).
+          break;
+      }
+    }
+    if (theme) body['theme'] = themeOf(edited);
+    return body;
+  }
+
+  /// Full `theme` object (the backend replaces it as a whole).
+  static Json themeOf(CardModel c) => {
+        if (c.template.isBackendSupported) 'templateId': c.template.wire,
+        if (c.brandColor != null) 'primaryColor': c.brandColor,
+        if (c.themeLayout != null) 'layout': c.themeLayout,
+        'sectionOrder':
+            c.sectionOrder.where(sectionKeys.contains).toSet().toList(),
+      };
+
+  /// Full `displayOptions` object; missing keys default to shown.
+  static Json displayOptionsOf(CardModel c) => {
+        for (final k in displayOptionKeys) k: c.displayToggles[k] ?? true,
+      };
+
+  /// `POST /organization/cards` body.
+  static Json encodeCreate({
+    required String title,
+    String? designation,
+    bool assignToAllStaff = false,
+  }) =>
+      {
+        'title': title.trim(),
+        if (designation != null && designation.trim().isNotEmpty)
+          'designation': designation.trim(),
+        if (assignToAllStaff) 'assignToAllStaff': true,
+      };
 }

@@ -30,7 +30,7 @@ class ReviewsRepository {
     query: {'status': status?.name, 'page': page, 'limit': pageSize},
     parse: (data) => Paged.parse(
       data,
-      Review.fromJson,
+      reviewFromApi,
       listKeys: const ['reviews', 'items', 'docs', 'results', 'data'],
     ),
   );
@@ -72,8 +72,23 @@ class ReviewsRepository {
     final j = asJson(data);
     final raw = j['review'] is Map ? asJson(j['review']) : j;
     if (idOf(raw).isEmpty || raw['status'] == null) return null;
-    return Review.fromJson(raw);
+    return reviewFromApi(raw);
   }
+}
+
+/// Backend lists populate `cardId` as `{_id, title, slug}`. Normalise it to
+/// the `{cardId: id, card: {...}}` shape [Review.fromJson] understands. Only
+/// the id and title are carried over.
+Review reviewFromApi(Object? raw) {
+  final j = asJson(raw);
+  final card = j['cardId'];
+  if (card is! Map) return Review.fromJson(j);
+  final c = asJson(card);
+  return Review.fromJson({
+    ...j,
+    'cardId': idOf(c),
+    'card': {'_id': idOf(c), 'title': str(c['title']) ?? str(c['name'])},
+  });
 }
 
 final reviewsRepositoryProvider = Provider<ReviewsRepository>(

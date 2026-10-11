@@ -35,6 +35,8 @@ abstract final class Endpoints {
   static const billing = '/organization/billing';
 
   // ---- Cards (existing) ----
+  /// **POST** → `{qrCodeUrl: 'data:image/png;base64,…', publicUrl}`
+  /// (persists `qrCodeUrl`; staff need `editCard`). There is no GET.
   static String cardQr(String id) => '/cards/${_id(id)}/qrcode';
   static String cardVcard(String id) => '/cards/${_id(id)}/vcard';
   static String cardMedia(String id) => '/cards/${_id(id)}/media';
@@ -48,8 +50,10 @@ abstract final class Endpoints {
   static String staffReviewStatus(String id) =>
       '/staff/reviews/${_id(id)}/status';
 
-  /// PROPOSED: staff member's own assigned card (read + permitted update).
-  static const staffCard = '/staff/card';
+  /// Staff member's assigned cards (bare array) and permitted update
+  /// (`.strict()` schema; requires `editCard`, plus `manageLinks` for links).
+  static const staffCards = '/staff/cards';
+  static String staffCardById(String id) => '/staff/cards/${_id(id)}';
 
   // ---- Public (existing) ----
   static String publicCard(String slug) => '/public/card/${_id(slug)}';

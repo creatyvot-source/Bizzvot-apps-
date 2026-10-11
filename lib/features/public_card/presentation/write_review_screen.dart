@@ -12,7 +12,7 @@ import '../../../shared/widgets/state_views.dart';
 import '../data/public_card_repository.dart';
 import '../domain/public_review.dart';
 import 'public_card_providers.dart';
-import 'widgets/star_rating.dart';
+import '../../../shared/widgets/star_rating.dart';
 
 /// Public review form at `/card/:slug/review`. No sign-in required.
 class WriteReviewScreen extends ConsumerStatefulWidget {
@@ -207,7 +207,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
                   maxLength: WriteReviewScreen.nameMaxLength,
                   decoration: const InputDecoration(labelText: 'Your name'),
                   validator: (v) {
-                    if (_fieldErrors['name'] case final e?) return e;
+                    if ((_fieldErrors['reviewerName'] ?? _fieldErrors['name']) case final e?) {
+                      return e;
+                    }
                     if (v == null || v.trim().isEmpty) {
                       return 'Please enter your name';
                     }

@@ -69,18 +69,20 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
   PublicCard get card => widget.card;
   String get slug => card.slug.isNotEmpty ? card.slug : widget.slug;
 
-  void _track(String type, [String? target]) {
-    // Fire-and-forget; the repository swallows failures.
+  /// Fire-and-forget click tracking; needs the public card id.
+  void _track(String linkType, [Uri? link]) {
+    final id = card.id;
+    if (id == null || id.isEmpty) return;
     unawaited(
       ref
           .read(publicCardRepositoryProvider)
-          .trackClick(slug: slug, type: type, target: target),
+          .trackClick(cardId: id, linkType: linkType, linkUrl: link?.toString()),
     );
   }
 
-  Future<void> _open(Uri? uri, String type, [String? target]) async {
+  Future<void> _open(Uri? uri, String linkType) async {
     if (uri == null) return;
-    _track(type, target);
+    _track(linkType, uri);
     final ok = await ref.read(externalActionsProvider).open(uri);
     if (!ok && mounted) showMessage(context, "Couldn't open this link.");
   }
@@ -341,7 +343,7 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                 icon: Icons.play_circle_outline,
                 fallbackName: 'Video',
                 onTap: (m) =>
-                    _open(ContactLinks.web(m.url), TrackType.video, m.name),
+                    _open(ContactLinks.web(m.url), TrackType.video),
               )
             : null,
       PublicSection.pdfs =>
@@ -352,7 +354,7 @@ class _PublicCardViewState extends ConsumerState<_PublicCardView> {
                 icon: Icons.picture_as_pdf_outlined,
                 fallbackName: 'Document',
                 onTap: (m) =>
-                    _open(ContactLinks.web(m.url), TrackType.pdf, m.name),
+                    _open(ContactLinks.web(m.url), TrackType.pdf),
               )
             : null,
       PublicSection.reviews => PublicReviewsSection(slug: slug, card: card),

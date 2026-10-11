@@ -8,7 +8,7 @@ import '../../../shared/models/review.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../../../shared/widgets/ui_kit.dart';
-import '../../public_card/presentation/widgets/star_rating.dart';
+import '../../../shared/widgets/star_rating.dart';
 import '../data/reviews_repository.dart';
 import 'reviews_providers.dart';
 

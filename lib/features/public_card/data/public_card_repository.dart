@@ -5,26 +5,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/providers.dart';
+import '../../../core/utilities/json.dart';
 import '../../../shared/models/paged.dart';
 import '../domain/public_card.dart';
 import '../domain/public_directory.dart';
 import '../domain/public_review.dart';
 
-/// Click/tap categories sent to `POST /public/track-click`.
+/// `linkType` values for `POST /public/track-click`. The backend accepts any
+/// string; these mirror what the Bizzvot web card sends so app and web taps
+/// aggregate together in analytics.
 abstract final class TrackType {
   static const phone = 'phone';
-  static const companyPhone = 'company_phone';
   static const whatsapp = 'whatsapp';
   static const email = 'email';
   static const website = 'website';
-  static const map = 'map';
-  static const social = 'social';
-  static const custom = 'custom';
+
+  /// Address / map (web uses `address`).
+  static const map = 'address';
   static const vcard = 'vcard';
   static const share = 'share';
   static const googleReview = 'google_review';
   static const pdf = 'pdf';
   static const video = 'video';
+
+  /// `social:<platform>`, e.g. `social:linkedin`.
+  static String social(String platform) => 'social:${platform.trim().toLowerCase()}';
+
+  /// `custom:<label>`.
+  static String custom(String label) => 'custom:${label.trim()}';
+
+  /// Backend limit on `linkType`.
+  static const maxLength = 64;
 }
 
 /// Public (anonymous) endpoints. Every call is sent with `anonymous: true`
@@ -56,14 +67,21 @@ class PublicCardRepository {
             (r) => r,
             listKeys: const ['reviews', 'items', 'docs', 'results', 'data'],
           );
+          // The backend returns `{items, total, page, limit}` without
+          // `hasMore`, so derive it from the totals.
+          final j = asJson(data);
+          final limit = intOr(j['limit'], reviewsPageSize);
+          final total = raw.total;
+          final hasMore =
+              raw.hasMore || (total != null && raw.page * limit < total);
           return Paged(
             items: raw.items
                 .where(PublicReview.isPublishable)
                 .map(PublicReview.fromJson)
                 .toList(growable: false),
-            total: raw.total,
+            total: total,
             page: raw.page,
-            hasMore: raw.hasMore,
+            hasMore: hasMore,
           );
         },
       );
@@ -82,22 +100,27 @@ class PublicCardRepository {
     parse: ReviewSubmissionResult.fromJson,
   );
 
-  /// `POST /public/track-click` `{slug, type, target?}` (payload assumed).
+  /// `POST /public/track-click` `{cardId, linkType, linkUrl?}`.
   ///
   /// Fire-and-forget: never throws, so analytics can never block a visitor.
   Future<void> trackClick({
-    required String slug,
-    required String type,
-    String? target,
+    required String cardId,
+    required String linkType,
+    String? linkUrl,
   }) async {
+    if (cardId.isEmpty || linkType.isEmpty) return;
+    final type = linkType.length > TrackType.maxLength
+        ? linkType.substring(0, TrackType.maxLength)
+        : linkType;
     try {
       await _api.post<void>(
         Endpoints.trackClick,
         anonymous: true,
         body: {
-          'slug': slug,
-          'type': type,
-          if (target != null && target.isNotEmpty) 'target': target,
+          'cardId': cardId,
+          'linkType': type,
+          if (linkUrl != null && linkUrl.isNotEmpty && linkUrl.length <= 2048)
+            'linkUrl': linkUrl,
         },
         parse: (_) {},
       );

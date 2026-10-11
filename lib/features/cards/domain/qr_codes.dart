@@ -3,8 +3,9 @@ import 'dart:typed_data';
 
 import '../../../core/utilities/json.dart';
 
-/// One QR image in the `GET /organization/cards/qrcodes` JSON response.
-/// Assumed shape: `[{cardId, name?, slug?, url | dataUrl | qrCode}]`.
+/// A QR image reference: the `POST /cards/:id/qrcode` response
+/// `{qrCodeUrl: 'data:image/png;base64,…', publicUrl}`, or a card's stored
+/// `qrCodeUrl`. A remote https `url` is tolerated for forward compatibility.
 class QrCodeEntry {
   const QrCodeEntry({
     required this.cardId,
@@ -12,6 +13,7 @@ class QrCodeEntry {
     this.slug,
     this.url,
     this.dataUrl,
+    this.publicUrl,
   });
 
   final String cardId;
@@ -23,6 +25,9 @@ class QrCodeEntry {
 
   /// `data:image/png;base64,...`
   final String? dataUrl;
+
+  /// The card URL encoded in the QR (server `NEXT_PUBLIC_APP_URL` based).
+  final String? publicUrl;
 
   factory QrCodeEntry.fromJson(Object? raw) {
     final j = asJson(raw);
@@ -44,6 +49,7 @@ class QrCodeEntry {
       slug: str(j['slug']) ?? str(card['slug']),
       url: url,
       dataUrl: dataUrl,
+      publicUrl: str(j['publicUrl']),
     );
   }
 
@@ -62,28 +68,6 @@ Uint8List? decodeDataUrl(String? dataUrl) {
   } on FormatException {
     return null;
   }
-}
-
-/// Result of downloading every QR code: either a JSON list of entries or a
-/// single binary file (ZIP/PNG/PDF) the server generated.
-sealed class QrBundle {
-  const QrBundle();
-}
-
-class QrEntryList extends QrBundle {
-  const QrEntryList(this.entries);
-  final List<QrCodeEntry> entries;
-}
-
-class QrArchive extends QrBundle {
-  const QrArchive(
-    this.bytes, {
-    required this.mimeType,
-    required this.extension,
-  });
-  final Uint8List bytes;
-  final String mimeType;
-  final String extension;
 }
 
 /// A ready-to-share file (QR PNG, vCard, archive).
