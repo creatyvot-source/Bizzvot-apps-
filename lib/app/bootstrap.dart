@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/errors/app_exception.dart';
@@ -11,6 +12,11 @@ import 'app.dart';
 /// and personal data (see docs/SECURITY.md).
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  LicenseRegistry.addLicense(() async* {
+    final ofl = await rootBundle.loadString('assets/fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(const ['Inter font'], ofl);
+  });
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);

@@ -45,7 +45,12 @@ test/features/<feature>/  unit + widget tests
    server. Never compute a final price client-side or mark something paid from a gateway callback.
 9. **URLs:** only open `http(s)`, `tel:`, `mailto:`, `https://wa.me/` links; validate with
    `Validators.isSafeWebUrl` before launching user-supplied URLs.
-10. **UI:** Material 3 via `Theme.of(context)`; spacing from `AppSpacing`; wrap page bodies in
+10. **UI:** modern Material 3 design system in `lib/app/theme.dart` (Inter font, `AppColors`,
+    `AppSpacing`, `AppRadius`, `AppMotion`). Use the UI kit in `lib/shared/widgets/ui_kit.dart`:
+    `SectionHeader`, `StatTile`, `StatusChip` (+`StatusTone`), `InitialsAvatar`, `HeroHeader`,
+    `SkeletonBox`/`SkeletonList` (prefer skeletons over spinners for first loads). Feature flags and
+    legal/support links come from `currentConfigProvider` (`lib/core/config/app_config.dart`) — never hard-code them.
+    Use `Theme.of(context)`; spacing from `AppSpacing`; wrap page bodies in
     `ContentWidth`; min tap target 48dp; every icon-only button has a `tooltip`;
     support pull-to-refresh on lists; text must survive 200% text scale (no fixed-height text boxes).
 11. **Lints:** `flutter analyze` must be clean. Prefer `const`, `final`, small widgets.

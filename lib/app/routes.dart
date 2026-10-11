@@ -6,6 +6,9 @@ abstract final class Routes {
   static const splash = '/splash';
   static const unsupported = '/unsupported';
 
+  /// Privacy, terms, support, licences — reachable signed in or out.
+  static const legal = '/legal';
+
   // Auth (signed-out only)
   static const welcome = '/welcome';
   static const login = '/login';
@@ -50,6 +53,7 @@ abstract final class Routes {
   static String ownerSubscription(String id) => '/o/subscriptions/${_e(id)}';
   static const ownerNotifications = '/o/notifications';
   static const ownerSecurity = '/o/security';
+  static const ownerDeleteAccount = '/o/account/delete';
 
   // Staff tabs
   static const staffCard = '/s/card';
@@ -61,9 +65,12 @@ abstract final class Routes {
   static const staffCardEdit = '/s/card/edit';
   static const staffCardShare = '/s/card/share';
   static const staffSecurity = '/s/security';
+  static const staffDeleteAccount = '/s/account/delete';
 
   static bool isPublic(String location) =>
-      location.startsWith('/card/') || location.startsWith('/directory/');
+      location.startsWith('/card/') ||
+      location.startsWith('/directory/') ||
+      location == legal;
 
   static bool isAuth(String location) => const {
         welcome,

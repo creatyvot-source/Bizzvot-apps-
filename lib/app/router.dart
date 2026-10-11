@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../core/auth/auth_user.dart';
 import '../core/auth/session_controller.dart';
+import '../features/account/presentation/delete_account_screen.dart';
+import '../features/account/presentation/legal_screen.dart';
 import '../features/analytics/presentation/card_analytics_screen.dart';
 import '../features/auth/presentation/change_password_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
@@ -121,6 +123,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       r(Routes.splash, (_) => const SplashScreen()),
       r(Routes.unsupported, (_) => const UnsupportedRoleScreen()),
+      r(Routes.legal, (_) => const LegalScreen()),
 
       // Auth
       r(Routes.welcome, (_) => const WelcomeScreen()),
@@ -179,6 +182,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           (s) => SubscriptionDetailScreen(subscriptionId: p(s, 'id'))),
       r(Routes.ownerNotifications, (_) => const NotificationsScreen()),
       r(Routes.ownerSecurity, (_) => const ChangePasswordScreen()),
+      r(Routes.ownerDeleteAccount, (_) => const DeleteAccountScreen()),
 
       // Staff tabs
       StatefulShellRoute.indexedStack(
@@ -198,6 +202,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       r(Routes.staffCardEdit, (_) => const CardEditorScreen(staffMode: true)),
       r(Routes.staffCardShare, (_) => const CardShareScreen(staffMode: true)),
       r(Routes.staffSecurity, (_) => const ChangePasswordScreen()),
+      r(Routes.staffDeleteAccount, (_) => const DeleteAccountScreen()),
     ],
   );
   ref.onDispose(router.dispose);

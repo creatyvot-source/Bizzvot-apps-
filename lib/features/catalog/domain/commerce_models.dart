@@ -53,7 +53,7 @@ class CartLine {
 
   /// Body for `POST /cart/quote` and `POST /orders`. No amounts, no titles.
   Json toRequestJson() => compact({
-        'itemType': itemType.wire,
+        'itemType': itemType.name,
         'itemId': itemId,
         'variantId': variantId,
         if (addOnIds.isNotEmpty) 'addOnIds': addOnIds,
@@ -137,7 +137,7 @@ class QuoteLine {
     final j = asJson(raw);
     final item = asJson(j['item']);
     final status = wireKey(str(j['status']));
-    final issue = str(j['issue'] ?? j['error'] ?? j['reason'] ?? j['message']);
+    final issue = str(j['issue'] ?? j['error'] ?? j['reason'] ?? j['unavailableReason']);
     return QuoteLine(
       itemType: CatalogItemType.parse(j['itemType'] ?? j['type'] ?? item['type']),
       itemId: strOr(j['itemId'] ?? (item.isEmpty ? null : idOf(item))),

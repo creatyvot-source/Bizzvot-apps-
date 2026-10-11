@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/auth/session_controller.dart';
+import '../core/config/app_config.dart';
 import '../shared/widgets/feedback.dart';
 import '../shared/widgets/state_views.dart';
 import 'routes.dart';
@@ -76,6 +77,7 @@ class MoreScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final config = ref.watch(currentConfigProvider);
     final theme = Theme.of(context);
 
     Widget tile(IconData icon, String title, String route, {String? subtitle}) =>
@@ -121,23 +123,33 @@ class MoreScreen extends ConsumerWidget {
               tile(Icons.business_outlined, 'Organization profile', Routes.ownerProfile),
               tile(Icons.visibility_outlined, 'Public presence & visibility',
                   Routes.ownerVisibility),
-              tile(Icons.notifications_outlined, 'Notifications',
-                  Routes.ownerNotifications),
+              if (config.isEnabled(Flags.notifications))
+                tile(Icons.notifications_outlined, 'Notifications',
+                    Routes.ownerNotifications),
               header('Billing & shop'),
               tile(Icons.credit_card_outlined, 'Billing & seats', Routes.ownerBilling),
-              tile(Icons.storefront_outlined, 'Services & Shop', Routes.ownerShop),
-              tile(Icons.shopping_cart_outlined, 'Cart', Routes.ownerCart),
-              tile(Icons.receipt_long_outlined, 'Orders', Routes.ownerOrders),
+              if (config.isEnabled(Flags.shop)) ...[
+                tile(Icons.storefront_outlined, 'Services & Shop', Routes.ownerShop),
+                tile(Icons.shopping_cart_outlined, 'Cart', Routes.ownerCart),
+                tile(Icons.receipt_long_outlined, 'Orders', Routes.ownerOrders),
+              ],
               tile(Icons.description_outlined, 'Invoices', Routes.ownerInvoices),
               tile(Icons.autorenew, 'Subscriptions & renewals',
                   Routes.ownerSubscriptions),
               header('Account'),
               tile(Icons.lock_outline, 'Security & password', Routes.ownerSecurity),
+              tile(Icons.policy_outlined, 'Privacy & legal', Routes.legal),
+              if (config.isEnabled(Flags.accountDeletion))
+                tile(Icons.person_remove_outlined, 'Delete account',
+                    Routes.ownerDeleteAccount),
             ] else ...[
               header('My card'),
               tile(Icons.qr_code_2, 'QR & sharing', Routes.staffCardShare),
               header('Account'),
               tile(Icons.lock_outline, 'Change password', Routes.staffSecurity),
+              tile(Icons.policy_outlined, 'Privacy & legal', Routes.legal),
+              tile(Icons.person_remove_outlined, 'Delete account',
+                  Routes.staffDeleteAccount),
             ],
             const Divider(height: AppSpacing.xl),
             ListTile(

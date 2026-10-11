@@ -1,5 +1,5 @@
 name: bizzvot
-description: "A new Flutter project."
+description: "Bizzvot — digital business cards, reviews and services for organizations."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -17,6 +17,7 @@ dependencies:
   go_router: ^18.0.2
   image_picker: ^1.2.4
   intl: ^0.20.3
+  package_info_plus: ^10.2.2
   path_provider: ^2.1.6
   share_plus: ^13.3.1
   url_launcher: ^6.3.3
@@ -29,3 +30,16 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-400.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-500.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-600.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-700.ttf
+          weight: 700
+  assets:
+    - assets/fonts/OFL.txt

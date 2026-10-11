@@ -89,6 +89,13 @@ abstract final class Endpoints {
   static const invoices = '/invoices';
   static String invoice(String id) => '/invoices/${_id(id)}';
 
+  // ---- App config & account (PROPOSED) ----
+  /// Remote config: min/latest version, maintenance, legal links, flags.
+  static const appConfig = '/app/config';
+
+  /// Permanently delete the signed-in owner's account (App Store 5.1.1(v)).
+  static const deleteAccount = '/auth/account';
+
   // ---- Notifications (PROPOSED) ----
   static const notifications = '/notifications';
   static String notificationRead(String id) =>
