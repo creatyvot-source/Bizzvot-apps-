@@ -15,7 +15,8 @@ void main() {
 
   setUp(() {
     repo = FakePublicRepo()
-      ..onCard = (_) async => PublicCard.fromJson({'slug': 'jane', 'title': 'Jane Doe'});
+      ..onCard = (_) async =>
+          PublicCard.fromJson({'slug': 'jane', 'title': 'Jane Doe'});
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -33,7 +34,10 @@ void main() {
   Future<void> fill(WidgetTester tester, {int stars = 4}) async {
     await tester.tap(find.byKey(ValueKey('star-$stars')));
     await tester.enterText(find.byKey(const ValueKey('review-name')), 'Sam');
-    await tester.enterText(find.byKey(const ValueKey('review-comment')), 'Great help');
+    await tester.enterText(
+      find.byKey(const ValueKey('review-comment')),
+      'Great help',
+    );
     await tester.pump();
   }
 
@@ -75,18 +79,27 @@ void main() {
   });
 
   testWidgets('pending result shows the approval message', (tester) async {
-    repo.onSubmit = (_) async => ReviewSubmissionResult.fromJson({'status': 'pending'});
+    repo.onSubmit = (_) async =>
+        ReviewSubmissionResult.fromJson({'status': 'pending'});
     await pump(tester);
     await fill(tester);
     await submit(tester);
     await tester.pumpAndSettle();
 
-    expect(repo.submissions.single.toJson(), {'rating': 4, 'name': 'Sam', 'comment': 'Great help'});
-    expect(find.text('Thanks! Your review will appear after approval'), findsOneWidget);
+    expect(repo.submissions.single.toJson(), {
+      'rating': 4,
+      'name': 'Sam',
+      'comment': 'Great help',
+    });
+    expect(
+      find.text('Thanks! Your review will appear after approval'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('approved result thanks the reviewer', (tester) async {
-    repo.onSubmit = (_) async => ReviewSubmissionResult.fromJson({'status': 'approved'});
+    repo.onSubmit = (_) async =>
+        ReviewSubmissionResult.fromJson({'status': 'approved'});
     await pump(tester);
     await fill(tester, stars: 5);
     await submit(tester);
@@ -100,7 +113,10 @@ void main() {
     await pump(tester);
     await fill(tester);
     await tester.tap(find.byKey(const ValueKey('submit-review')));
-    await tester.tap(find.byKey(const ValueKey('submit-review')), warnIfMissed: false);
+    await tester.tap(
+      find.byKey(const ValueKey('submit-review')),
+      warnIfMissed: false,
+    );
     await tester.pump();
     expect(repo.submissions, hasLength(1));
     completer.complete(ReviewSubmissionResult.fromJson({'status': 'pending'}));
@@ -109,8 +125,8 @@ void main() {
 
   testWidgets('409 disables re-submit', (tester) async {
     repo.onSubmit = (_) => Future.error(
-          const AppException(AppErrorKind.conflict, 'Duplicate', statusCode: 409),
-        );
+      const AppException(AppErrorKind.conflict, 'Duplicate', statusCode: 409),
+    );
     await pump(tester);
     await fill(tester);
     await submit(tester);
@@ -128,15 +144,17 @@ void main() {
     expect(repo.submissions, hasLength(1));
   });
 
-  testWidgets('429 starts a cooldown countdown using retryAfter', (tester) async {
+  testWidgets('429 starts a cooldown countdown using retryAfter', (
+    tester,
+  ) async {
     repo.onSubmit = (_) => Future.error(
-          const AppException(
-            AppErrorKind.rateLimited,
-            'Too many',
-            statusCode: 429,
-            retryAfter: Duration(seconds: 3),
-          ),
-        );
+      const AppException(
+        AppErrorKind.rateLimited,
+        'Too many',
+        statusCode: 429,
+        retryAfter: Duration(seconds: 3),
+      ),
+    );
     await pump(tester);
     await fill(tester);
     await submit(tester);

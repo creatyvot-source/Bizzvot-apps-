@@ -347,6 +347,7 @@ class GallerySection extends StatelessWidget {
             itemCount: safe.length,
             separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, i) => Semantics(
+              container: true,
               button: true,
               label: '${safe[i].name ?? 'Gallery image ${i + 1}'}, open',
               excludeSemantics: true,

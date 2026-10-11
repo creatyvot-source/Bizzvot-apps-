@@ -3,14 +3,19 @@ import '../utilities/json.dart';
 enum UserRole {
   owner,
   staff,
+
+  /// Coglink "individual" account (single personal card, no organization).
+  individual,
   customer,
   superAdmin,
   unknown;
 
+  /// Coglink calls organization owners `organization`.
   static UserRole parse(Object? v) => switch (str(v)?.toLowerCase()) {
-        'owner' || 'org_owner' || 'organization_owner' || 'admin' =>
+        'organization' || 'owner' || 'org_owner' || 'organization_owner' =>
           UserRole.owner,
         'staff' => UserRole.staff,
+        'individual' => UserRole.individual,
         'customer' => UserRole.customer,
         'super_admin' || 'superadmin' => UserRole.superAdmin,
         _ => UserRole.unknown,
@@ -116,7 +121,11 @@ class AuthUser {
       email: strOr(j['email']),
       name: str(j['name']) ?? str(j['fullName']),
       role: UserRole.parse(j['role']),
-      organizationId: str(j['organizationId']) ?? str(j['orgId']) ??
+      // Coglink /auth/me returns `organizationId: null` for owners and the
+      // real id in `organizationIdToken`.
+      organizationId: str(j['organizationId']) ??
+          str(j['organizationIdToken']) ??
+          str(j['orgId']) ??
           (org.isEmpty ? null : idOf(org)),
       organizationName: str(j['organizationName']) ?? str(org['name']),
       cardId: str(j['cardId']) ?? (card is Map ? idOf(asJson(card)) : str(card)),

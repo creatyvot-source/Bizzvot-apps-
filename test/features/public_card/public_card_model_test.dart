@@ -10,32 +10,48 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// A payload that (wrongly) includes private and internal fields.
 Map<String, dynamic> leakyPayload() => {
-      '_id': 'card-1',
-      'slug': 'jane-doe',
-      'title': 'Jane Doe',
-      'designation': 'Head of Sales',
-      'phone': '+91 98765 43210',
-      'email': 'jane@acme.test',
-      'bloodGroup': 'AB-NEG-SECRET',
-      'fatherName': 'FATHER-SECRET',
-      'motherName': 'MOTHER-SECRET',
-      'privateDetails': {
-        'bloodGroup': 'PD-BLOOD-SECRET',
-        'fatherName': 'PD-FATHER-SECRET',
-      },
-      'reviewerEmail': 'REVIEWER-EMAIL-SECRET',
-      'ip': '203.0.113.9',
-      'internalNotes': 'INTERNAL-SECRET',
-      'staffUserId': 'STAFF-ID-SECRET',
-      'displayToggles': {'showPhone': true, 'bloodGroup': true, 'showFatherName': true},
-      'socialLinks': [
-        {'type': 'linkedin', 'url': 'https://linkedin.com/in/jane', '_id': 'LINK-ID-SECRET'},
-      ],
-      'gallery': [
-        {'url': 'https://cdn.test/a.jpg', '_id': 'MEDIA-ID-SECRET', 'uploadedBy': 'UPLOADER-SECRET'},
-      ],
-      'organization': {'name': 'Acme', 'logo': 'https://cdn.test/logo.png', 'ownerEmail': 'OWNER-SECRET'},
-    };
+  '_id': 'card-1',
+  'slug': 'jane-doe',
+  'title': 'Jane Doe',
+  'designation': 'Head of Sales',
+  'phone': '+91 98765 43210',
+  'email': 'jane@acme.test',
+  'bloodGroup': 'AB-NEG-SECRET',
+  'fatherName': 'FATHER-SECRET',
+  'motherName': 'MOTHER-SECRET',
+  'privateDetails': {
+    'bloodGroup': 'PD-BLOOD-SECRET',
+    'fatherName': 'PD-FATHER-SECRET',
+  },
+  'reviewerEmail': 'REVIEWER-EMAIL-SECRET',
+  'ip': '203.0.113.9',
+  'internalNotes': 'INTERNAL-SECRET',
+  'staffUserId': 'STAFF-ID-SECRET',
+  'displayToggles': {
+    'showPhone': true,
+    'bloodGroup': true,
+    'showFatherName': true,
+  },
+  'socialLinks': [
+    {
+      'type': 'linkedin',
+      'url': 'https://linkedin.com/in/jane',
+      '_id': 'LINK-ID-SECRET',
+    },
+  ],
+  'gallery': [
+    {
+      'url': 'https://cdn.test/a.jpg',
+      '_id': 'MEDIA-ID-SECRET',
+      'uploadedBy': 'UPLOADER-SECRET',
+    },
+  ],
+  'organization': {
+    'name': 'Acme',
+    'logo': 'https://cdn.test/logo.png',
+    'ownerEmail': 'OWNER-SECRET',
+  },
+};
 
 void main() {
   group('PublicCard privacy', () {
@@ -61,7 +77,13 @@ void main() {
         expect(dump, isNot(contains(secret)), reason: '$secret leaked');
       }
       final lower = dump.toLowerCase();
-      for (final key in ['bloodgroup', 'fathername', 'mothername', 'privatedetails', '"ip"']) {
+      for (final key in [
+        'bloodgroup',
+        'fathername',
+        'mothername',
+        'privatedetails',
+        '"ip"',
+      ]) {
         expect(lower, isNot(contains(key)), reason: '$key leaked');
       }
       // Public data is still there.
@@ -85,7 +107,10 @@ void main() {
       expect(r.reviewerName, 'Sam');
       expect(r.reply?.text, 'Thanks Sam');
       // The DTO has no field that could carry them; check textual output too.
-      expect('${r.id}${r.reviewerName}${r.comment}${r.reply?.text}', isNot(contains('sam@x.test')));
+      expect(
+        '${r.id}${r.reviewerName}${r.comment}${r.reply?.text}',
+        isNot(contains('sam@x.test')),
+      );
     });
 
     test('only approved (or unmarked) reviews are publishable', () {
@@ -125,7 +150,13 @@ void main() {
     test('sectionOrder keeps known sections and appends the rest', () {
       final card = PublicCard.fromJson({
         'slug': 's',
-        'sectionOrder': ['reviews', 'socialLinks', 'bogus', 'gallery', 'reviews'],
+        'sectionOrder': [
+          'reviews',
+          'socialLinks',
+          'bogus',
+          'gallery',
+          'reviews',
+        ],
       });
       expect(card.sectionOrder.take(3), [
         PublicSection.reviews,
@@ -138,7 +169,11 @@ void main() {
     test('display toggles are normalised (showPhone == phone)', () {
       final card = PublicCard.fromJson({
         'slug': 's',
-        'displayToggles': {'showPhone': false, 'show_gallery': 'false', 'reviews': true},
+        'displayToggles': {
+          'showPhone': false,
+          'show_gallery': 'false',
+          'reviews': true,
+        },
       });
       expect(card.shows(['phone']), isFalse);
       expect(card.showsSection(PublicSection.gallery), isFalse);
@@ -148,14 +183,22 @@ void main() {
 
     test('vCard needs an id and vcardEnabled != false', () {
       expect(PublicCard.fromJson({'slug': 's'}).canSaveContact, isFalse);
-      expect(PublicCard.fromJson({'slug': 's', '_id': 'x'}).canSaveContact, isTrue);
+      expect(
+        PublicCard.fromJson({'slug': 's', '_id': 'x'}).canSaveContact,
+        isTrue,
+      );
     });
 
     test('directory parses entries and skips ones without slug', () {
       final page = PublicDirectoryPage.fromJson({
         'organization': {'name': 'Acme'},
         'people': [
-          {'slug': 'a', 'title': 'Ann', 'designation': 'CEO', 'bloodGroup': 'X'},
+          {
+            'slug': 'a',
+            'title': 'Ann',
+            'designation': 'CEO',
+            'bloodGroup': 'X',
+          },
           {'title': 'No slug'},
           {
             'card': {'slug': 'b', 'name': 'Ben'},
@@ -171,20 +214,30 @@ void main() {
     });
 
     test('submission result: approved vs pending (default)', () {
-      expect(ReviewSubmissionResult.fromJson({'status': 'approved'}).isApproved, isTrue);
+      expect(
+        ReviewSubmissionResult.fromJson({'status': 'approved'}).isApproved,
+        isTrue,
+      );
       expect(
         ReviewSubmissionResult.fromJson({
           'review': {'status': 'approved'},
         }).isApproved,
         isTrue,
       );
-      expect(ReviewSubmissionResult.fromJson({'status': 'pending'}).isApproved, isFalse);
+      expect(
+        ReviewSubmissionResult.fromJson({'status': 'pending'}).isApproved,
+        isFalse,
+      );
       expect(ReviewSubmissionResult.fromJson(null).isApproved, isFalse);
     });
 
     test('submission body omits an empty comment', () {
       expect(
-        const ReviewSubmission(rating: 5, name: ' Ann ', comment: '  ').toJson(),
+        const ReviewSubmission(
+          rating: 5,
+          name: ' Ann ',
+          comment: '  ',
+        ).toJson(),
         {'rating': 5, 'name': 'Ann'},
       );
     });
@@ -192,14 +245,23 @@ void main() {
 
   group('ContactLinks', () {
     test('tel keeps a leading + and strips punctuation', () {
-      expect(ContactLinks.tel('+91 (987) 654-3210').toString(), 'tel:+919876543210');
+      expect(
+        ContactLinks.tel('+91 (987) 654-3210').toString(),
+        'tel:+919876543210',
+      );
       expect(ContactLinks.tel('ab'), isNull);
     });
 
     test('whatsapp builds https://wa.me/<digits>', () {
-      expect(ContactLinks.whatsapp('+91 98765 43210').toString(), 'https://wa.me/919876543210');
+      expect(
+        ContactLinks.whatsapp('+91 98765 43210').toString(),
+        'https://wa.me/919876543210',
+      );
       expect(ContactLinks.whatsapp('123'), isNull);
-      expect(ContactLinks.whatsapp('https://wa.me/123456789').toString(), 'https://wa.me/123456789');
+      expect(
+        ContactLinks.whatsapp('https://wa.me/123456789').toString(),
+        'https://wa.me/123456789',
+      );
     });
 
     test('mailto validates the address', () {
@@ -209,7 +271,10 @@ void main() {
 
     test('web allows http(s) only and upgrades bare hosts', () {
       expect(ContactLinks.web('example.com').toString(), 'https://example.com');
-      expect(ContactLinks.web('https://x.test/p?q=1').toString(), 'https://x.test/p?q=1');
+      expect(
+        ContactLinks.web('https://x.test/p?q=1').toString(),
+        'https://x.test/p?q=1',
+      );
       expect(ContactLinks.web('javascript:alert(1)'), isNull);
       expect(ContactLinks.web('data:text/html,hi'), isNull);
       expect(ContactLinks.web('file:///etc/passwd'), isNull);
@@ -218,10 +283,16 @@ void main() {
 
     test('map prefers a safe map link, else searches the address', () {
       expect(
-        ContactLinks.map(mapLink: 'https://maps.app.goo.gl/x', address: 'A').toString(),
+        ContactLinks.map(
+          mapLink: 'https://maps.app.goo.gl/x',
+          address: 'A',
+        ).toString(),
         'https://maps.app.goo.gl/x',
       );
-      final search = ContactLinks.map(mapLink: 'javascript:x', address: '1 Main St');
+      final search = ContactLinks.map(
+        mapLink: 'javascript:x',
+        address: '1 Main St',
+      );
       expect(search?.host, 'www.google.com');
       expect(search?.queryParameters['query'], '1 Main St');
       expect(ContactLinks.map(), isNull);

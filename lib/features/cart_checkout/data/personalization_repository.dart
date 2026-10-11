@@ -29,12 +29,12 @@ class LinkableCard {
   final String? googleReviewUrl;
 
   factory LinkableCard.fromCard(CardModel c) => LinkableCard(
-        id: c.id,
-        slug: c.slug,
-        name: c.displayTitle,
-        designation: c.designation,
-        googleReviewUrl: c.googleReviewUrl,
-      );
+    id: c.id,
+    slug: c.slug,
+    name: c.displayTitle,
+    designation: c.designation,
+    googleReviewUrl: c.googleReviewUrl,
+  );
 }
 
 /// Uploaded logo reference.
@@ -45,7 +45,11 @@ class UploadedLogo {
 }
 
 class PickedLogo {
-  const PickedLogo({required this.name, required this.bytes, required this.mimeType});
+  const PickedLogo({
+    required this.name,
+    required this.bytes,
+    required this.mimeType,
+  });
   final String name;
   final Uint8List bytes;
   final String mimeType;
@@ -74,9 +78,13 @@ class GalleryLogoPicker implements LogoPicker {
     final mime = lower.endsWith('.png')
         ? 'image/png'
         : lower.endsWith('.webp')
-            ? 'image/webp'
-            : 'image/jpeg';
-    return PickedLogo(name: f.name, bytes: await f.readAsBytes(), mimeType: mime);
+        ? 'image/webp'
+        : 'image/jpeg';
+    return PickedLogo(
+      name: f.name,
+      bytes: await f.readAsBytes(),
+      mimeType: mime,
+    );
   }
 }
 
@@ -90,41 +98,47 @@ class PersonalizationRepository {
 
   /// Organization cards (EXISTING `GET /organization/cards`).
   Future<List<LinkableCard>> cards() => _api.get(
-        Endpoints.cards,
-        query: {'limit': 200},
-        parse: (d) => Paged.parse(d, CardModel.fromJson,
-                listKeys: const ['cards', 'items', 'docs', 'data'])
-            .items
+    Endpoints.cards,
+    query: {'limit': 200},
+    parse: (d) =>
+        Paged.parse(
+              d,
+              CardModel.fromJson,
+              listKeys: const ['cards', 'items', 'docs', 'data'],
+            ).items
             .where((c) => c.id.isNotEmpty)
             .map(LinkableCard.fromCard)
             .toList(growable: false),
-      );
+  );
 
   /// EXISTING `POST /media/upload` (multipart `file`).
   Future<UploadedLogo> uploadLogo(PickedLogo logo) => _api.upload(
-        Endpoints.mediaUpload,
-        form: FormData.fromMap({
-          'file': MultipartFile.fromBytes(
-            logo.bytes,
-            filename: logo.name,
-            contentType: DioMediaType.parse(logo.mimeType),
-          ),
-        }),
-        parse: (d) {
-          final j = asJson(d);
-          final inner = asJson(j['file'] ?? j['media']);
-          final url = d is String
-              ? d
-              : str(j['url'] ?? j['secure_url'] ?? j['location'] ?? inner['url']);
-          if (url == null || !url.startsWith('https://')) {
-            throw const AppException(
-              AppErrorKind.unknown,
-              'The logo uploaded but no secure link was returned.',
-            );
-          }
-          return UploadedLogo(url: url, id: str(j['id'] ?? j['_id'] ?? inner['id']));
-        },
+    Endpoints.mediaUpload,
+    form: FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        logo.bytes,
+        filename: logo.name,
+        contentType: DioMediaType.parse(logo.mimeType),
+      ),
+    }),
+    parse: (d) {
+      final j = asJson(d);
+      final inner = asJson(j['file'] ?? j['media']);
+      final url = d is String
+          ? d
+          : str(j['url'] ?? j['secure_url'] ?? j['location'] ?? inner['url']);
+      if (url == null || !url.startsWith('https://')) {
+        throw const AppException(
+          AppErrorKind.unknown,
+          'The logo uploaded but no secure link was returned.',
+        );
+      }
+      return UploadedLogo(
+        url: url,
+        id: str(j['id'] ?? j['_id'] ?? inner['id']),
       );
+    },
+  );
 }
 
 final personalizationRepositoryProvider = Provider<PersonalizationRepository>(

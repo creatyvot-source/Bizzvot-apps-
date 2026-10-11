@@ -128,6 +128,7 @@ class RatingSummary extends StatelessWidget {
     final avg = average.clamp(0, 5).toStringAsFixed(1);
     final reviews = count == 1 ? '1 review' : '$count reviews';
     return Semantics(
+      container: true,
       label: 'Average rating $avg out of 5 from $reviews',
       excludeSemantics: true,
       child: Wrap(

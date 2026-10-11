@@ -225,11 +225,9 @@ final checkoutQuoteProvider = FutureProvider.autoDispose<Quote?>((ref) {
   final lines = ref.watch(cartProvider);
   if (lines.isEmpty) return null;
   final details = ref.watch(checkoutDetailsProvider);
-  return ref.watch(cartCheckoutRepositoryProvider).quote(
-    lines,
-    shippingAddress: details.address,
-    gst: details.gst,
-  );
+  return ref
+      .watch(cartCheckoutRepositoryProvider)
+      .quote(lines, shippingAddress: details.address, gst: details.gst);
 });
 
 // ---------------------------------------------------------------------------

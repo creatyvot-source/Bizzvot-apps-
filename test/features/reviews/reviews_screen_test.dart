@@ -17,7 +17,9 @@ class FakeReviewsRepo extends ReviewsRepository {
 
   List<Review> data = [
     Review.fromJson(reviewJson('1')),
-    Review.fromJson(reviewJson('2', status: 'approved', reply: {'text': 'Thanks!'})),
+    Review.fromJson(
+      reviewJson('2', status: 'approved', reply: {'text': 'Thanks!'}),
+    ),
     Review.fromJson(reviewJson('3', status: 'hidden')),
   ];
   final fetches = <(ReviewScope, ReviewStatus?)>[];
@@ -26,14 +28,22 @@ class FakeReviewsRepo extends ReviewsRepository {
   Object? failWith;
 
   @override
-  Future<Paged<Review>> fetch(ReviewScope scope, {ReviewStatus? status, int page = 1}) async {
+  Future<Paged<Review>> fetch(
+    ReviewScope scope, {
+    ReviewStatus? status,
+    int page = 1,
+  }) async {
     fetches.add((scope, status));
     // Simulate a server that ignores the filter: the screen filters locally.
     return Paged(items: data);
   }
 
   @override
-  Future<Review?> setStatus(ReviewScope scope, String id, ReviewStatus status) async {
+  Future<Review?> setStatus(
+    ReviewScope scope,
+    String id,
+    ReviewStatus status,
+  ) async {
     statusCalls.add((id, status));
     if (failWith != null) throw failWith!;
     return null;
@@ -50,12 +60,12 @@ class FakeReviewsRepo extends ReviewsRepository {
 const owner = AuthUser(id: 'o1', email: 'o@x.test', role: UserRole.owner);
 
 AuthUser staff({bool view = true, bool reply = true}) => AuthUser(
-      id: 's1',
-      email: 's@x.test',
-      role: UserRole.staff,
-      cardId: 'c1',
-      permissions: StaffPermissions(viewReviews: view, replyReviews: reply),
-    );
+  id: 's1',
+  email: 's@x.test',
+  role: UserRole.staff,
+  cardId: 'c1',
+  permissions: StaffPermissions(viewReviews: view, replyReviews: reply),
+);
 
 void main() {
   late FakeReviewsRepo repo;
@@ -77,7 +87,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('owner sees reviews with card, reviewer, status and reply', (tester) async {
+  testWidgets('owner sees reviews with card, reviewer, status and reply', (
+    tester,
+  ) async {
     await pump(tester, const ReviewsScreen(), owner);
     expect(repo.fetches.single, (ReviewScope.owner, null));
     expect(find.text('Reviewer 1'), findsOneWidget);
@@ -104,7 +116,10 @@ void main() {
     await tester.tap(find.text('Approve'));
     await tester.pumpAndSettle();
     expect(repo.statusCalls.single, ('1', ReviewStatus.approved));
-    expect(find.text('Pending'), findsOneWidget); // only the filter chip remains
+    expect(
+      find.text('Pending'),
+      findsOneWidget,
+    ); // only the filter chip remains
     expect(find.text('Review approved'), findsOneWidget);
   });
 
@@ -125,7 +140,10 @@ void main() {
     await tester.pump();
     expect(find.text('Write a reply first'), findsOneWidget);
 
-    await tester.enterText(find.byKey(const ValueKey('reply-text')), '  Much appreciated  ');
+    await tester.enterText(
+      find.byKey(const ValueKey('reply-text')),
+      '  Much appreciated  ',
+    );
     await tester.tap(find.byKey(const ValueKey('reply-submit')));
     await tester.pumpAndSettle();
     expect(repo.replies.single, ('1', 'Much appreciated'));
@@ -141,14 +159,26 @@ void main() {
     expect(find.text('Nothing waiting for approval'), findsOneWidget);
   });
 
-  testWidgets('staff without viewReviews gets a no-permission state', (tester) async {
-    await pump(tester, const ReviewsScreen(staffMode: true), staff(view: false));
+  testWidgets('staff without viewReviews gets a no-permission state', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const ReviewsScreen(staffMode: true),
+      staff(view: false),
+    );
     expect(find.text("You don't have access to reviews"), findsOneWidget);
     expect(repo.fetches, isEmpty);
   });
 
-  testWidgets('staff without replyReviews can read but not act', (tester) async {
-    await pump(tester, const ReviewsScreen(staffMode: true), staff(reply: false));
+  testWidgets('staff without replyReviews can read but not act', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const ReviewsScreen(staffMode: true),
+      staff(reply: false),
+    );
     expect(repo.fetches.single.$1, ReviewScope.staff);
     expect(find.text('Reviewer 1'), findsOneWidget);
     expect(find.text('Approve'), findsNothing);

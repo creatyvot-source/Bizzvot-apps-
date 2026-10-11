@@ -21,10 +21,12 @@ class DirectoryVisibilityScreen extends ConsumerStatefulWidget {
   const DirectoryVisibilityScreen({super.key});
 
   @override
-  ConsumerState<DirectoryVisibilityScreen> createState() => _DirectoryVisibilityScreenState();
+  ConsumerState<DirectoryVisibilityScreen> createState() =>
+      _DirectoryVisibilityScreenState();
 }
 
-class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityScreen> {
+class _DirectoryVisibilityScreenState
+    extends ConsumerState<DirectoryVisibilityScreen> {
   /// Optimistic directory value while the PATCH is in flight.
   DirectoryVisibility? _pendingOrg;
   final _pendingCards = <String, CardVisibility>{};
@@ -52,7 +54,8 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
       final ok = await confirmAction(
         context,
         title: 'Hide the people directory?',
-        message: 'Your public people directory will stop listing any cards. '
+        message:
+            'Your public people directory will stop listing any cards. '
             'Direct card links and QR codes keep working for active cards.',
         confirmLabel: 'Hide directory',
       );
@@ -65,7 +68,9 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
       if (mounted) {
         showMessage(
           context,
-          value == DirectoryVisibility.public ? 'People directory is public' : 'People directory is hidden',
+          value == DirectoryVisibility.public
+              ? 'People directory is public'
+              : 'People directory is hidden',
         );
       }
     } catch (e) {
@@ -79,7 +84,9 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
     if (value == card.visibility || _pendingCards.containsKey(card.id)) return;
     setState(() => _pendingCards[card.id] = value);
     try {
-      await ref.read(directoryActionsProvider).setCardVisibility(card.id, value);
+      await ref
+          .read(directoryActionsProvider)
+          .setCardVisibility(card.id, value);
       await ref.read(cardsListProvider.future);
     } catch (e) {
       if (mounted) showError(context, e);
@@ -104,7 +111,9 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
     );
     if (!ok || !mounted) return;
     setState(() => _bulk = (0, ids.length));
-    final result = await ref.read(directoryActionsProvider).bulkSetVisibility(
+    final result = await ref
+        .read(directoryActionsProvider)
+        .bulkSetVisibility(
           ids,
           value,
           onProgress: (done, total) {
@@ -120,7 +129,10 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
       _selecting = result.hasFailures;
     });
     if (!result.hasFailures) {
-      showMessage(context, 'Updated ${result.succeeded.length} card${result.succeeded.length == 1 ? '' : 's'}');
+      showMessage(
+        context,
+        'Updated ${result.succeeded.length} card${result.succeeded.length == 1 ? '' : 's'}',
+      );
       return;
     }
     final firstError = result.failed.values.first;
@@ -135,24 +147,34 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
           'The cards that failed are still selected so you can try again.',
         ),
         actions: [
-          FilledButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
   }
 
   static String _explain(CardVisibility v) => switch (v) {
-        CardVisibility.inherit => 'listed only when the organization directory is public and the card is active.',
-        CardVisibility.public => 'listed when active, unless the organization directory is private.',
-        CardVisibility.private => 'never listed in the directory. Direct links and QR codes still work.',
-      };
+    CardVisibility.inherit => 'listed only when the organization directory is public and the card is active.',
+    CardVisibility.public =>
+      'listed when active, unless the organization directory is private.',
+    CardVisibility.private =>
+      'never listed in the directory. Direct links and QR codes still work.',
+  };
 
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(directoryProfileProvider);
     final cards = ref.watch(cardsListProvider);
-    final directoryEnabled = ref.watch(currentConfigProvider).isEnabled(Flags.directory);
-    final org = _pendingOrg ?? profile.value?.directoryVisibility ?? DirectoryVisibility.public;
+    final directoryEnabled = ref
+        .watch(currentConfigProvider)
+        .isEnabled(Flags.directory);
+    final org =
+        _pendingOrg ??
+        profile.value?.directoryVisibility ??
+        DirectoryVisibility.public;
     final slug = profile.value?.slug;
     final canPreview = directoryEnabled && slug != null && slug.isNotEmpty;
 
@@ -184,7 +206,8 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
                     if (canPreview) ...[
                       const SizedBox(height: AppSpacing.md),
                       OutlinedButton.icon(
-                        onPressed: () => context.push(Routes.publicDirectory(slug)),
+                        onPressed: () =>
+                            context.push(Routes.publicDirectory(slug)),
                         icon: const Icon(Icons.travel_explore),
                         label: const Text('Preview directory as a visitor'),
                       ),
@@ -192,20 +215,23 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
                     SectionHeader(
                       'Cards',
                       subtitle: 'Choose who appears in the directory.',
-                      action: cards.hasValue && (cards.value?.isNotEmpty ?? false)
+                      action:
+                          cards.hasValue && (cards.value?.isNotEmpty ?? false)
                           ? TextButton(
                               onPressed: _locked
                                   ? null
                                   : () => setState(() {
-                                        _selecting = !_selecting;
-                                        _selected.clear();
-                                      }),
+                                      _selecting = !_selecting;
+                                      _selected.clear();
+                                    }),
                               child: Text(_selecting ? 'Done' : 'Select'),
                             )
                           : null,
                     ),
-                    if (_bulk != null) _BulkProgress(done: _bulk!.$1, total: _bulk!.$2),
-                    if (_selecting && cards.hasValue) _selectionBar(cards.value!),
+                    if (_bulk != null)
+                      _BulkProgress(done: _bulk!.$1, total: _bulk!.$2),
+                    if (_selecting && cards.hasValue)
+                      _selectionBar(cards.value!),
                   ],
                 ),
               ),
@@ -218,7 +244,10 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
     );
   }
 
-  Widget _orgCard(AsyncValue<OrganizationProfile> profile, DirectoryVisibility org) {
+  Widget _orgCard(
+    AsyncValue<OrganizationProfile> profile,
+    DirectoryVisibility org,
+  ) {
     if (profile.hasError && !profile.hasValue) {
       return Card(
         child: ListTile(
@@ -237,7 +266,9 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
       child: Column(
         children: [
           SwitchListTile(
-            secondary: Icon(public ? Icons.groups_outlined : Icons.lock_outline),
+            secondary: Icon(
+              public ? Icons.groups_outlined : Icons.lock_outline,
+            ),
             title: const Text('Show people directory'),
             subtitle: Text(
               public
@@ -247,7 +278,11 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
             value: public,
             onChanged: loading || _pendingOrg != null || _locked
                 ? null
-                : (v) => _setOrg(v ? DirectoryVisibility.public : DirectoryVisibility.private),
+                : (v) => _setOrg(
+                    v
+                        ? DirectoryVisibility.public
+                        : DirectoryVisibility.private,
+                  ),
           ),
           if (_pendingOrg != null || loading) const LinearProgressIndicator(),
         ],
@@ -269,20 +304,22 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
                 Expanded(
                   child: Semantics(
                     liveRegion: true,
-                    child: Text('${_selected.length} selected',
-                        style: Theme.of(context).textTheme.titleSmall),
+                    child: Text(
+                      '${_selected.length} selected',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: _locked
                       ? null
                       : () => setState(() {
-                            if (allSelected) {
-                              _selected.clear();
-                            } else {
-                              _selected.addAll(all.map((c) => c.id));
-                            }
-                          }),
+                          if (allSelected) {
+                            _selected.clear();
+                          } else {
+                            _selected.addAll(all.map((c) => c.id));
+                          }
+                        }),
                   child: Text(allSelected ? 'Clear' : 'Select all'),
                 ),
               ],
@@ -294,10 +331,16 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
                 for (final (v, label, icon) in const [
                   (CardVisibility.public, 'Make public', Icons.public),
                   (CardVisibility.private, 'Make private', Icons.lock_outline),
-                  (CardVisibility.inherit, 'Inherit', Icons.account_tree_outlined),
+                  (
+                    CardVisibility.inherit,
+                    'Inherit',
+                    Icons.account_tree_outlined,
+                  ),
                 ])
                   FilledButton.tonalIcon(
-                    onPressed: _selected.isEmpty || _locked ? null : () => _bulkApply(v),
+                    onPressed: _selected.isEmpty || _locked
+                        ? null
+                        : () => _bulkApply(v),
                     icon: Icon(icon),
                     label: Text(label),
                   ),
@@ -309,7 +352,10 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
     );
   }
 
-  List<Widget> _cardSlivers(AsyncValue<List<CardModel>> cards, DirectoryVisibility org) {
+  List<Widget> _cardSlivers(
+    AsyncValue<List<CardModel>> cards,
+    DirectoryVisibility org,
+  ) {
     if (!cards.hasValue) {
       if (cards.hasError) {
         return [
@@ -322,9 +368,7 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
           ),
         ];
       }
-      return const [
-        SliverFillRemaining(child: SkeletonList(count: 4)),
-      ];
+      return const [SliverFillRemaining(child: SkeletonList(count: 4))];
     }
     final list = cards.value!;
     if (list.isEmpty) {
@@ -347,11 +391,19 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
           final card = list[i];
           final pending = _pendingCards[card.id];
           final visibility = pending ?? card.visibility;
-          final status = directoryStatusText(org: org, card: visibility, cardActive: card.isActive);
+          final status = directoryStatusText(
+            org: org,
+            card: visibility,
+            cardActive: card.isActive,
+          );
           final selected = _selected.contains(card.id);
           return ListTile(
             onTap: _selecting && !_locked
-                ? () => setState(() => selected ? _selected.remove(card.id) : _selected.add(card.id))
+                ? () => setState(
+                    () => selected
+                        ? _selected.remove(card.id)
+                        : _selected.add(card.id),
+                  )
                 : null,
             selected: selected,
             leading: _selecting
@@ -359,7 +411,11 @@ class _DirectoryVisibilityScreenState extends ConsumerState<DirectoryVisibilityS
                     value: selected,
                     onChanged: _locked
                         ? null
-                        : (v) => setState(() => v == true ? _selected.add(card.id) : _selected.remove(card.id)),
+                        : (v) => setState(
+                            () => v == true
+                                ? _selected.add(card.id)
+                                : _selected.remove(card.id),
+                          ),
                     semanticLabel: 'Select ${card.displayTitle}',
                   )
                 : CardAvatar(card: card),
@@ -414,22 +470,19 @@ class _BulkProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(
-              liveRegion: true,
-              child: Text('Updating $done of $total…'),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            LinearProgressIndicator(
-              value: total == 0 ? null : done / total,
-              semanticsLabel: 'Bulk update progress',
-            ),
-          ],
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(liveRegion: true, child: Text('Updating $done of $total…')),
+        const SizedBox(height: AppSpacing.xs),
+        LinearProgressIndicator(
+          value: total == 0 ? null : done / total,
+          semanticsLabel: 'Bulk update progress',
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _RulesCard extends StatelessWidget {
@@ -439,10 +492,22 @@ class _RulesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const rules = <(IconData, String)>[
-      (Icons.lock_outline, 'A private organization directory wins: no card is listed, even cards set to Public.'),
-      (Icons.visibility_off_outlined, 'A card set to Private is never listed in the directory.'),
-      (Icons.account_tree_outlined, 'Inherit and Public cards are listed when the directory is public and the card is active.'),
-      (Icons.qr_code_2, 'Hiding a card from the directory does not block its direct link or QR code. Active cards stay reachable by anyone who has the link.'),
+      (
+        Icons.lock_outline,
+        'A private organization directory wins: no card is listed, even cards set to Public.',
+      ),
+      (
+        Icons.visibility_off_outlined,
+        'A card set to Private is never listed in the directory.',
+      ),
+      (
+        Icons.account_tree_outlined,
+        'Inherit and Public cards are listed when the directory is public and the card is active.',
+      ),
+      (
+        Icons.qr_code_2,
+        'Hiding a card from the directory does not block its direct link or QR code. Active cards stay reachable by anyone who has the link.',
+      ),
     ];
     return Card(
       child: Padding(
@@ -452,7 +517,10 @@ class _RulesCard extends StatelessWidget {
           children: [
             Semantics(
               header: true,
-              child: Text('How visibility works', style: theme.textTheme.titleMedium),
+              child: Text(
+                'How visibility works',
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             for (final (icon, text) in rules)
@@ -463,7 +531,9 @@ class _RulesCard extends StatelessWidget {
                   children: [
                     Icon(icon, size: 20, color: theme.colorScheme.primary),
                     const SizedBox(width: AppSpacing.sm),
-                    Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+                    Expanded(
+                      child: Text(text, style: theme.textTheme.bodyMedium),
+                    ),
                   ],
                 ),
               ),

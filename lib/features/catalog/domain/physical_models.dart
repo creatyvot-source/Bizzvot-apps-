@@ -18,17 +18,19 @@ enum NfcTarget {
   none;
 
   String get wire => switch (this) {
-        NfcTarget.card => 'card',
-        NfcTarget.review => 'review',
-        NfcTarget.none => 'none',
-      };
+    NfcTarget.card => 'card',
+    NfcTarget.review => 'review',
+    NfcTarget.none => 'none',
+  };
 
   static NfcTarget parse(Object? v) => switch (wireKey(str(v))) {
-        'card' || 'digital_card' || 'profile' => NfcTarget.card,
-        'review' || 'google_review' || 'review_card' || 'review_url' =>
-          NfcTarget.review,
-        _ => NfcTarget.none,
-      };
+    'card' || 'digital_card' || 'profile' => NfcTarget.card,
+    'review' ||
+    'google_review' ||
+    'review_card' ||
+    'review_url' => NfcTarget.review,
+    _ => NfcTarget.none,
+  };
 }
 
 /// Which personalisation inputs an item needs. Sent by the server on the
@@ -75,7 +77,8 @@ class PersonalizationSpec {
     }
     // Stop-gap when the server only flags the item as NFC.
     if (boolOr(item['nfc'] ?? item['isNfc'])) {
-      final text = '${str(item['slug']) ?? ''} ${str(item['title']) ?? ''}'.toLowerCase();
+      final text = '${str(item['slug']) ?? ''} ${str(item['title']) ?? ''}'
+          .toLowerCase();
       final review = text.contains('review');
       return PersonalizationSpec(
         target: review ? NfcTarget.review : NfcTarget.card,
@@ -145,18 +148,18 @@ class UnitPersonalization {
   }
 
   Json toJson(NfcTarget target) => compact({
-        'nfcTarget': target == NfcTarget.none ? null : target.wire,
-        'cardId': cardId,
-        'cardSlug': cardSlug,
-        'reviewUrl': useCardReviewPage ? null : reviewUrl,
-        'reviewTarget': target == NfcTarget.review
-            ? (useCardReviewPage ? 'review_card' : 'google_review')
-            : null,
-        'printName': printName,
-        'printDesignation': printDesignation,
-        'logoMediaId': logoMediaId,
-        'logoUrl': logoUrl,
-      });
+    'nfcTarget': target == NfcTarget.none ? null : target.wire,
+    'cardId': cardId,
+    'cardSlug': cardSlug,
+    'reviewUrl': useCardReviewPage ? null : reviewUrl,
+    'reviewTarget': target == NfcTarget.review
+        ? (useCardReviewPage ? 'review_card' : 'google_review')
+        : null,
+    'printName': printName,
+    'printDesignation': printDesignation,
+    'logoMediaId': logoMediaId,
+    'logoUrl': logoUrl,
+  });
 }
 
 /// Personalisation for a cart line: one entry per unit (or a single shared
@@ -177,7 +180,8 @@ class LinePersonalization {
   /// First validation problem across units, or null.
   String? problem(int quantity) {
     if (assignLater) return null;
-    if (units.isEmpty) return 'Add personalisation details or choose “assign later”';
+    if (units.isEmpty)
+      return 'Add personalisation details or choose “assign later”';
     if (spec.perUnit && units.length != quantity) {
       return 'Personalise all $quantity units or choose “assign later”';
     }
@@ -194,8 +198,16 @@ class LinePersonalization {
     if (units.length == quantity) return this;
     final next = units.length > quantity
         ? units.sublist(0, quantity)
-        : [...units, for (var i = units.length; i < quantity; i++) const UnitPersonalization()];
-    return LinePersonalization(spec: spec, assignLater: assignLater, units: next);
+        : [
+            ...units,
+            for (var i = units.length; i < quantity; i++)
+              const UnitPersonalization(),
+          ];
+    return LinePersonalization(
+      spec: spec,
+      assignLater: assignLater,
+      units: next,
+    );
   }
 
   /// Non-per-unit specs hold a single shared entry.
@@ -207,18 +219,19 @@ class LinePersonalization {
           units: const [UnitPersonalization()],
         );
 
-  LinePersonalization copyWith({bool? assignLater, List<UnitPersonalization>? units}) =>
-      LinePersonalization(
-        spec: spec,
-        assignLater: assignLater ?? this.assignLater,
-        units: units ?? this.units,
-      );
+  LinePersonalization copyWith({
+    bool? assignLater,
+    List<UnitPersonalization>? units,
+  }) => LinePersonalization(
+    spec: spec,
+    assignLater: assignLater ?? this.assignLater,
+    units: units ?? this.units,
+  );
 
   Json toJson() => {
-        'assignLater': assignLater,
-        if (!assignLater)
-          'units': [for (final u in units) u.toJson(spec.target)],
-      };
+    'assignLater': assignLater,
+    if (!assignLater) 'units': [for (final u in units) u.toJson(spec.target)],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -227,21 +240,50 @@ class LinePersonalization {
 
 /// Indian states and union territories (place of supply / address state).
 const indianStates = <String>[
-  'Andaman and Nicobar Islands', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam',
-  'Bihar', 'Chandigarh', 'Chhattisgarh',
-  'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Goa', 'Gujarat',
-  'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka',
-  'Kerala', 'Ladakh', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab',
-  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
-  'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands',
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chandigarh',
+  'Chhattisgarh',
+  'Dadra and Nagar Haveli and Daman and Diu',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jammu and Kashmir',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Ladakh',
+  'Lakshadweep',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Puducherry',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
 ];
 
 abstract final class ShippingValidators {
   static final _pin = RegExp(r'^[1-9][0-9]{5}$');
   static final _mobile = RegExp(r'^(?:\+?91[\s-]?)?[6-9][0-9]{9}$');
-  static final _gstin =
-      RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$');
+  static final _gstin = RegExp(
+    r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
+  );
 
   static String? pinCode(String? v) {
     final s = v?.trim() ?? '';
@@ -306,25 +348,32 @@ class ShippingAddress {
       ShippingValidators.pinCode(pinCode) == null;
 
   /// Identity for de-duplicating saved addresses.
-  String get dedupeKey =>
-      [name, line1, line2 ?? '', city, pinCode].map((s) => s.trim().toLowerCase()).join('|');
+  String get dedupeKey => [
+    name,
+    line1,
+    line2 ?? '',
+    city,
+    pinCode,
+  ].map((s) => s.trim().toLowerCase()).join('|');
 
-  String get singleLine => [line1, line2, city, '$state $pinCode']
-      .whereType<String>()
-      .where((s) => s.trim().isNotEmpty)
-      .join(', ');
+  String get singleLine => [
+    line1,
+    line2,
+    city,
+    '$state $pinCode',
+  ].whereType<String>().where((s) => s.trim().isNotEmpty).join(', ');
 
   Json toJson() => compact({
-        'id': id,
-        'name': name.trim(),
-        'phone': phone.trim(),
-        'line1': line1.trim(),
-        'line2': (line2?.trim().isEmpty ?? true) ? null : line2!.trim(),
-        'city': city.trim(),
-        'state': state,
-        'pinCode': pinCode.trim(),
-        'country': country,
-      });
+    'id': id,
+    'name': name.trim(),
+    'phone': phone.trim(),
+    'line1': line1.trim(),
+    'line2': (line2?.trim().isEmpty ?? true) ? null : line2!.trim(),
+    'city': city.trim(),
+    'state': state,
+    'pinCode': pinCode.trim(),
+    'country': country,
+  });
 
   static ShippingAddress? tryParse(Object? raw) {
     final j = asJson(raw);
@@ -339,7 +388,9 @@ class ShippingAddress {
       line2: str(j['line2'] ?? j['addressLine2'] ?? j['address2']),
       city: strOr(j['city']),
       state: strOr(j['state']),
-      pinCode: strOr(j['pinCode'] ?? j['pincode'] ?? j['postalCode'] ?? j['zip']),
+      pinCode: strOr(
+        j['pinCode'] ?? j['pincode'] ?? j['postalCode'] ?? j['zip'],
+      ),
       country: strOr(j['country'], 'IN'),
     );
   }
@@ -353,13 +404,14 @@ class GstDetails {
   final String? placeOfSupply;
   final String? businessName;
 
-  bool get isEmpty => gstin == null && placeOfSupply == null && businessName == null;
+  bool get isEmpty =>
+      gstin == null && placeOfSupply == null && businessName == null;
 
   Json toJson() => compact({
-        'gstin': gstin?.trim().toUpperCase(),
-        'placeOfSupply': placeOfSupply,
-        'businessName': businessName?.trim(),
-      });
+    'gstin': gstin?.trim().toUpperCase(),
+    'placeOfSupply': placeOfSupply,
+    'businessName': businessName?.trim(),
+  });
 
   static GstDetails? tryParse(Object? raw) {
     final j = asJson(raw);
@@ -389,19 +441,26 @@ enum FulfilmentStep {
   final String label;
 
   static FulfilmentStep? parse(Object? v) => switch (wireKey(str(v))) {
-        'placed' || 'created' || 'order_placed' => FulfilmentStep.placed,
-        'paid' || 'payment_confirmed' => FulfilmentStep.paid,
-        'design' || 'proof' || 'design_proof' || 'awaiting_proof' ||
-        'proof_approved' || 'design_and_proof' =>
-          FulfilmentStep.design,
-        'printing' || 'in_production' || 'production' => FulfilmentStep.printing,
-        'nfc_programmed' || 'programmed' || 'nfc' || 'encoding' =>
-          FulfilmentStep.nfcProgrammed,
-        'shipped' || 'dispatched' || 'in_transit' || 'out_for_delivery' =>
-          FulfilmentStep.shipped,
-        'delivered' || 'completed' || 'fulfilled' => FulfilmentStep.delivered,
-        _ => null,
-      };
+    'placed' || 'created' || 'order_placed' => FulfilmentStep.placed,
+    'paid' || 'payment_confirmed' => FulfilmentStep.paid,
+    'design' ||
+    'proof' ||
+    'design_proof' ||
+    'awaiting_proof' ||
+    'proof_approved' ||
+    'design_and_proof' => FulfilmentStep.design,
+    'printing' || 'in_production' || 'production' => FulfilmentStep.printing,
+    'nfc_programmed' ||
+    'programmed' ||
+    'nfc' ||
+    'encoding' => FulfilmentStep.nfcProgrammed,
+    'shipped' ||
+    'dispatched' ||
+    'in_transit' ||
+    'out_for_delivery' => FulfilmentStep.shipped,
+    'delivered' || 'completed' || 'fulfilled' => FulfilmentStep.delivered,
+    _ => null,
+  };
 }
 
 class Fulfilment {
@@ -436,24 +495,38 @@ class Fulfilment {
   static Fulfilment? tryParse(Json order) {
     final raw = order['fulfilment'] ?? order['fulfillment'];
     final j = asJson(raw);
-    final statusRaw = str(raw is Map ? j['status'] : raw) ??
+    final statusRaw =
+        str(raw is Map ? j['status'] : raw) ??
         str(order['fulfilmentStatus'] ?? order['fulfillmentStatus']);
     final shipment = asJson(j['shipment'] ?? order['shipment']);
     final reached = <FulfilmentStep, DateTime?>{};
-    for (final e in asJsonList(j['timeline'] ?? j['steps'] ?? j['events'] ?? order['timeline'])) {
+    for (final e in asJsonList(
+      j['timeline'] ?? j['steps'] ?? j['events'] ?? order['timeline'],
+    )) {
       final step = FulfilmentStep.parse(e['step'] ?? e['status'] ?? e['key']);
       if (step == null) continue;
       final done = boolOrNull(e['done'] ?? e['completed']) ?? true;
-      if (done) reached[step] = dateOrNull(e['at'] ?? e['date'] ?? e['timestamp']);
+      if (done)
+        reached[step] = dateOrNull(e['at'] ?? e['date'] ?? e['timestamp']);
     }
     var current = FulfilmentStep.parse(statusRaw);
     for (final s in reached.keys) {
       if (current == null || s.index > current.index) current = s;
     }
-    final courier = str(shipment['courier'] ?? j['courier'] ?? order['courier']);
-    final awb = str(shipment['awb'] ?? shipment['trackingNumber'] ?? j['awb'] ?? order['awb']);
-    final tracking = str(shipment['trackingUrl'] ?? j['trackingUrl'] ?? order['trackingUrl']);
-    if (current == null && reached.isEmpty && courier == null && awb == null && statusRaw == null) {
+    final courier = str(
+      shipment['courier'] ?? j['courier'] ?? order['courier'],
+    );
+    final awb = str(
+      shipment['awb'] ?? shipment['trackingNumber'] ?? j['awb'] ?? order['awb'],
+    );
+    final tracking = str(
+      shipment['trackingUrl'] ?? j['trackingUrl'] ?? order['trackingUrl'],
+    );
+    if (current == null &&
+        reached.isEmpty &&
+        courier == null &&
+        awb == null &&
+        statusRaw == null) {
       return null;
     }
     return Fulfilment(

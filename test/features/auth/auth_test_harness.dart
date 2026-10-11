@@ -83,12 +83,14 @@ Future<void> enterField(WidgetTester tester, String label, String text) async {
   final f = find.widgetWithText(TextFormField, label);
   await tester.ensureVisible(f);
   await tester.enterText(f, text);
+  // Let the focused field's scroll-into-view animation finish.
+  await tester.pumpAndSettle();
 }
 
 Future<void> tapText(WidgetTester tester, String text) async {
   final f = find.text(text);
   await tester.ensureVisible(f);
-  await tester.pump();
+  await tester.pumpAndSettle();
   await tester.tap(f);
   await tester.pump();
   await tester.pump();
@@ -97,7 +99,7 @@ Future<void> tapText(WidgetTester tester, String text) async {
 Future<void> tapButton(WidgetTester tester, String label) async {
   final f = find.widgetWithText(FilledButton, label);
   await tester.ensureVisible(f);
-  await tester.pump();
+  await tester.pumpAndSettle();
   await tester.tap(f);
   await tester.pump();
   await tester.pump();

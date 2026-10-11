@@ -409,6 +409,7 @@ class ReviewStatusChip extends StatelessWidget {
       ),
     };
     return Semantics(
+      container: true,
       label: 'Status: $label',
       excludeSemantics: true,
       child: StatusChip(label, tone: tone, icon: icon),

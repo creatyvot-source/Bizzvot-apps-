@@ -21,8 +21,10 @@ class CartScreen extends ConsumerWidget {
     final lines = ref.watch(cartProvider);
     final quote = ref.watch(cartQuoteProvider);
     final q = quote.value;
-    final personalizationIssue =
-        lines.map((l) => l.personalizationProblem).whereType<String>().firstOrNull;
+    final personalizationIssue = lines
+        .map((l) => l.personalizationProblem)
+        .whereType<String>()
+        .firstOrNull;
 
     Widget bottom() {
       if (lines.isEmpty) return const SizedBox.shrink();
@@ -44,7 +46,8 @@ class CartScreen extends ConsumerWidget {
       final blocked = !q.canCheckout || personalizationIssue != null;
       return TotalBar(
         total: q.total,
-        caption: personalizationIssue ??
+        caption:
+            personalizationIssue ??
             (q.hasUnavailable ? 'Remove unavailable items to continue' : null),
         action: FilledButton.icon(
           onPressed: blocked ? null : () => context.push(Routes.ownerCheckout),
@@ -95,7 +98,8 @@ class CartScreen extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: AppSpacing.md),
                           child: ErrorView(
                             error: quote.error!,
-                            onRetry: () => ref.read(cartQuoteProvider.notifier).fetch(),
+                            onRetry: () =>
+                                ref.read(cartQuoteProvider.notifier).fetch(),
                           ),
                         ),
                       if (q != null && q.hasUnavailable) ...[
@@ -103,10 +107,15 @@ class CartScreen extends ConsumerWidget {
                           title: 'Some items can’t be ordered',
                           message: q.invalidLines.isEmpty
                               ? 'Items marked unavailable must be removed before checkout.'
-                              : q.invalidLines.map((i) => i.reason).toSet().join('\n'),
+                              : q.invalidLines
+                                    .map((i) => i.reason)
+                                    .toSet()
+                                    .join('\n'),
                           tone: StatusTone.warning,
                           action: TextButton(
-                            onPressed: () => ref.read(cartProvider.notifier).removeInvalid(q),
+                            onPressed: () => ref
+                                .read(cartProvider.notifier)
+                                .removeInvalid(q),
                             child: const Text('Remove unavailable items'),
                           ),
                         ),
@@ -136,12 +145,25 @@ class _CartLineTile extends ConsumerWidget {
     final theme = Theme.of(context);
     final cart = ref.read(cartProvider.notifier);
     final serverLine = quote?.lines
-        .where((q) => line.matches(itemId: q.itemId, itemType: q.itemType.name, variantId: q.variantId))
+        .where(
+          (q) => line.matches(
+            itemId: q.itemId,
+            itemType: q.itemType.name,
+            variantId: q.variantId,
+          ),
+        )
         .firstOrNull;
-    final invalid = quote?.invalidLines.where(
-          (i) => line.matches(itemId: i.itemId, itemType: i.itemType, variantId: i.variantId),
-        ).firstOrNull;
-    final unavailable = invalid != null || (serverLine != null && !serverLine.available);
+    final invalid = quote?.invalidLines
+        .where(
+          (i) => line.matches(
+            itemId: i.itemId,
+            itemType: i.itemType,
+            variantId: i.variantId,
+          ),
+        )
+        .firstOrNull;
+    final unavailable =
+        invalid != null || (serverLine != null && !serverLine.available);
     final p = line.personalization;
 
     return Card(
@@ -157,23 +179,32 @@ class _CartLineTile extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(line.titleSnapshot, style: theme.textTheme.titleSmall),
+                      Text(
+                        line.titleSnapshot,
+                        style: theme.textTheme.titleSmall,
+                      ),
                       if (line.variantLabel != null)
-                        Text(line.variantLabel!, style: theme.textTheme.bodySmall),
+                        Text(
+                          line.variantLabel!,
+                          style: theme.textTheme.bodySmall,
+                        ),
                       if (serverLine?.lineTotal != null && !unavailable)
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: MoneyText(
                             serverLine!.lineTotal,
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(color: theme.colorScheme.primary),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
                       if (unavailable)
                         Padding(
                           padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: StatusChip(
-                            invalid?.reason ?? serverLine?.issue ?? 'Unavailable',
+                            invalid?.reason ??
+                                serverLine?.issue ??
+                                'Unavailable',
                             tone: StatusTone.warning,
                           ),
                         ),
@@ -206,16 +237,21 @@ class _CartLineTile extends ConsumerWidget {
                     p.assignLater
                         ? 'Assign later'
                         : line.personalizationProblem == null
-                            ? 'Personalised'
-                            : p.spec.perUnit
-                                ? '${_complete(line)} of ${line.quantity} personalised'
-                                : 'Needs details',
+                        ? 'Personalised'
+                        : p.spec.perUnit
+                        ? '${_complete(line)} of ${line.quantity} personalised'
+                        : 'Needs details',
                     icon: Icons.nfc,
-                    tone: line.personalizationProblem == null ? StatusTone.success : StatusTone.warning,
+                    tone: line.personalizationProblem == null
+                        ? StatusTone.success
+                        : StatusTone.warning,
                   ),
                   OutlinedButton.icon(
                     onPressed: () async {
-                      final next = await showPersonalizationEditor(context, line);
+                      final next = await showPersonalizationEditor(
+                        context,
+                        line,
+                      );
                       if (next != null) cart.setPersonalization(line.key, next);
                     },
                     icon: const Icon(Icons.edit_outlined),

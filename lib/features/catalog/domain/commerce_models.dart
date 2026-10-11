@@ -50,17 +50,15 @@ class CartLine {
   /// Identity of the purchasable configuration (same key = merge lines).
   String get key {
     final addOns = [...addOnIds]..sort();
-    final base = '${itemType.wire}|$itemId|${variantId ?? ''}|${addOns.join(',')}';
+    final base =
+        '${itemType.wire}|$itemId|${variantId ?? ''}|${addOns.join(',')}';
     return lineId == null ? base : '$base|$lineId';
   }
 
   /// Personalisation problem that blocks checkout, or null.
   String? get personalizationProblem => personalization?.problem(quantity);
 
-  CartLine copyWith({
-    int? quantity,
-    LinePersonalization? personalization,
-  }) {
+  CartLine copyWith({int? quantity, LinePersonalization? personalization}) {
     final q = quantity ?? this.quantity;
     return CartLine(
       itemType: itemType,
@@ -335,7 +333,9 @@ class Quote {
       ),
       termsUrl: str(j['termsUrl']),
       notes: strList(j['notes'] ?? j['messages']),
-      requiresShipping: boolOrNull(j['requiresShipping'] ?? j['shippingRequired']),
+      requiresShipping: boolOrNull(
+        j['requiresShipping'] ?? j['shippingRequired'],
+      ),
     );
   }
 }
@@ -703,9 +703,13 @@ class Order {
       failureReason: str(j['failureReason'] ?? payment['failureReason']),
       fulfilment: Fulfilment.tryParse(j),
       shippingAddress: ShippingAddress.tryParse(
-        j['shippingAddress'] ?? asJson(j['shippingSnapshot'])['address'] ?? j['shippingSnapshot'],
+        j['shippingAddress'] ??
+            asJson(j['shippingSnapshot'])['address'] ??
+            j['shippingSnapshot'],
       ),
-      gst: GstDetails.tryParse(j['gst'] ?? j['billingDetails'] ?? j['taxSnapshot']),
+      gst: GstDetails.tryParse(
+        j['gst'] ?? j['billingDetails'] ?? j['taxSnapshot'],
+      ),
     );
   }
 }
@@ -877,8 +881,12 @@ class Invoice {
       dueAt: dateOrNull(j['dueAt'] ?? j['dueDate']),
       fileUrl: str(j['fileUrl'] ?? j['pdfUrl'] ?? j['url']),
       taxId: str(j['sellerGstin'] ?? j['taxId']),
-      buyerGstin: str(j['buyerGstin'] ?? j['gstin'] ?? asJson(j['buyer'])['gstin']),
-      placeOfSupply: str(j['placeOfSupply'] ?? asJson(j['gst'])['placeOfSupply']),
+      buyerGstin: str(
+        j['buyerGstin'] ?? j['gstin'] ?? asJson(j['buyer'])['gstin'],
+      ),
+      placeOfSupply: str(
+        j['placeOfSupply'] ?? asJson(j['gst'])['placeOfSupply'],
+      ),
     );
   }
 }

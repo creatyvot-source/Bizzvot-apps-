@@ -8,19 +8,23 @@ import '../data/directory_visibility_repository.dart';
 import '../domain/visibility_rules.dart';
 
 /// Organization profile (for `directoryVisibility` and `slug`).
-final directoryProfileProvider = FutureProvider.autoDispose<OrganizationProfile>((ref) {
-  ref.watch(sessionKeyProvider);
-  return ref.watch(directoryVisibilityRepositoryProvider).profile();
-});
+final directoryProfileProvider =
+    FutureProvider.autoDispose<OrganizationProfile>((ref) {
+      ref.watch(sessionKeyProvider);
+      return ref.watch(directoryVisibilityRepositoryProvider).profile();
+    });
 
-final directoryActionsProvider = Provider<DirectoryActions>(DirectoryActions.new);
+final directoryActionsProvider = Provider<DirectoryActions>(
+  DirectoryActions.new,
+);
 
 class DirectoryActions {
   DirectoryActions(this._ref);
 
   final Ref _ref;
 
-  DirectoryVisibilityRepository get _repo => _ref.read(directoryVisibilityRepositoryProvider);
+  DirectoryVisibilityRepository get _repo =>
+      _ref.read(directoryVisibilityRepositoryProvider);
 
   Future<void> setDirectoryVisibility(DirectoryVisibility value) async {
     await _repo.setDirectoryVisibility(value);
@@ -37,7 +41,11 @@ class DirectoryActions {
     CardVisibility value, {
     void Function(int done, int total)? onProgress,
   }) async {
-    final result = await _repo.bulkSetVisibility(cardIds, value, onProgress: onProgress);
+    final result = await _repo.bulkSetVisibility(
+      cardIds,
+      value,
+      onProgress: onProgress,
+    );
     final cards = _ref.read(cardActionsProvider);
     for (final id in result.succeeded) {
       cards.invalidateCard(id);

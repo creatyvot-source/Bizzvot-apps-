@@ -17,6 +17,7 @@ class StarRating extends StatelessWidget {
         ? r.toInt().toString()
         : r.toStringAsFixed(1);
     return Semantics(
+      container: true,
       label: 'Rated $label out of 5',
       excludeSemantics: true,
       child: Row(

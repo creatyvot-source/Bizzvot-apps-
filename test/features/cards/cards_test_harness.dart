@@ -33,7 +33,8 @@ final tinyPdf = Uint8List.fromList(utf8.encode('%PDF-1.4\n%fake\n'));
 class BinaryFakeApi extends FakeApi {
   final _binary = <String, Uint8List>{};
 
-  void onBytes(String method, String path, Uint8List bytes) => _binary['$method $path'] = bytes;
+  void onBytes(String method, String path, Uint8List bytes) =>
+      _binary['$method $path'] = bytes;
 
   @override
   Future<ResponseBody> fetch(
@@ -43,10 +44,23 @@ class BinaryFakeApi extends FakeApi {
   ) {
     final bytes = _binary['${options.method} ${options.path}'];
     if (bytes == null) return super.fetch(options, requestStream, cancelFuture);
-    requests.add(RecordedRequest(options.method, options.path, options.queryParameters, options.data));
-    return Future.value(ResponseBody.fromBytes(bytes, 200, headers: {
-      Headers.contentTypeHeader: ['application/octet-stream'],
-    }));
+    requests.add(
+      RecordedRequest(
+        options.method,
+        options.path,
+        options.queryParameters,
+        options.data,
+      ),
+    );
+    return Future.value(
+      ResponseBody.fromBytes(
+        bytes,
+        200,
+        headers: {
+          Headers.contentTypeHeader: ['application/octet-stream'],
+        },
+      ),
+    );
   }
 }
 
@@ -59,11 +73,15 @@ class FakeShareService implements ShareService {
   Future<void> copyText(String text) async => copied.add(text);
 
   @override
-  Future<void> shareFiles(List<ShareableFile> files, {String? text, Rect? origin}) async =>
-      sharedFiles.add(files);
+  Future<void> shareFiles(
+    List<ShareableFile> files, {
+    String? text,
+    Rect? origin,
+  }) async => sharedFiles.add(files);
 
   @override
-  Future<void> shareText(String text, {String? subject, Rect? origin}) async => sharedTexts.add(text);
+  Future<void> shareText(String text, {String? subject, Rect? origin}) async =>
+      sharedTexts.add(text);
 }
 
 class FakeMediaPicker implements MediaPicker {
@@ -90,19 +108,22 @@ class FakeMediaPicker implements MediaPicker {
   }
 }
 
-const ownerUser = AuthUser(id: 'u-owner', email: 'owner@example.com', role: UserRole.owner);
+const ownerUser = AuthUser(
+  id: 'u-owner',
+  email: 'owner@example.com',
+  role: UserRole.owner,
+);
 
 AuthUser staffUser({
   StaffPermissions permissions = const StaffPermissions(),
   String? cardId = 'c1',
-}) =>
-    AuthUser(
-      id: 'u-staff',
-      email: 'staff@example.com',
-      role: UserRole.staff,
-      cardId: cardId,
-      permissions: permissions,
-    );
+}) => AuthUser(
+  id: 'u-staff',
+  email: 'staff@example.com',
+  role: UserRole.staff,
+  cardId: cardId,
+  permissions: permissions,
+);
 
 Json cardJson({
   String id = 'c1',
@@ -111,27 +132,26 @@ Json cardJson({
   String visibility = 'inherit',
   bool disabledByBilling = false,
   Map<String, dynamic> extra = const {},
-}) =>
-    {
-      '_id': id,
-      'slug': slug,
-      'title': 'Asha Rao',
-      'designation': 'Sales Lead',
-      'company': 'Acme',
-      'email': 'asha@example.com',
-      'phone': '+91 98765 43210',
-      'status': status,
-      'visibility': visibility,
-      'disabledByBilling': disabledByBilling,
-      'template': 'corporate',
-      'brandColor': '#1F4FD8',
-      'bloodGroup': 'O+',
-      'fatherName': 'Ravi Rao',
-      'motherName': 'Meena Rao',
-      ...extra,
-    };
+}) => {
+  '_id': id,
+  'slug': slug,
+  'title': 'Asha Rao',
+  'designation': 'Sales Lead',
+  'company': 'Acme',
+  'email': 'asha@example.com',
+  'phone': '+91 98765 43210',
+  'status': status,
+  'visibility': visibility,
+  'disabledByBilling': disabledByBilling,
+  'template': 'corporate',
+  'brandColor': '#1F4FD8',
+  'bloodGroup': 'O+',
+  'fatherName': 'Ravi Rao',
+  'motherName': 'Meena Rao',
+  ...extra,
+};
 
-/// Paths pushed by screens; each renders a "route:<location>" marker.
+/// Paths pushed by screens; each renders a `route:<location>` marker.
 const stubPaths = [
   '/o/cards/:id',
   '/o/cards/:id/edit',
@@ -156,6 +176,7 @@ Future<GoRouter> pumpScreen(
   List<Override> extra = const [],
   bool pushed = false,
   Size size = const Size(800, 2400),
+  double textScale = 1,
 }) async {
   tester.view
     ..physicalSize = size
@@ -195,7 +216,15 @@ Future<GoRouter> pumpScreen(
         mediaPickerProvider.overrideWithValue(picker ?? FakeMediaPicker()),
         ...extra,
       ],
-      child: MaterialApp.router(theme: AppTheme.light(), routerConfig: router),
+      child: MaterialApp.router(
+        theme: AppTheme.light(),
+        routerConfig: router,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+      ),
     ),
   );
   if (pushed) {

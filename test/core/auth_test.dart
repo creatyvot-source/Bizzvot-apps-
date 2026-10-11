@@ -14,6 +14,29 @@ void main() {
     expect(parseTokens({'user': {}}), isNull);
   });
 
+  test('RegisterRequest sends Coglink role and reset uses newPassword', () async {
+    expect(
+      const RegisterRequest(organizationName: 'Acme', name: 'A', email: 'A@B.co', password: 'pw123456')
+          .toJson()['role'],
+      'organization',
+    );
+    final fake = FakeApi()..on('POST', Endpoints.resetPassword, FakeResponse.ok(null));
+    await AuthRepository(fake.client, MemoryTokenStore()).resetPassword(token: 'tok', password: 'newpw123');
+    expect((fake.requests.single.body as Map)['newPassword'], 'newpw123');
+  });
+
+  test('Coglink error envelope: string error with sibling code', () async {
+    final fake = FakeApi()
+      ..on('POST', '/x', const FakeResponse(423, {'success': false, 'error': 'Locked', 'code': 'LOCKED'}));
+    try {
+      await fake.client.post('/x', parse: (_) {});
+      fail('expected');
+    } on AppException catch (e) {
+      expect(e.message, 'Locked');
+      expect(e.code, 'LOCKED');
+    }
+  });
+
   test('SessionTokens.toString never prints secrets', () {
     expect(const SessionTokens(accessToken: 'secret').toString(), isNot(contains('secret')));
   });
@@ -52,9 +75,16 @@ void main() {
     test('owner login stores tokens and loads /auth/me', () async {
       fake
         ..on('POST', Endpoints.login, FakeResponse.ok({'accessToken': 'a', 'refreshToken': 'r'}))
-        ..on('GET', Endpoints.me, FakeResponse.ok({'id': 'u', 'email': 'o@x.co', 'role': 'owner'}));
+        ..on('GET', Endpoints.me, FakeResponse.ok({
+              'id': 'u',
+              'email': 'o@x.co',
+              'role': 'organization',
+              'organizationId': null,
+              'organizationIdToken': 'org1',
+            }));
       final user = await repo.loginOwner(' O@X.co ', 'pw123456');
       expect(user.isOwner, isTrue);
+      expect(user.organizationId, 'org1');
       expect((await store.read())!.accessToken, 'a');
       expect((fake.requests.first.body as Map)['email'], 'o@x.co');
     });

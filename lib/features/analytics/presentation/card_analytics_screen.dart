@@ -376,6 +376,7 @@ class ViewsChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Semantics(
+          container: true,
           label: summary(),
           image: true,
           excludeSemantics: true,
@@ -489,6 +490,7 @@ class _BarRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Semantics(
+      container: true,
       label: spoken,
       excludeSemantics: true,
       child: Padding(

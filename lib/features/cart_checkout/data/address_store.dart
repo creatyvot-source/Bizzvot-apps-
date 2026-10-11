@@ -18,12 +18,13 @@ abstract interface class AddressStore {
 
 class SecureAddressStore implements AddressStore {
   SecureAddressStore([FlutterSecureStorage? storage])
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              iOptions: IOSOptions(
-                accessibility: KeychainAccessibility.first_unlock_this_device,
-              ),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
+          );
 
   final FlutterSecureStorage _storage;
 
@@ -61,11 +62,14 @@ class MemoryAddressStore implements AddressStore {
   final Map<String, List<ShippingAddress>> data = {};
 
   @override
-  Future<List<ShippingAddress>> load(String userKey) async => data[userKey] ?? const [];
+  Future<List<ShippingAddress>> load(String userKey) async =>
+      data[userKey] ?? const [];
 
   @override
   Future<void> save(String userKey, List<ShippingAddress> addresses) async =>
       data[userKey] = List.of(addresses);
 }
 
-final addressStoreProvider = Provider<AddressStore>((ref) => SecureAddressStore());
+final addressStoreProvider = Provider<AddressStore>(
+  (ref) => SecureAddressStore(),
+);

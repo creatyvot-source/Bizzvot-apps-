@@ -213,7 +213,7 @@ class AuthInterceptor extends Interceptor {
   final RefreshFn refresh;
   final VoidCallback onSessionExpired;
 
-  Future<SessionTokens?>? _inFlight;
+  Future<_RefreshOutcome>? _inFlight;
 
   @override
   Future<void> onRequest(
@@ -249,18 +249,27 @@ class AuthInterceptor extends Interceptor {
       return handler.next(err);
     }
 
-    final fresh = await _refreshOnce(current);
+    final outcome = await _refreshOnce(current);
+    final fresh = outcome.tokens;
     if (fresh == null) {
+      // Offline / 5xx during refresh: keep the session, surface a network
+      // error. Only a definite rejection of the refresh credential signs out.
+      final error = outcome.transient
+          ? const AppException(
+              AppErrorKind.network,
+              'You appear to be offline. Check your connection and try again.',
+            )
+          : const AppException(
+              AppErrorKind.unauthenticated,
+              'Your session has ended. Please sign in again.',
+              statusCode: 401,
+            );
       return handler.reject(
         DioException(
           requestOptions: opts,
           response: err.response,
           type: DioExceptionType.badResponse,
-          error: const AppException(
-            AppErrorKind.unauthenticated,
-            'Your session has ended. Please sign in again.',
-            statusCode: 401,
-          ),
+          error: error,
         ),
       );
     }
@@ -275,19 +284,20 @@ class AuthInterceptor extends Interceptor {
     }
   }
 
-  Future<SessionTokens?> _refreshOnce(SessionTokens current) {
+  Future<_RefreshOutcome> _refreshOnce(SessionTokens current) {
     return _inFlight ??= () async {
       try {
         final fresh = await refresh(current);
         if (fresh == null) {
           await _expire();
-          return null;
+          return const _RefreshOutcome(null);
         }
         await store.write(fresh);
-        return fresh;
-      } catch (_) {
+        return _RefreshOutcome(fresh);
+      } catch (e) {
+        if (_isTransient(e)) return const _RefreshOutcome(null, transient: true);
         await _expire();
-        return null;
+        return const _RefreshOutcome(null);
       } finally {
         // Allow a future refresh once this one has settled.
         scheduleMicrotask(() => _inFlight = null);
@@ -295,10 +305,24 @@ class AuthInterceptor extends Interceptor {
     }();
   }
 
+  /// No response, timeout, 429 or 5xx: the credential was not rejected.
+  static bool _isTransient(Object e) {
+    if (e is! DioException) return false;
+    final status = e.response?.statusCode;
+    if (status == null) return e.type != DioExceptionType.cancel;
+    return status == 429 || status >= 500;
+  }
+
   Future<void> _expire() async {
     await store.clear();
     onSessionExpired();
   }
+}
+
+class _RefreshOutcome {
+  const _RefreshOutcome(this.tokens, {this.transient = false});
+  final SessionTokens? tokens;
+  final bool transient;
 }
 
 /// Builds the configured Dio instance. Logging is debug-only and redacted.

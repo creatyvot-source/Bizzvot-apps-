@@ -25,13 +25,17 @@ void main() {
           reviewJson('3', status: 'hidden'),
         ];
         return FakeResponse.ok({
-          'reviews': status == null ? all : all.where((r) => r['status'] == status).toList(),
+          'reviews': status == null
+              ? all
+              : all.where((r) => r['status'] == status).toList(),
         });
       });
     container = ProviderContainer.test(
       overrides: [
         sessionKeyProvider.overrideWithValue('user-1'),
-        reviewsRepositoryProvider.overrideWithValue(ReviewsRepository(fake.client)),
+        reviewsRepositoryProvider.overrideWithValue(
+          ReviewsRepository(fake.client),
+        ),
       ],
     );
   });
@@ -44,7 +48,9 @@ void main() {
 
   test('filter change refetches with the status param', () async {
     expect((await load()).items, hasLength(3));
-    container.read(reviewFilterProvider(scope).notifier).select(ReviewFilter.hidden);
+    container
+        .read(reviewFilterProvider(scope).notifier)
+        .select(ReviewFilter.hidden);
     final s = await container.read(reviewsControllerProvider(scope).future);
     expect(s.filter, ReviewFilter.hidden);
     expect(s.items.single.id, '3');
@@ -76,7 +82,11 @@ void main() {
 
   test('setStatus rolls back on error and rethrows', () async {
     await load();
-    fake.on('PATCH', '/organization/reviews/1/status', FakeResponse.error(500, 'boom'));
+    fake.on(
+      'PATCH',
+      '/organization/reviews/1/status',
+      FakeResponse.error(500, 'boom'),
+    );
     await expectLater(
       container
           .read(reviewsControllerProvider(scope).notifier)
@@ -90,15 +100,27 @@ void main() {
 
   test('reply is optimistic and rolls back on error', () async {
     await load();
-    fake.on('POST', '/organization/reviews/2/reply', FakeResponse.error(422, 'Too long'));
+    fake.on(
+      'POST',
+      '/organization/reviews/2/reply',
+      FakeResponse.error(422, 'Too long'),
+    );
     final future = container
         .read(reviewsControllerProvider(scope).notifier)
         .reply('2', 'Thanks a lot');
     expect(
-      container.read(reviewsControllerProvider(scope)).value!.items[1].reply?.text,
+      container
+          .read(reviewsControllerProvider(scope))
+          .value!
+          .items[1]
+          .reply
+          ?.text,
       'Thanks a lot',
     );
     await expectLater(future, throwsA(anything));
-    expect(container.read(reviewsControllerProvider(scope)).value!.items[1].reply, isNull);
+    expect(
+      container.read(reviewsControllerProvider(scope)).value!.items[1].reply,
+      isNull,
+    );
   });
 }

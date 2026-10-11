@@ -9,13 +9,15 @@ typedef AddressResult = ({ShippingAddress address, bool save});
 
 /// Full-screen delivery address form (India). Returns the address and
 /// whether to save it for next time.
-Future<AddressResult?> showAddressForm(BuildContext context, {ShippingAddress? initial}) =>
-    Navigator.of(context).push<AddressResult>(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => AddressFormScreen(initial: initial),
-      ),
-    );
+Future<AddressResult?> showAddressForm(
+  BuildContext context, {
+  ShippingAddress? initial,
+}) => Navigator.of(context).push<AddressResult>(
+  MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (_) => AddressFormScreen(initial: initial),
+  ),
+);
 
 class AddressFormScreen extends StatefulWidget {
   const AddressFormScreen({super.key, this.initial});
@@ -33,7 +35,9 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   late final _line2 = TextEditingController(text: widget.initial?.line2);
   late final _city = TextEditingController(text: widget.initial?.city);
   late final _pin = TextEditingController(text: widget.initial?.pinCode);
-  late String? _state = indianStates.contains(widget.initial?.state) ? widget.initial!.state : null;
+  late String? _state = indianStates.contains(widget.initial?.state)
+      ? widget.initial!.state
+      : null;
   bool _save = true;
 
   @override
@@ -90,21 +94,30 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               controller: _phone,
               keyboardType: TextInputType.phone,
               autofillHints: const [AutofillHints.telephoneNumber],
-              decoration: const InputDecoration(labelText: 'Mobile number', prefixText: '+91 '),
+              decoration: const InputDecoration(
+                labelText: 'Mobile number',
+                prefixText: '+91 ',
+              ),
               validator: ShippingValidators.mobile,
             ),
             gap,
             TextFormField(
               controller: _line1,
               autofillHints: const [AutofillHints.streetAddressLine1],
-              decoration: const InputDecoration(labelText: 'Address line 1', hintText: 'House / building, street'),
+              decoration: const InputDecoration(
+                labelText: 'Address line 1',
+                hintText: 'House / building, street',
+              ),
               validator: (v) => Validators.required(v, 'Address'),
             ),
             gap,
             TextFormField(
               controller: _line2,
               autofillHints: const [AutofillHints.streetAddressLine2],
-              decoration: const InputDecoration(labelText: 'Address line 2 (optional)', hintText: 'Area, landmark'),
+              decoration: const InputDecoration(
+                labelText: 'Address line 2 (optional)',
+                hintText: 'Area, landmark',
+              ),
             ),
             gap,
             TextFormField(
@@ -120,7 +133,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'State / UT'),
               items: [
-                for (final s in indianStates) DropdownMenuItem(value: s, child: Text(s)),
+                for (final s in indianStates)
+                  DropdownMenuItem(value: s, child: Text(s)),
               ],
               onChanged: (v) => setState(() => _state = v),
               validator: (v) => v == null ? 'State is required' : null,
@@ -149,7 +163,10 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               title: const Text('Save this address on this device'),
             ),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(onPressed: _submit, child: const Text('Use this address')),
+            FilledButton(
+              onPressed: _submit,
+              child: const Text('Use this address'),
+            ),
           ],
         ),
       ),

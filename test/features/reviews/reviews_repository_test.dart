@@ -5,18 +5,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_api.dart';
 
-Map<String, dynamic> reviewJson(String id, {String status = 'pending', Object? reply}) => {
-      '_id': id,
-      'reviewerName': 'Reviewer $id',
-      'email': 'secret-$id@x.test',
-      'ip': '10.0.0.$id',
-      'rating': 4,
-      'comment': 'Comment $id',
-      'status': status,
-      'card': {'_id': 'c1', 'title': 'Jane Doe'},
-      'reply': ?reply,
-      'createdAt': '2026-09-01T10:00:00Z',
-    };
+Map<String, dynamic> reviewJson(
+  String id, {
+  String status = 'pending',
+  Object? reply,
+}) => {
+  '_id': id,
+  'reviewerName': 'Reviewer $id',
+  'email': 'secret-$id@x.test',
+  'ip': '10.0.0.$id',
+  'rating': 4,
+  'comment': 'Comment $id',
+  'status': status,
+  'card': {'_id': 'c1', 'title': 'Jane Doe'},
+  'reply': ?reply,
+  'createdAt': '2026-09-01T10:00:00Z',
+};
 
 void main() {
   late FakeApi fake;
@@ -37,8 +41,15 @@ void main() {
         'totalPages': 2,
       }),
     );
-    final page = await repo.fetch(ReviewScope.owner, status: ReviewStatus.pending);
-    expect(fake.requests.single.query, {'status': 'pending', 'page': 1, 'limit': 20});
+    final page = await repo.fetch(
+      ReviewScope.owner,
+      status: ReviewStatus.pending,
+    );
+    expect(fake.requests.single.query, {
+      'status': 'pending',
+      'page': 1,
+      'limit': 20,
+    });
     expect(page.items, hasLength(2));
     expect(page.hasMore, isTrue);
     final r = page.items.first;
@@ -54,7 +65,13 @@ void main() {
   });
 
   test('staff fetch uses /staff/reviews', () async {
-    fake.on('GET', '/staff/reviews', FakeResponse.ok({'items': [reviewJson('9')]}));
+    fake.on(
+      'GET',
+      '/staff/reviews',
+      FakeResponse.ok({
+        'items': [reviewJson('9')],
+      }),
+    );
     final page = await repo.fetch(ReviewScope.staff);
     expect(page.items.single.id, '9');
   });
@@ -65,14 +82,21 @@ void main() {
       '/organization/reviews/1/status',
       FakeResponse.ok({'review': reviewJson('1', status: 'approved')}),
     );
-    final r = await repo.setStatus(ReviewScope.owner, '1', ReviewStatus.approved);
+    final r = await repo.setStatus(
+      ReviewScope.owner,
+      '1',
+      ReviewStatus.approved,
+    );
     expect(fake.requests.single.body, {'status': 'approved'});
     expect(r?.status, ReviewStatus.approved);
   });
 
   test('setStatus tolerates an empty response', () async {
     fake.on('PATCH', '/staff/reviews/1/status', FakeResponse.ok(null));
-    expect(await repo.setStatus(ReviewScope.staff, '1', ReviewStatus.hidden), isNull);
+    expect(
+      await repo.setStatus(ReviewScope.staff, '1', ReviewStatus.hidden),
+      isNull,
+    );
   });
 
   test('reply POSTs {text} and parses the reply', () async {
@@ -89,10 +113,20 @@ void main() {
   });
 
   test('403 surfaces as forbidden', () async {
-    fake.on('POST', '/staff/reviews/1/reply', FakeResponse.error(403, 'No permission'));
+    fake.on(
+      'POST',
+      '/staff/reviews/1/reply',
+      FakeResponse.error(403, 'No permission'),
+    );
     await expectLater(
       repo.reply(ReviewScope.staff, '1', 'x'),
-      throwsA(isA<AppException>().having((e) => e.kind, 'kind', AppErrorKind.forbidden)),
+      throwsA(
+        isA<AppException>().having(
+          (e) => e.kind,
+          'kind',
+          AppErrorKind.forbidden,
+        ),
+      ),
     );
   });
 }

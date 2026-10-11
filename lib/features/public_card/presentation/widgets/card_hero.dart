@@ -322,6 +322,7 @@ class QuickActionButton extends StatelessWidget {
         : scheme.primaryContainer.withValues(alpha: 0.7);
     final fg = primary ? scheme.onPrimary : scheme.onPrimaryContainer;
     return Semantics(
+      container: true,
       button: true,
       enabled: onPressed != null,
       label: busy ? '$label, in progress' : label,

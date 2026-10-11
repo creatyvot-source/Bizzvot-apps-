@@ -40,7 +40,8 @@ class QuoteSummary extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       InfoRow(
-                        label: '${l.title}${l.variantLabel == null ? '' : ' · ${l.variantLabel}'} × ${l.quantity}',
+                        label:
+                            '${l.title}${l.variantLabel == null ? '' : ' · ${l.variantLabel}'} × ${l.quantity}',
                         value: l.available
                             ? MoneyText(l.lineTotal)
                             : const Text('Unavailable'),
@@ -48,44 +49,60 @@ class QuoteSummary extends StatelessWidget {
                       if (l.unitPrice != null && l.quantity > 1)
                         Text(
                           '${l.unitPrice!.format()} each',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       if (!l.available && l.issue != null)
                         Text(
                           l.issue!,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: theme.colorScheme.error),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
                         ),
                     ],
                   ),
                 ),
             if (showLines) const Divider(height: AppSpacing.lg),
-            if (quote.subtotal != null) InfoRow.money('Subtotal', quote.subtotal),
+            if (quote.subtotal != null)
+              InfoRow.money('Subtotal', quote.subtotal),
             for (final d in quote.discounts)
               InfoRow.money(d.label, d.amount, negative: true),
-            if (quote.discounts.isEmpty && quote.discountTotal != null && !quote.discountTotal!.isZero)
+            if (quote.discounts.isEmpty &&
+                quote.discountTotal != null &&
+                !quote.discountTotal!.isZero)
               InfoRow.money('Discount', quote.discountTotal, negative: true),
             if (quote.shipping != null)
               InfoRow(
                 label: 'Shipping',
-                value: quote.shipping!.isZero ? const Text('Free') : MoneyText(quote.shipping),
+                value: quote.shipping!.isZero
+                    ? const Text('Free')
+                    : MoneyText(quote.shipping),
               )
             else if (shippingPending)
               InfoRow.text('Shipping', 'Calculated after address'),
             for (final t in quote.taxes)
-              InfoRow.money(t.rate == null ? t.label : '${t.label} (${t.rate})', t.amount),
+              InfoRow.money(
+                t.rate == null ? t.label : '${t.label} (${t.rate})',
+                t.amount,
+              ),
             if (quote.taxes.isEmpty && quote.taxTotal != null)
               InfoRow.money('Tax', quote.taxTotal),
             const Divider(height: AppSpacing.lg),
-            InfoRow.money('Total', quote.total, emphasize: true, fallback: 'Unavailable'),
+            InfoRow.money(
+              'Total',
+              quote.total,
+              emphasize: true,
+              fallback: 'Unavailable',
+            ),
             for (final n in quote.notes)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                 child: Text(
                   n,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
           ],
@@ -97,12 +114,7 @@ class QuoteSummary extends StatelessWidget {
 
 /// Sticky bottom bar: server total + primary action.
 class TotalBar extends StatelessWidget {
-  const TotalBar({
-    super.key,
-    required this.action,
-    this.total,
-    this.caption,
-  });
+  const TotalBar({super.key, required this.action, this.total, this.caption});
 
   final Money? total;
   final String? caption;

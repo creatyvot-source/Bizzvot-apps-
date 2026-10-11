@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui';
 
 import 'package:bizzvot/app/theme.dart';
 import 'package:bizzvot/features/public_card/data/external_actions.dart';
@@ -88,14 +87,20 @@ class FakePublicRepo extends PublicCardRepository {
       onReviews?.call(slug, page) ?? Future.value(const Paged(items: []));
 
   @override
-  Future<ReviewSubmissionResult> submitReview(String slug, ReviewSubmission review) {
+  Future<ReviewSubmissionResult> submitReview(
+    String slug,
+    ReviewSubmission review,
+  ) {
     submissions.add(review);
     return onSubmit!(review);
   }
 
   @override
-  Future<void> trackClick({required String slug, required String type, String? target}) async =>
-      tracked.add(type);
+  Future<void> trackClick({
+    required String slug,
+    required String type,
+    String? target,
+  }) async => tracked.add(type);
 
   @override
   Future<Uint8List> fetchVcard(String cardId) async {

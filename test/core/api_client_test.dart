@@ -167,6 +167,20 @@ void main() {
       expect(expiredCalls, 1);
     });
 
+    test('offline refresh keeps the session and reports a network error', () async {
+      build(refresh: (t) async => throw DioException(
+            requestOptions: RequestOptions(path: '/auth/refresh'),
+            type: DioExceptionType.connectionError,
+          ));
+      final client = ApiClient(dio);
+      await expectLater(
+        client.get('/me', parse: (d) => d),
+        throwsA(isA<AppException>().having((e) => e.kind, 'kind', AppErrorKind.network)),
+      );
+      expect(await store.read(), isNotNull);
+      expect(expiredCalls, 0);
+    });
+
     test('anonymous requests carry no credentials and never refresh', () async {
       build(refresh: (_) async => const SessionTokens(accessToken: 'new'));
       adapter.validToken = 'none';

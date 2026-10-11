@@ -35,12 +35,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders public data only and launches tracked actions', (tester) async {
+  testWidgets('renders public data only and launches tracked actions', (
+    tester,
+  ) async {
     repo.onCard = (_) async => PublicCard.fromJson({
-          ...leakyPayload(),
-          'whatsapp': '+91 98765 43210',
-          'bio': 'Helping teams grow.',
-        });
+      ...leakyPayload(),
+      'whatsapp': '+91 98765 43210',
+      'bio': 'Helping teams grow.',
+    });
     await pump(tester);
 
     expect(find.text('Jane Doe'), findsWidgets);
@@ -68,7 +70,9 @@ void main() {
     expect(repo.tracked.last, TrackType.social);
   });
 
-  testWidgets('save contact downloads the vCard and opens the share sheet', (tester) async {
+  testWidgets('save contact downloads the vCard and opens the share sheet', (
+    tester,
+  ) async {
     repo.onCard = (_) async => PublicCard.fromJson(leakyPayload());
     await pump(tester);
 
@@ -88,17 +92,19 @@ void main() {
     expect(actions.sharedText.single, endsWith('/card/jane-doe'));
   });
 
-  testWidgets('review_card shows Google review; vcard disabled hides save', (tester) async {
+  testWidgets('review_card shows Google review; vcard disabled hides save', (
+    tester,
+  ) async {
     repo.onCard = (_) async => PublicCard.fromJson({
-          '_id': 'c1',
-          'slug': 'jane-doe',
-          'title': 'Jane Doe',
-          'template': 'review_card',
-          'vcardEnabled': false,
-          'googleReviewUrl': 'https://g.page/r/abc/review',
-          'averageRating': 4.5,
-          'reviewCount': 2,
-        });
+      '_id': 'c1',
+      'slug': 'jane-doe',
+      'title': 'Jane Doe',
+      'template': 'review_card',
+      'vcardEnabled': false,
+      'googleReviewUrl': 'https://g.page/r/abc/review',
+      'averageRating': 4.5,
+      'reviewCount': 2,
+    });
     await pump(tester);
 
     expect(find.byKey(const ValueKey('save-contact')), findsNothing);
@@ -110,12 +116,12 @@ void main() {
 
   testWidgets('display toggles hide fields and sections', (tester) async {
     repo.onCard = (_) async => PublicCard.fromJson({
-          'slug': 'jane-doe',
-          'title': 'Jane Doe',
-          'phone': '+1 555 0100',
-          'email': 'jane@acme.test',
-          'displayToggles': {'showPhone': false, 'showReviews': false},
-        });
+      'slug': 'jane-doe',
+      'title': 'Jane Doe',
+      'phone': '+1 555 0100',
+      'email': 'jane@acme.test',
+      'displayToggles': {'showPhone': false, 'showReviews': false},
+    });
     await pump(tester);
 
     expect(find.bySemanticsLabel('Call'), findsNothing);
@@ -124,20 +130,23 @@ void main() {
     expect(find.text('Write a review'), findsNothing);
   });
 
-  testWidgets('approved reviews with replies; write-a-review navigates', (tester) async {
-    repo.onCard = (_) async => PublicCard.fromJson({'slug': 'jane-doe', 'title': 'Jane Doe'});
+  testWidgets('approved reviews with replies; write-a-review navigates', (
+    tester,
+  ) async {
+    repo.onCard = (_) async =>
+        PublicCard.fromJson({'slug': 'jane-doe', 'title': 'Jane Doe'});
     repo.onReviews = (_, _) async => Paged(
-          items: [
-            PublicReview.fromJson({
-              '_id': 'r1',
-              'reviewerName': 'Sam Lee',
-              'rating': 5,
-              'comment': 'Brilliant service',
-              'reply': {'text': 'Thank you Sam!'},
-              'createdAt': '2026-09-01T10:00:00Z',
-            }),
-          ],
-        );
+      items: [
+        PublicReview.fromJson({
+          '_id': 'r1',
+          'reviewerName': 'Sam Lee',
+          'rating': 5,
+          'comment': 'Brilliant service',
+          'reply': {'text': 'Thank you Sam!'},
+          'createdAt': '2026-09-01T10:00:00Z',
+        }),
+      ],
+    );
     await pump(tester);
 
     expect(find.text('Sam Lee'), findsOneWidget);
@@ -154,16 +163,16 @@ void main() {
   for (final status in [403, 404, 410]) {
     testWidgets('$status shows a neutral unavailable state', (tester) async {
       repo.onCard = (_) => Future.error(
-            AppException(
-              switch (status) {
-                403 => AppErrorKind.forbidden,
-                404 => AppErrorKind.notFound,
-                _ => AppErrorKind.gone,
-              },
-              'Card disabled by billing', // must not be shown
-              statusCode: status,
-            ),
-          );
+        AppException(
+          switch (status) {
+            403 => AppErrorKind.forbidden,
+            404 => AppErrorKind.notFound,
+            _ => AppErrorKind.gone,
+          },
+          'Card disabled by billing', // must not be shown
+          statusCode: status,
+        ),
+      );
       await pump(tester);
       expect(find.text("This card isn't available"), findsOneWidget);
       expect(find.textContaining('billing'), findsNothing);
@@ -176,9 +185,13 @@ void main() {
     repo.onCard = (_) {
       calls++;
       if (calls == 1) {
-        return Future.error(const AppException(AppErrorKind.network, 'You appear to be offline.'));
+        return Future.error(
+          const AppException(AppErrorKind.network, 'You appear to be offline.'),
+        );
       }
-      return Future.value(PublicCard.fromJson({'slug': 'jane-doe', 'title': 'Jane Doe'}));
+      return Future.value(
+        PublicCard.fromJson({'slug': 'jane-doe', 'title': 'Jane Doe'}),
+      );
     };
     await pump(tester);
     expect(find.text('Try again'), findsOneWidget);

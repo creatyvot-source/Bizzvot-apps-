@@ -27,7 +27,11 @@ void main() {
   });
 
   test('fetchCard hits /public/card/:slug anonymously', () async {
-    fake.on('GET', '/public/card/jane', FakeResponse.ok({'slug': 'jane', 'title': 'Jane'}));
+    fake.on(
+      'GET',
+      '/public/card/jane',
+      FakeResponse.ok({'slug': 'jane', 'title': 'Jane'}),
+    );
     final card = await repo.fetchCard('jane');
     expect(card.name, 'Jane');
     expect(anonymousFlags, [true]);
@@ -53,7 +57,13 @@ void main() {
       '/public/card/jane/reviews',
       FakeResponse.ok({
         'reviews': [
-          {'_id': '1', 'name': 'A', 'rating': 5, 'status': 'approved', 'email': 'a@x.test'},
+          {
+            '_id': '1',
+            'name': 'A',
+            'rating': 5,
+            'status': 'approved',
+            'email': 'a@x.test',
+          },
           {'_id': '2', 'name': 'B', 'rating': 1, 'status': 'pending'},
           {'_id': '3', 'name': 'C', 'rating': 3},
         ],
@@ -66,7 +76,10 @@ void main() {
     expect(page.items.map((r) => r.id), ['1', '3']);
     expect(page.hasMore, isTrue);
     expect(page.total, 30);
-    expect(fake.requests.single.query, {'page': 1, 'limit': PublicCardRepository.reviewsPageSize});
+    expect(fake.requests.single.query, {
+      'page': 1,
+      'limit': PublicCardRepository.reviewsPageSize,
+    });
     expect(anonymousFlags, [true]);
   });
 
@@ -74,18 +87,36 @@ void main() {
     const body = ReviewSubmission(rating: 4, name: 'Sam', comment: 'Nice');
 
     test('posts {rating, name, comment} and parses status', () async {
-      fake.on('POST', '/public/card/jane/review', FakeResponse.ok({'status': 'pending'}));
+      fake.on(
+        'POST',
+        '/public/card/jane/review',
+        FakeResponse.ok({'status': 'pending'}),
+      );
       final result = await repo.submitReview('jane', body);
       expect(result.isApproved, isFalse);
-      expect(fake.requests.single.body, {'rating': 4, 'name': 'Sam', 'comment': 'Nice'});
+      expect(fake.requests.single.body, {
+        'rating': 4,
+        'name': 'Sam',
+        'comment': 'Nice',
+      });
       expect(anonymousFlags, [true]);
     });
 
     test('409 maps to conflict', () async {
-      fake.on('POST', '/public/card/jane/review', FakeResponse.error(409, 'Duplicate'));
+      fake.on(
+        'POST',
+        '/public/card/jane/review',
+        FakeResponse.error(409, 'Duplicate'),
+      );
       await expectLater(
         repo.submitReview('jane', body),
-        throwsA(isA<AppException>().having((e) => e.kind, 'kind', AppErrorKind.conflict)),
+        throwsA(
+          isA<AppException>().having(
+            (e) => e.kind,
+            'kind',
+            AppErrorKind.conflict,
+          ),
+        ),
       );
     });
 
@@ -93,16 +124,24 @@ void main() {
       fake.on(
         'POST',
         '/public/card/jane/review',
-        FakeResponse.error(429, 'Slow down', headers: {
-          'retry-after': ['42'],
-        }),
+        FakeResponse.error(
+          429,
+          'Slow down',
+          headers: {
+            'retry-after': ['42'],
+          },
+        ),
       );
       await expectLater(
         repo.submitReview('jane', body),
         throwsA(
           isA<AppException>()
               .having((e) => e.kind, 'kind', AppErrorKind.rateLimited)
-              .having((e) => e.retryAfter, 'retryAfter', const Duration(seconds: 42)),
+              .having(
+                (e) => e.retryAfter,
+                'retryAfter',
+                const Duration(seconds: 42),
+              ),
         ),
       );
     });
@@ -110,8 +149,16 @@ void main() {
 
   test('trackClick posts {slug, type, target} and swallows errors', () async {
     fake.on('POST', '/public/track-click', FakeResponse.error(500, 'boom'));
-    await repo.trackClick(slug: 'jane', type: TrackType.social, target: 'linkedin');
-    expect(fake.requests.single.body, {'slug': 'jane', 'type': 'social', 'target': 'linkedin'});
+    await repo.trackClick(
+      slug: 'jane',
+      type: TrackType.social,
+      target: 'linkedin',
+    );
+    expect(fake.requests.single.body, {
+      'slug': 'jane',
+      'type': 'social',
+      'target': 'linkedin',
+    });
     expect(anonymousFlags, [true]);
 
     // Omits empty target.

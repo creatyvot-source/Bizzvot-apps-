@@ -17,11 +17,15 @@ void main() {
     });
 
     test('per-kind limits follow the spec (5 / 10 / 5)', () {
-      final card = CardModel.fromJson(cardJson(extra: {
-        'gallery': List.generate(5, (i) => 'https://cdn/g$i.png'),
-        'pdfs': List.generate(4, (i) => {'url': 'https://cdn/d$i.pdf'}),
-        'videos': ['https://youtu.be/dQw4w9WgXcQ'],
-      }));
+      final card = CardModel.fromJson(
+        cardJson(
+          extra: {
+            'gallery': List.generate(5, (i) => 'https://cdn/g$i.png'),
+            'pdfs': List.generate(4, (i) => {'url': 'https://cdn/d$i.pdf'}),
+            'videos': ['https://youtu.be/dQw4w9WgXcQ'],
+          },
+        ),
+      );
       expect(MediaRules.remainingGallery(card), 0);
       expect(MediaRules.remainingPdfs(card), 6);
       expect(MediaRules.remainingVideos(card), 4);
@@ -31,7 +35,10 @@ void main() {
   group('file validation', () {
     test('sniffs real types from signatures', () {
       expect(MediaRules.sniffMime(tinyPng), 'image/png');
-      expect(MediaRules.sniffMime(Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0])), 'image/jpeg');
+      expect(
+        MediaRules.sniffMime(Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0])),
+        'image/jpeg',
+      );
       expect(MediaRules.sniffMime(tinyPdf), 'application/pdf');
       expect(MediaRules.sniffMime(Uint8List.fromList([1, 2, 3])), isNull);
     });
@@ -66,7 +73,12 @@ void main() {
     test('rejects http, other hosts and bad ids', () {
       expect(MediaRules.youtubeId('http://youtu.be/dQw4w9WgXcQ'), isNull);
       expect(MediaRules.youtubeId('https://vimeo.com/123'), isNull);
-      expect(MediaRules.youtubeId('https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ'), isNull);
+      expect(
+        MediaRules.youtubeId(
+          'https://youtube.com.evil.com/watch?v=dQw4w9WgXcQ',
+        ),
+        isNull,
+      );
       expect(MediaRules.youtubeId('https://youtu.be/short'), isNull);
       expect(MediaRules.validateYoutube(''), isNotNull);
     });
@@ -82,14 +94,35 @@ void main() {
   group('list filtering', () {
     final cards = [
       CardModel.fromJson(cardJson(id: 'a')),
-      CardModel.fromJson(cardJson(id: 'b', status: 'disabled', extra: {'title': 'Bo Chen'})),
-      CardModel.fromJson(cardJson(id: 'c', status: 'disabled', disabledByBilling: true, extra: {'title': 'Cy'})),
+      CardModel.fromJson(
+        cardJson(id: 'b', status: 'disabled', extra: {'title': 'Bo Chen'}),
+      ),
+      CardModel.fromJson(
+        cardJson(
+          id: 'c',
+          status: 'disabled',
+          disabledByBilling: true,
+          extra: {'title': 'Cy'},
+        ),
+      ),
     ];
 
     test('status filter distinguishes billing-disabled cards', () {
-      expect(filterCards(cards, status: CardStatusFilter.active).map((c) => c.id), ['a']);
-      expect(filterCards(cards, status: CardStatusFilter.disabled).map((c) => c.id), ['b']);
-      expect(filterCards(cards, status: CardStatusFilter.disabledByBilling).map((c) => c.id), ['c']);
+      expect(
+        filterCards(cards, status: CardStatusFilter.active).map((c) => c.id),
+        ['a'],
+      );
+      expect(
+        filterCards(cards, status: CardStatusFilter.disabled).map((c) => c.id),
+        ['b'],
+      );
+      expect(
+        filterCards(
+          cards,
+          status: CardStatusFilter.disabledByBilling,
+        ).map((c) => c.id),
+        ['c'],
+      );
     });
 
     test('search is case-insensitive across fields', () {

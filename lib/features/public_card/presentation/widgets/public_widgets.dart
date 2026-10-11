@@ -113,6 +113,7 @@ class PersonAvatar extends StatelessWidget {
       ),
     );
     return Semantics(
+      container: true,
       image: true,
       label: 'Photo of $name',
       excludeSemantics: true,

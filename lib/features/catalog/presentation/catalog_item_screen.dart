@@ -34,7 +34,8 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
   final Set<String> _addOns = {};
   int _quantity = 1;
 
-  CatalogItemKey get _key => (type: CatalogItemType.parse(widget.type), id: widget.id);
+  CatalogItemKey get _key =>
+      (type: CatalogItemType.parse(widget.type), id: widget.id);
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,10 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(item?.title ?? _key.type.label),
-          actions: const [CartButton(), SizedBox(width: AppSpacing.xs)],
+          actions: const [
+            CartButton(),
+            SizedBox(width: AppSpacing.xs),
+          ],
         ),
         body: AsyncValueView(
           value: value,
@@ -100,8 +104,9 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                 if (!item.contactOnly)
                   Text(
                     'Final price, taxes and any discounts are confirmed at checkout.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ..._statusNotices(item),
                 if (!item.personalization.isNone && item.purchasable) ...[
@@ -130,10 +135,18 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                     children: [
                       for (final v in item.variants)
                         ChoiceChip(
-                          label: Text(v.price == null ? v.name : '${v.name} · ${v.price!.format()}'),
+                          label: Text(
+                            v.price == null
+                                ? v.name
+                                : '${v.name} · ${v.price!.format()}',
+                          ),
                           selected: variant?.id == v.id,
-                          onSelected: v.available ? (_) => setState(() => _variantId = v.id) : null,
-                          tooltip: v.available ? null : '${v.name} is unavailable',
+                          onSelected: v.available
+                              ? (_) => setState(() => _variantId = v.id)
+                              : null,
+                          tooltip: v.available
+                              ? null
+                              : '${v.name} is unavailable',
                         ),
                     ],
                   ),
@@ -145,26 +158,35 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                       contentPadding: EdgeInsets.zero,
                       value: _addOns.contains(a.id),
                       onChanged: item.purchasable
-                          ? (on) => setState(() => on == true ? _addOns.add(a.id) : _addOns.remove(a.id))
+                          ? (on) => setState(
+                              () => on == true
+                                  ? _addOns.add(a.id)
+                                  : _addOns.remove(a.id),
+                            )
                           : null,
                       title: Text(a.title),
-                      subtitle: Text([
-                        if (a.price != null) '+ ${a.price!.format()}',
-                        ?a.description,
-                      ].join(' · ')),
+                      subtitle: Text(
+                        [
+                          if (a.price != null) '+ ${a.price!.format()}',
+                          ?a.description,
+                        ].join(' · '),
+                      ),
                     ),
                 ],
                 if (item.benefits.isNotEmpty) ...[
                   const SectionHeader('Benefits'),
-                  for (final b in item.benefits) _Bullet(b, icon: Icons.star_outline),
+                  for (final b in item.benefits)
+                    _Bullet(b, icon: Icons.star_outline),
                 ],
                 if (item.features.isNotEmpty) ...[
                   const SectionHeader('What’s included'),
-                  for (final f in item.features) _Bullet(f, icon: Icons.check_circle_outline),
+                  for (final f in item.features)
+                    _Bullet(f, icon: Icons.check_circle_outline),
                 ],
                 if (item.eligibilityNotes.isNotEmpty) ...[
                   const SectionHeader('Eligibility'),
-                  for (final n in item.eligibilityNotes) _Bullet(n, icon: Icons.info_outline),
+                  for (final n in item.eligibilityNotes)
+                    _Bullet(n, icon: Icons.info_outline),
                 ],
                 if (item.faq.isNotEmpty) ...[
                   const SectionHeader('FAQ'),
@@ -172,7 +194,9 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
                     ExpansionTile(
                       tilePadding: EdgeInsets.zero,
                       title: Text(f.question),
-                      childrenPadding: const EdgeInsets.only(bottom: AppSpacing.md),
+                      childrenPadding: const EdgeInsets.only(
+                        bottom: AppSpacing.md,
+                      ),
                       expandedAlignment: Alignment.centerLeft,
                       children: [Text(f.answer)],
                     ),
@@ -194,17 +218,27 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
   List<Widget> _statusNotices(CatalogItem item) {
     final notices = <Widget>[];
     void add(String title, String msg, StatusTone tone) => notices.addAll([
-          const SizedBox(height: AppSpacing.md),
-          NoticeCard(title: title, message: msg, tone: tone),
-        ]);
+      const SizedBox(height: AppSpacing.md),
+      NoticeCard(title: title, message: msg, tone: tone),
+    ]);
     if (item.paymentPolicy.blocksCheckout) {
-      add('Purchase not available in app yet',
-          'This item can’t be bought in the app yet. Contact us to purchase it.',
-          StatusTone.info);
+      add(
+        'Purchase not available in app yet',
+        'This item can’t be bought in the app yet. Contact us to purchase it.',
+        StatusTone.info,
+      );
     } else if (!item.active) {
-      add('Currently unavailable', 'This item is not on sale right now.', StatusTone.warning);
+      add(
+        'Currently unavailable',
+        'This item is not on sale right now.',
+        StatusTone.warning,
+      );
     } else if (!item.inStock) {
-      add('Out of stock', 'This item is temporarily out of stock.', StatusTone.warning);
+      add(
+        'Out of stock',
+        'This item is temporarily out of stock.',
+        StatusTone.warning,
+      );
     }
     return notices;
   }
@@ -229,7 +263,9 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
       );
     } else {
       action = FilledButton.icon(
-        onPressed: item.purchasable && !variantBlocked ? () => _addToCart(item, variant) : null,
+        onPressed: item.purchasable && !variantBlocked
+            ? () => _addToCart(item, variant)
+            : null,
         icon: const Icon(Icons.add_shopping_cart),
         label: const Text('Add to cart'),
       );
@@ -241,7 +277,10 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           child: Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -263,31 +302,39 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
   }
 
   void _addToCart(CatalogItem item, CatalogVariant? variant) {
-    ref.read(cartProvider.notifier).add(CartLine(
-          itemType: item.type,
-          itemId: item.id,
-          variantId: variant?.id,
-          variantLabel: variant?.name,
-          addOnIds: _addOns.toList(),
-          quantity: _quantity,
-          titleSnapshot: item.title,
-          paymentPolicy: item.paymentPolicy,
-          requiresShipping: item.requiresShipping,
-          // Personalised lines never merge: each holds its own unit details.
-          lineId: item.personalization.isNone ? null : uuidV4(),
-          personalization: item.personalization.isNone
-              ? null
-              : LinePersonalization(spec: item.personalization).resized(_quantity).withAtLeastOne(),
-        ));
+    ref
+        .read(cartProvider.notifier)
+        .add(
+          CartLine(
+            itemType: item.type,
+            itemId: item.id,
+            variantId: variant?.id,
+            variantLabel: variant?.name,
+            addOnIds: _addOns.toList(),
+            quantity: _quantity,
+            titleSnapshot: item.title,
+            paymentPolicy: item.paymentPolicy,
+            requiresShipping: item.requiresShipping,
+            // Personalised lines never merge: each holds its own unit details.
+            lineId: item.personalization.isNone ? null : uuidV4(),
+            personalization: item.personalization.isNone
+                ? null
+                : LinePersonalization(spec: item.personalization)
+                      .resized(_quantity)
+                      .withAtLeastOne(),
+          ),
+        );
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text('Added ${item.title} to cart'),
-        action: SnackBarAction(
-          label: 'View cart',
-          onPressed: () => context.push(Routes.ownerCart),
+      ..showSnackBar(
+        SnackBar(
+          content: Text('Added ${item.title} to cart'),
+          action: SnackBarAction(
+            label: 'View cart',
+            onPressed: () => context.push(Routes.ownerCart),
+          ),
         ),
-      ));
+      );
   }
 
   Future<void> _contact(CatalogItem item) async {
@@ -296,7 +343,10 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
     final phone = config.supportPhone ?? item.supportPhone;
     final launcher = ref.read(linkLauncherProvider);
     if (email == null && phone == null) {
-      showMessage(context, 'Support contact details are not available right now.');
+      showMessage(
+        context,
+        'Support contact details are not available right now.',
+      );
       return;
     }
     if (email != null && phone == null) {
@@ -320,7 +370,9 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
               subtitle: Text(email!),
               onTap: () {
                 Navigator.of(ctx).pop();
-                _report(launcher.email(email, subject: 'Enquiry: ${item.title}'));
+                _report(
+                  launcher.email(email, subject: 'Enquiry: ${item.title}'),
+                );
               },
             ),
             ListTile(
@@ -340,12 +392,17 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
 
   Future<void> _report(Future<bool> launch) async {
     final ok = await launch;
-    if (!ok && mounted) showMessage(context, 'Couldn’t open that link on this device.');
+    if (!ok && mounted)
+      showMessage(context, 'Couldn’t open that link on this device.');
   }
 }
 
 class _Gallery extends StatefulWidget {
-  const _Gallery({required this.images, required this.title, required this.type});
+  const _Gallery({
+    required this.images,
+    required this.title,
+    required this.type,
+  });
   final List<String> images;
   final String title;
   final CatalogItemType type;
@@ -381,7 +438,8 @@ class _GalleryState extends State<_Gallery> {
                   itemBuilder: (_, i) => SafeNetworkImage(
                     url: images[i],
                     placeholderIcon: icon,
-                    semanticLabel: '${widget.title} image ${i + 1} of ${images.length}',
+                    semanticLabel:
+                        '${widget.title} image ${i + 1} of ${images.length}',
                   ),
                 ),
                 Positioned(
@@ -399,8 +457,12 @@ class _GalleryState extends State<_Gallery> {
                             width: i == _page ? 18 : 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: i == _page ? 1 : 0.6),
-                              borderRadius: BorderRadius.circular(AppRadius.pill),
+                              color: Colors.white.withValues(
+                                alpha: i == _page ? 1 : 0.6,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.pill,
+                              ),
                             ),
                           ),
                       ],
@@ -420,14 +482,14 @@ class _Bullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(child: Text(text)),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: Text(text)),
+      ],
+    ),
+  );
 }

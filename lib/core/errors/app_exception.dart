@@ -154,6 +154,8 @@ class AppException implements Exception {
         message = error;
       }
       message ??= _str(data['message']);
+      // Coglink puts extras (e.g. `code`) beside a string `error`.
+      code ??= _str(data['code']);
     }
     if (message != null && message.length > 300) {
       message = message.substring(0, 300);

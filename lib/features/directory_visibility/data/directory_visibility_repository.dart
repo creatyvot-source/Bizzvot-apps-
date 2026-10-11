@@ -8,9 +8,10 @@ import '../../../shared/models/card.dart';
 import '../../../shared/models/organization.dart';
 import '../domain/visibility_rules.dart';
 
-final directoryVisibilityRepositoryProvider = Provider<DirectoryVisibilityRepository>(
-  (ref) => DirectoryVisibilityRepository(ref.watch(apiClientProvider)),
-);
+final directoryVisibilityRepositoryProvider =
+    Provider<DirectoryVisibilityRepository>(
+      (ref) => DirectoryVisibilityRepository(ref.watch(apiClientProvider)),
+    );
 
 /// Organization directory setting and per-card visibility. Both fields are
 /// PROPOSED additions to the profile/card contracts (plan §7.5).
@@ -25,13 +26,14 @@ class DirectoryVisibilityRepository {
 
   /// `PATCH /organization/profile` with `{directoryVisibility}` only.
   Future<void> setDirectoryVisibility(DirectoryVisibility value) => _api.patch(
-        Endpoints.profile,
-        body: {'directoryVisibility': value.wire},
-        parse: (_) {},
-      );
+    Endpoints.profile,
+    body: {'directoryVisibility': value.wire},
+    parse: (_) {},
+  );
 
   /// `PATCH /organization/cards/:id` with `{visibility}` only.
-  Future<void> setCardVisibility(String cardId, CardVisibility value) => _api.patch(
+  Future<void> setCardVisibility(String cardId, CardVisibility value) =>
+      _api.patch(
         Endpoints.card(cardId),
         body: {'visibility': value.wire},
         parse: (_) {},
@@ -54,7 +56,8 @@ class DirectoryVisibilityRepository {
       } catch (e) {
         final ex = AppException.from(e);
         failed[id] = ex.message;
-        if (ex.kind == AppErrorKind.unauthenticated || ex.kind == AppErrorKind.rateLimited) {
+        if (ex.kind == AppErrorKind.unauthenticated ||
+            ex.kind == AppErrorKind.rateLimited) {
           for (final rest in cardIds.skip(i + 1)) {
             failed[rest] = ex.message;
           }

@@ -29,6 +29,7 @@ class RegisterRequest {
     required this.email,
     required this.password,
     this.phone,
+    this.industry,
   });
 
   final String organizationName;
@@ -36,9 +37,13 @@ class RegisterRequest {
   final String email;
   final String password;
   final String? phone;
+  final String? industry;
 
+  /// Coglink requires `role`; the mobile app registers organizations only.
   Json toJson() => compact({
+        'role': 'organization',
         'organizationName': organizationName,
+        'industry': industry,
         'name': name,
         'email': email.trim().toLowerCase(),
         'password': password,
@@ -146,7 +151,7 @@ class AuthRepository {
   }) =>
       _api.post<void>(
         Endpoints.resetPassword,
-        body: {'token': token, 'password': password},
+        body: {'token': token, 'newPassword': password},
         parse: (_) {},
         anonymous: true,
         noRefresh: true,

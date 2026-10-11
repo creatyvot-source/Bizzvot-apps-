@@ -28,16 +28,17 @@ class PersonalizationEditor extends ConsumerStatefulWidget {
   final CartLine line;
 
   @override
-  ConsumerState<PersonalizationEditor> createState() => _PersonalizationEditorState();
+  ConsumerState<PersonalizationEditor> createState() =>
+      _PersonalizationEditorState();
 }
 
 class _UnitDraft {
   _UnitDraft(UnitPersonalization u)
-      : cardId = u.cardId,
-        useCardReviewPage = u.useCardReviewPage,
-        review = TextEditingController(text: u.reviewUrl ?? ''),
-        name = TextEditingController(text: u.printName ?? ''),
-        designation = TextEditingController(text: u.printDesignation ?? '');
+    : cardId = u.cardId,
+      useCardReviewPage = u.useCardReviewPage,
+      review = TextEditingController(text: u.reviewUrl ?? ''),
+      name = TextEditingController(text: u.printName ?? ''),
+      designation = TextEditingController(text: u.printDesignation ?? '');
 
   String? cardId;
   bool useCardReviewPage;
@@ -66,7 +67,8 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
   @override
   void initState() {
     super.initState();
-    final p = widget.line.personalization ??
+    final p =
+        widget.line.personalization ??
         const LinePersonalization(spec: PersonalizationSpec.none);
     _initial = p.resized(widget.line.quantity).withAtLeastOne();
     _assignLater = _initial.assignLater;
@@ -93,7 +95,9 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
     }
     setState(() => _uploading = true);
     try {
-      final up = await ref.read(personalizationRepositoryProvider).uploadLogo(picked);
+      final up = await ref
+          .read(personalizationRepositoryProvider)
+          .uploadLogo(picked);
       if (mounted) {
         setState(() {
           _logoUrl = up.url;
@@ -109,15 +113,19 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
 
   void _save(List<LinkableCard> cards) {
     if (!_assignLater && !(_form.currentState?.validate() ?? false)) return;
-    String? t(TextEditingController c) => c.text.trim().isEmpty ? null : c.text.trim();
+    String? t(TextEditingController c) =>
+        c.text.trim().isEmpty ? null : c.text.trim();
     final units = [
       for (final u in _units)
         UnitPersonalization(
           cardId: u.cardId,
           cardSlug: cards.where((c) => c.id == u.cardId).firstOrNull?.slug,
           cardLabel: cards.where((c) => c.id == u.cardId).firstOrNull?.name,
-          reviewUrl: _spec.target == NfcTarget.review && !u.useCardReviewPage ? t(u.review) : null,
-          useCardReviewPage: _spec.target == NfcTarget.review && u.useCardReviewPage,
+          reviewUrl: _spec.target == NfcTarget.review && !u.useCardReviewPage
+              ? t(u.review)
+              : null,
+          useCardReviewPage:
+              _spec.target == NfcTarget.review && u.useCardReviewPage,
           printName: _spec.printName ? t(u.name) : null,
           printDesignation: _spec.printDesignation ? t(u.designation) : null,
           logoUrl: _spec.logo ? _logoUrl : null,
@@ -159,7 +167,10 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
         child: ListView(
           padding: AppSpacing.page,
           children: [
-            Text(widget.line.titleSnapshot, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              widget.line.titleSnapshot,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Text('Quantity: ${widget.line.quantity}'),
             const SizedBox(height: AppSpacing.sm),
             SwitchListTile(
@@ -196,7 +207,10 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader('Logo (optional)', subtitle: 'Printed on every unit'),
+        const SectionHeader(
+          'Logo (optional)',
+          subtitle: 'Printed on every unit',
+        ),
         Row(
           children: [
             if (_logoUrl != null)
@@ -204,7 +218,10 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: SizedBox.square(
                   dimension: 56,
-                  child: SafeNetworkImage(url: _logoUrl, semanticLabel: 'Uploaded logo'),
+                  child: SafeNetworkImage(
+                    url: _logoUrl,
+                    semanticLabel: 'Uploaded logo',
+                  ),
                 ),
               ),
             if (_logoUrl != null) const SizedBox(width: AppSpacing.md),
@@ -227,7 +244,10 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
                   _logoUrl = null;
                   _logoId = null;
                 }),
-                icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: theme.colorScheme.error,
+                ),
               ),
           ],
         ),
@@ -237,12 +257,16 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
 
   Widget _unitSection(int i, List<LinkableCard> cards) {
     final u = _units[i];
-    final title = _spec.perUnit ? 'Unit ${i + 1} of ${_units.length}' : 'Details';
+    final title = _spec.perUnit
+        ? 'Unit ${i + 1} of ${_units.length}'
+        : 'Details';
     final cardPicker = DropdownButtonFormField<String>(
       initialValue: cards.any((c) => c.id == u.cardId) ? u.cardId : null,
       isExpanded: true,
       decoration: InputDecoration(
-        labelText: _spec.target == NfcTarget.review ? 'Card whose review page opens' : 'Card the tag opens',
+        labelText: _spec.target == NfcTarget.review
+            ? 'Card whose review page opens'
+            : 'Card the tag opens',
         prefixIcon: const Icon(Icons.badge_outlined),
       ),
       items: [
@@ -260,7 +284,8 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
         u.cardId = v;
         final card = cards.where((c) => c.id == v).firstOrNull;
         if (card == null) return;
-        if (_spec.printName && u.name.text.trim().isEmpty) u.name.text = card.name;
+        if (_spec.printName && u.name.text.trim().isEmpty)
+          u.name.text = card.name;
         if (_spec.printDesignation && u.designation.text.trim().isEmpty) {
           u.designation.text = card.designation ?? '';
         }
@@ -283,7 +308,8 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
               ButtonSegment(value: true, label: Text('Card review page')),
             ],
             selected: {u.useCardReviewPage},
-            onSelectionChanged: (s) => setState(() => u.useCardReviewPage = s.first),
+            onSelectionChanged: (s) =>
+                setState(() => u.useCardReviewPage = s.first),
           ),
           const SizedBox(height: AppSpacing.md),
           if (u.useCardReviewPage)
@@ -315,7 +341,9 @@ class _PersonalizationEditorState extends ConsumerState<PersonalizationEditor> {
             controller: u.designation,
             textCapitalization: TextCapitalization.words,
             maxLength: 40,
-            decoration: const InputDecoration(labelText: 'Designation to print'),
+            decoration: const InputDecoration(
+              labelText: 'Designation to print',
+            ),
           ),
         ],
       ],

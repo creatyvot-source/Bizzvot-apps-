@@ -27,7 +27,9 @@ String directoryStatusText({
     return 'Listed in the directory';
   }
   if (card == CardVisibility.private) return 'Hidden · card is private';
-  if (org == DirectoryVisibility.private) return 'Hidden · directory is private';
+  if (org == DirectoryVisibility.private) {
+    return 'Hidden · directory is private';
+  }
   return 'Hidden · card is not active';
 }
 

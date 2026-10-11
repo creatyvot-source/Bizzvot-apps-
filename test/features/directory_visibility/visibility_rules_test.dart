@@ -20,7 +20,10 @@ void main() {
     ];
     for (final (org, card, active, listed) in matrix) {
       test('org=${org.wire} card=${card.wire} active=$active → $listed', () {
-        expect(isListedInDirectory(org: org, card: card, cardActive: active), listed);
+        expect(
+          isListedInDirectory(org: org, card: card, cardActive: active),
+          listed,
+        );
       });
     }
   });
@@ -32,19 +35,35 @@ void main() {
 
   test('status text explains the deciding rule', () {
     expect(
-      directoryStatusText(org: DirectoryVisibility.public, card: CardVisibility.inherit, cardActive: true),
+      directoryStatusText(
+        org: DirectoryVisibility.public,
+        card: CardVisibility.inherit,
+        cardActive: true,
+      ),
       'Listed in the directory',
     );
     expect(
-      directoryStatusText(org: DirectoryVisibility.private, card: CardVisibility.public, cardActive: true),
+      directoryStatusText(
+        org: DirectoryVisibility.private,
+        card: CardVisibility.public,
+        cardActive: true,
+      ),
       contains('directory is private'),
     );
     expect(
-      directoryStatusText(org: DirectoryVisibility.private, card: CardVisibility.private, cardActive: true),
+      directoryStatusText(
+        org: DirectoryVisibility.private,
+        card: CardVisibility.private,
+        cardActive: true,
+      ),
       contains('card is private'),
     );
     expect(
-      directoryStatusText(org: DirectoryVisibility.public, card: CardVisibility.public, cardActive: false),
+      directoryStatusText(
+        org: DirectoryVisibility.public,
+        card: CardVisibility.public,
+        cardActive: false,
+      ),
       contains('not active'),
     );
   });

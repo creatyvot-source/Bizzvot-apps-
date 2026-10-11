@@ -18,6 +18,8 @@ Ten agents each audited one area of the Bizzvot platform. Reports:
 | 12 | App Store / Play policy, WCAG 2.2, OWASP MASVS, NFC, i18n | `12-store-a11y-masvs.md` |
 | 13 | Commerce, GST, consumer-protection & payments law | `13-commerce-tax-legal.md` |
 | 14 | Engineering/ops standards (ASVS, ISO 27001, OpenAPI) + integration model | `14-engineering-ops-standards.md` |
+| 15 | Abuse, looping/flood attacks, rate limits, DoS resilience | `15-abuse-dos-resilience.md` |
+| 16 | Database & server performance optimisation | `16-db-server-performance.md` |
 
 Live web portal: https://www.bizzvot.com/ (Coglink, `creatyvot-source/COGCard`). The mobile app
 uses `https://www.bizzvot.com/api/v1` as its only gateway to the MongoDB database.

@@ -22,7 +22,11 @@ void main() {
 
   group('listCards', () {
     test('parses a bare array', () async {
-      api.on('GET', '/organization/cards', FakeResponse.ok([cardJson(), cardJson(id: 'c2')]));
+      api.on(
+        'GET',
+        '/organization/cards',
+        FakeResponse.ok([cardJson(), cardJson(id: 'c2')]),
+      );
       final cards = await repo.listCards();
       expect(cards.map((c) => c.id), ['c1', 'c2']);
       expect(cards.first.template, CardTemplate.corporate);
@@ -30,9 +34,16 @@ void main() {
     });
 
     test('parses {cards: [...]} and drops rows without id', () async {
-      api.on('GET', '/organization/cards', FakeResponse.ok({
-        'cards': [cardJson(status: 'disabled', disabledByBilling: true), {'title': 'no id'}],
-      }));
+      api.on(
+        'GET',
+        '/organization/cards',
+        FakeResponse.ok({
+          'cards': [
+            cardJson(status: 'disabled', disabledByBilling: true),
+            {'title': 'no id'},
+          ],
+        }),
+      );
       final cards = await repo.listCards();
       expect(cards, hasLength(1));
       expect(cards.single.isActive, isFalse);
@@ -46,7 +57,11 @@ void main() {
   });
 
   test('getCard unwraps {card: ...}', () async {
-    api.on('GET', '/organization/cards/c1', FakeResponse.ok({'card': cardJson(visibility: 'private')}));
+    api.on(
+      'GET',
+      '/organization/cards/c1',
+      FakeResponse.ok({'card': cardJson(visibility: 'private')}),
+    );
     final card = await repo.getCard('c1');
     expect(card.visibility, CardVisibility.private);
     expect(card.bloodGroup, 'O+');
@@ -64,17 +79,29 @@ void main() {
   test('setStatus body is {cardIds, status}', () async {
     api.on('PATCH', '/organization/cards/status', FakeResponse.ok(null));
     await repo.setStatus(['c1'], CardStatus.active);
-    expect(api.requests.single.body, {'cardIds': ['c1'], 'status': 'active'});
+    expect(api.requests.single.body, {
+      'cardIds': ['c1'],
+      'status': 'active',
+    });
   });
 
   test('setStatus surfaces 409 seat errors with the server message', () async {
-    api.on('PATCH', '/organization/cards/status',
-        FakeResponse.error(409, 'No free paid card slot is available.'));
+    api.on(
+      'PATCH',
+      '/organization/cards/status',
+      FakeResponse.error(409, 'No free paid card slot is available.'),
+    );
     await expectLater(
       repo.setStatus(['c1'], CardStatus.active),
-      throwsA(isA<AppException>()
-          .having((e) => e.kind, 'kind', AppErrorKind.conflict)
-          .having((e) => e.message, 'message', 'No free paid card slot is available.')),
+      throwsA(
+        isA<AppException>()
+            .having((e) => e.kind, 'kind', AppErrorKind.conflict)
+            .having(
+              (e) => e.message,
+              'message',
+              'No free paid card slot is available.',
+            ),
+      ),
     );
   });
 
@@ -91,16 +118,24 @@ void main() {
     });
 
     test('qrCode decodes a JSON data URL', () async {
-      api.on('GET', '/cards/c1/qrcode', FakeResponse.ok({'qrCode': tinyPngDataUrl}));
+      api.on(
+        'GET',
+        '/cards/c1/qrcode',
+        FakeResponse.ok({'qrCode': tinyPngDataUrl}),
+      );
       expect(await repo.qrCode('c1'), tinyPng);
     });
 
     test('allQrCodes parses JSON entries with url or dataUrl', () async {
-      api.on('GET', '/organization/cards/qrcodes', FakeResponse.ok([
-        {'cardId': 'c1', 'slug': 'asha', 'dataUrl': tinyPngDataUrl},
-        {'cardId': 'c2', 'url': 'https://cdn.example.com/qr/c2.png'},
-        {'cardId': 'c3'},
-      ]));
+      api.on(
+        'GET',
+        '/organization/cards/qrcodes',
+        FakeResponse.ok([
+          {'cardId': 'c1', 'slug': 'asha', 'dataUrl': tinyPngDataUrl},
+          {'cardId': 'c2', 'url': 'https://cdn.example.com/qr/c2.png'},
+          {'cardId': 'c3'},
+        ]),
+      );
       final bundle = await repo.allQrCodes();
       expect(bundle, isA<QrEntryList>());
       final entries = (bundle as QrEntryList).entries;
@@ -117,13 +152,18 @@ void main() {
     });
 
     test('qrEntryImage refuses non-https remote URLs', () async {
-      const entry = QrCodeEntry(cardId: 'c', url: 'http://insecure.example.com/q.png');
+      const entry = QrCodeEntry(
+        cardId: 'c',
+        url: 'http://insecure.example.com/q.png',
+      );
       expect(await repo.qrEntryImage(entry), isNull);
     });
   });
 
   test('vcard returns the file and rejects non-vCard bodies', () async {
-    final vcf = Uint8List.fromList(utf8.encode('BEGIN:VCARD\nVERSION:3.0\nEND:VCARD\n'));
+    final vcf = Uint8List.fromList(
+      utf8.encode('BEGIN:VCARD\nVERSION:3.0\nEND:VCARD\n'),
+    );
     api.onBytes('GET', '/cards/c1/vcard', vcf);
     expect(await repo.vcard('c1'), vcf);
 
@@ -133,8 +173,16 @@ void main() {
 
   group('uploads', () {
     test('uploadImage posts multipart field "file" and parses url', () async {
-      api.on('POST', '/media/upload', FakeResponse.ok({'url': 'https://cdn.example.com/a.png'}));
-      final url = await repo.uploadImage(bytes: tinyPng, filename: 'a.png', mimeType: 'image/png');
+      api.on(
+        'POST',
+        '/media/upload',
+        FakeResponse.ok({'url': 'https://cdn.example.com/a.png'}),
+      );
+      final url = await repo.uploadImage(
+        bytes: tinyPng,
+        filename: 'a.png',
+        mimeType: 'image/png',
+      );
       expect(url, 'https://cdn.example.com/a.png');
       final form = api.requests.single.body as FormData;
       expect(form.files.single.key, 'file');
@@ -142,17 +190,40 @@ void main() {
     });
 
     test('uploadCardDocument goes to /cards/:id/media', () async {
-      api.on('POST', '/cards/c1/media', FakeResponse.ok({'file': {'location': 'https://cdn/x.pdf'}}));
-      final url = await repo.uploadCardDocument('c1', bytes: tinyPdf, filename: 'x.pdf');
+      api.on(
+        'POST',
+        '/cards/c1/media',
+        FakeResponse.ok({
+          'file': {'location': 'https://cdn/x.pdf'},
+        }),
+      );
+      final url = await repo.uploadCardDocument(
+        'c1',
+        bytes: tinyPdf,
+        filename: 'x.pdf',
+      );
       expect(url, 'https://cdn/x.pdf');
     });
 
     test('uploadedUrl handles many response shapes', () {
       expect(CardsRepository.uploadedUrl('https://a'), 'https://a');
-      expect(CardsRepository.uploadedUrl({'secure_url': 'https://b'}), 'https://b');
-      expect(CardsRepository.uploadedUrl({'media': {'url': 'https://c'}}), 'https://c');
       expect(
-        CardsRepository.uploadedUrl({'pdfs': [{'url': 'https://old'}, {'url': 'https://new'}]}),
+        CardsRepository.uploadedUrl({'secure_url': 'https://b'}),
+        'https://b',
+      );
+      expect(
+        CardsRepository.uploadedUrl({
+          'media': {'url': 'https://c'},
+        }),
+        'https://c',
+      );
+      expect(
+        CardsRepository.uploadedUrl({
+          'pdfs': [
+            {'url': 'https://old'},
+            {'url': 'https://new'},
+          ],
+        }),
         'https://new',
       );
       expect(CardsRepository.uploadedUrl({}), isNull);
@@ -161,7 +232,11 @@ void main() {
     test('missing url is an error', () async {
       api.on('POST', '/media/upload', FakeResponse.ok({'ok': true}));
       await expectLater(
-        repo.uploadImage(bytes: tinyPng, filename: 'a.png', mimeType: 'image/png'),
+        repo.uploadImage(
+          bytes: tinyPng,
+          filename: 'a.png',
+          mimeType: 'image/png',
+        ),
         throwsA(isA<AppException>()),
       );
     });
@@ -184,11 +259,17 @@ void main() {
       expect(await repo.staffCard(), isNull);
     });
 
-    test('404 without a known card id means none; with one it is an error', () async {
-      api.on('GET', '/staff/card', FakeResponse.error(404, 'Not found'));
-      expect(await repo.staffCard(), isNull);
-      await expectLater(repo.staffCard(knownCardId: 'c1'), throwsA(isA<AppException>()));
-    });
+    test(
+      '404 without a known card id means none; with one it is an error',
+      () async {
+        api.on('GET', '/staff/card', FakeResponse.error(404, 'Not found'));
+        expect(await repo.staffCard(), isNull);
+        await expectLater(
+          repo.staffCard(knownCardId: 'c1'),
+          throwsA(isA<AppException>()),
+        );
+      },
+    );
 
     test('updateStaffCard PATCHes /staff/card', () async {
       api.on('PATCH', '/staff/card', FakeResponse.ok(cardJson()));

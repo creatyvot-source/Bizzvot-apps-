@@ -12,8 +12,10 @@ enum CardTemplate {
   final String wire;
   final String label;
 
-  static CardTemplate parse(Object? v) => CardTemplate.values
-      .firstWhere((t) => t.wire == str(v), orElse: () => CardTemplate.minimal);
+  static CardTemplate parse(Object? v) => CardTemplate.values.firstWhere(
+    (t) => t.wire == str(v),
+    orElse: () => CardTemplate.minimal,
+  );
 }
 
 enum CardStatus {
@@ -34,8 +36,10 @@ enum CardVisibility {
   final String wire;
   final String label;
 
-  static CardVisibility parse(Object? v) => CardVisibility.values
-      .firstWhere((t) => t.wire == str(v), orElse: () => CardVisibility.inherit);
+  static CardVisibility parse(Object? v) => CardVisibility.values.firstWhere(
+    (t) => t.wire == str(v),
+    orElse: () => CardVisibility.inherit,
+  );
 }
 
 /// Media limits from the product spec. The server re-validates.
@@ -64,7 +68,8 @@ class CardLink {
     );
   }
 
-  Json toJson() => compact({'type': type, 'url': url, 'label': label, '_id': id});
+  Json toJson() =>
+      compact({'type': type, 'url': url, 'label': label, '_id': id});
 }
 
 class MediaItem {
@@ -205,7 +210,8 @@ class CardModel {
     return CardModel(
       id: idOf(j),
       slug: strOr(j['slug']),
-      staffUserId: str(j['staffUserId']) ?? (staff.isEmpty ? null : idOf(staff)),
+      staffUserId:
+          str(j['staffUserId']) ?? (staff.isEmpty ? null : idOf(staff)),
       staffName: str(j['staffName']) ?? str(staff['name']),
       title: str(j['title']) ?? str(j['name']),
       designation: str(j['designation']),
@@ -247,44 +253,44 @@ class CardModel {
   }
 
   static List<MediaItem> _media(Object? v) {
-    if (v is List) return v.map(MediaItem.fromJson).where((m) => m.url.isNotEmpty).toList();
-    return const [];
+    if (v is! List) return const [];
+    return v.map(MediaItem.fromJson).where((m) => m.url.isNotEmpty).toList();
   }
 
   /// Editable fields for `PATCH /organization/cards/:id`. Status and
   /// billing flags are excluded — they go through the status endpoint.
   Json toUpdateJson() => {
-        'title': title,
-        'designation': designation,
-        'company': company,
-        'pronouns': pronouns,
-        'bio': bio,
-        'profilePhoto': profilePhoto,
-        'coverImage': coverImage,
-        'logo': logo,
-        'phone': phone,
-        'companyPhone': companyPhone,
-        'whatsapp': whatsapp,
-        'email': email,
-        'website': website,
-        'address': address,
-        'mapLink': mapLink,
-        'bloodGroup': bloodGroup,
-        'fatherName': fatherName,
-        'motherName': motherName,
-        'socialLinks': socialLinks.map((l) => l.toJson()).toList(),
-        'customLinks': customLinks.map((l) => l.toJson()).toList(),
-        'gallery': gallery.map((m) => m.toJson()).toList(),
-        'pdfs': pdfs.map((m) => m.toJson()).toList(),
-        'videos': videos.map((m) => m.toJson()).toList(),
-        'template': template.wire,
-        'brandColor': brandColor,
-        'sectionOrder': sectionOrder,
-        'displayToggles': displayToggles,
-        'vcardEnabled': vcardEnabled,
-        'visibility': visibility.wire,
-        'googleReviewUrl': googleReviewUrl,
-      };
+    'title': title,
+    'designation': designation,
+    'company': company,
+    'pronouns': pronouns,
+    'bio': bio,
+    'profilePhoto': profilePhoto,
+    'coverImage': coverImage,
+    'logo': logo,
+    'phone': phone,
+    'companyPhone': companyPhone,
+    'whatsapp': whatsapp,
+    'email': email,
+    'website': website,
+    'address': address,
+    'mapLink': mapLink,
+    'bloodGroup': bloodGroup,
+    'fatherName': fatherName,
+    'motherName': motherName,
+    'socialLinks': socialLinks.map((l) => l.toJson()).toList(),
+    'customLinks': customLinks.map((l) => l.toJson()).toList(),
+    'gallery': gallery.map((m) => m.toJson()).toList(),
+    'pdfs': pdfs.map((m) => m.toJson()).toList(),
+    'videos': videos.map((m) => m.toJson()).toList(),
+    'template': template.wire,
+    'brandColor': brandColor,
+    'sectionOrder': sectionOrder,
+    'displayToggles': displayToggles,
+    'vcardEnabled': vcardEnabled,
+    'visibility': visibility.wire,
+    'googleReviewUrl': googleReviewUrl,
+  };
 
   CardModel copyWith({
     String? title,
@@ -326,55 +332,74 @@ class CardModel {
     T? pick<T>(String key, T? next, T? current) =>
         clear.contains(key) ? null : (next ?? current);
     return CardModel(
-        id: id,
-        slug: slug,
-        staffUserId: staffUserId,
-        staffName: staffName,
-        title: pick('title', title, this.title),
-        designation: pick('designation', designation, this.designation),
-        company: pick('company', company, this.company),
-        pronouns: pick('pronouns', pronouns, this.pronouns),
-        bio: pick('bio', bio, this.bio),
-        profilePhoto: pick('profilePhoto', profilePhoto, this.profilePhoto),
-        coverImage: pick('coverImage', coverImage, this.coverImage),
-        logo: pick('logo', logo, this.logo),
-        phone: pick('phone', phone, this.phone),
-        companyPhone: pick('companyPhone', companyPhone, this.companyPhone),
-        whatsapp: pick('whatsapp', whatsapp, this.whatsapp),
-        email: pick('email', email, this.email),
-        website: pick('website', website, this.website),
-        address: pick('address', address, this.address),
-        mapLink: pick('mapLink', mapLink, this.mapLink),
-        bloodGroup: pick('bloodGroup', bloodGroup, this.bloodGroup),
-        fatherName: pick('fatherName', fatherName, this.fatherName),
-        motherName: pick('motherName', motherName, this.motherName),
-        socialLinks: socialLinks ?? this.socialLinks,
-        customLinks: customLinks ?? this.customLinks,
-        gallery: gallery ?? this.gallery,
-        pdfs: pdfs ?? this.pdfs,
-        videos: videos ?? this.videos,
-        template: template ?? this.template,
-        brandColor: pick('brandColor', brandColor, this.brandColor),
-        sectionOrder: sectionOrder ?? this.sectionOrder,
-        displayToggles: displayToggles ?? this.displayToggles,
-        vcardEnabled: vcardEnabled ?? this.vcardEnabled,
-        status: status ?? this.status,
-        disabledByBilling: disabledByBilling ?? this.disabledByBilling,
-        visibility: visibility ?? this.visibility,
-        googleReviewUrl: pick('googleReviewUrl', googleReviewUrl, this.googleReviewUrl),
-        viewCount: viewCount,
-        reviewCount: reviewCount,
-        averageRating: averageRating,
-        updatedAt: updatedAt,
-      );
+      id: id,
+      slug: slug,
+      staffUserId: staffUserId,
+      staffName: staffName,
+      title: pick('title', title, this.title),
+      designation: pick('designation', designation, this.designation),
+      company: pick('company', company, this.company),
+      pronouns: pick('pronouns', pronouns, this.pronouns),
+      bio: pick('bio', bio, this.bio),
+      profilePhoto: pick('profilePhoto', profilePhoto, this.profilePhoto),
+      coverImage: pick('coverImage', coverImage, this.coverImage),
+      logo: pick('logo', logo, this.logo),
+      phone: pick('phone', phone, this.phone),
+      companyPhone: pick('companyPhone', companyPhone, this.companyPhone),
+      whatsapp: pick('whatsapp', whatsapp, this.whatsapp),
+      email: pick('email', email, this.email),
+      website: pick('website', website, this.website),
+      address: pick('address', address, this.address),
+      mapLink: pick('mapLink', mapLink, this.mapLink),
+      bloodGroup: pick('bloodGroup', bloodGroup, this.bloodGroup),
+      fatherName: pick('fatherName', fatherName, this.fatherName),
+      motherName: pick('motherName', motherName, this.motherName),
+      socialLinks: socialLinks ?? this.socialLinks,
+      customLinks: customLinks ?? this.customLinks,
+      gallery: gallery ?? this.gallery,
+      pdfs: pdfs ?? this.pdfs,
+      videos: videos ?? this.videos,
+      template: template ?? this.template,
+      brandColor: pick('brandColor', brandColor, this.brandColor),
+      sectionOrder: sectionOrder ?? this.sectionOrder,
+      displayToggles: displayToggles ?? this.displayToggles,
+      vcardEnabled: vcardEnabled ?? this.vcardEnabled,
+      status: status ?? this.status,
+      disabledByBilling: disabledByBilling ?? this.disabledByBilling,
+      visibility: visibility ?? this.visibility,
+      googleReviewUrl: pick(
+        'googleReviewUrl',
+        googleReviewUrl,
+        this.googleReviewUrl,
+      ),
+      viewCount: viewCount,
+      reviewCount: reviewCount,
+      averageRating: averageRating,
+      updatedAt: updatedAt,
+    );
   }
 
   /// Nullable scalar fields that [copyWith] can clear via `clear:`.
   static const clearableFields = {
-    'title', 'designation', 'company', 'pronouns', 'bio',
-    'profilePhoto', 'coverImage', 'logo',
-    'phone', 'companyPhone', 'whatsapp', 'email', 'website', 'address',
-    'mapLink', 'bloodGroup', 'fatherName', 'motherName', 'brandColor',
+    'title',
+    'designation',
+    'company',
+    'pronouns',
+    'bio',
+    'profilePhoto',
+    'coverImage',
+    'logo',
+    'phone',
+    'companyPhone',
+    'whatsapp',
+    'email',
+    'website',
+    'address',
+    'mapLink',
+    'bloodGroup',
+    'fatherName',
+    'motherName',
+    'brandColor',
     'googleReviewUrl',
   };
 
