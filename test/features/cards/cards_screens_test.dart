@@ -63,23 +63,22 @@ void main() {
       expect(find.text('Asha Rao'), findsOneWidget);
     });
 
-    testWidgets('empty organization shows add-staff CTA', (tester) async {
+    testWidgets('empty organization shows create-card CTA', (tester) async {
       final api = BinaryFakeApi()
         ..on('GET', '/organization/cards', FakeResponse.ok([]));
       await pumpScreen(tester, const CardsListScreen(), api: api);
       expect(find.text('No cards yet'), findsOneWidget);
-      expect(find.text('Add staff member'), findsOneWidget);
+      expect(find.text('Create card'), findsOneWidget);
     });
 
     testWidgets('shares all QR codes as PNG files', (tester) async {
       final share = FakeShareService();
       final api = BinaryFakeApi()
-        ..on('GET', '/organization/cards', FakeResponse.ok([cardJson()]))
         ..on(
           'GET',
-          '/organization/cards/qrcodes',
+          '/organization/cards',
           FakeResponse.ok([
-            {'cardId': 'c1', 'slug': 'asha-rao', 'dataUrl': tinyPngDataUrl},
+            cardJson(extra: {'qrCodeUrl': tinyPngDataUrl}),
           ]),
         );
       await pumpScreen(tester, const CardsListScreen(), api: api, share: share);
@@ -104,7 +103,7 @@ void main() {
           '/organization/cards/c1',
           FakeResponse.ok(cardJson(status: 'disabled')),
         )
-        ..on('PATCH', '/organization/cards/status', FakeResponse.ok(null));
+        ..on('PATCH', '/organization/cards/c1', FakeResponse.ok(null));
       await pumpScreen(tester, const CardDetailScreen(cardId: 'c1'), api: api);
 
       expect(find.byType(CardPreview), findsOneWidget);
@@ -115,10 +114,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final req = api.requests.firstWhere((r) => r.method == 'PATCH');
-      expect(req.body, {
-        'cardIds': ['c1'],
-        'status': 'active',
-      });
+      expect(req.body, {'status': 'active'});
     });
 
     testWidgets('billing-disabled card explains and 409 suggests seats', (
@@ -134,7 +130,7 @@ void main() {
         )
         ..on(
           'PATCH',
-          '/organization/cards/status',
+          '/organization/cards/c1',
           FakeResponse.error(409, 'No free paid slot.'),
         );
       await pumpScreen(tester, const CardDetailScreen(cardId: 'c1'), api: api);
@@ -212,8 +208,11 @@ void main() {
     ) async {
       final share = FakeShareService();
       final api = BinaryFakeApi()
-        ..on('GET', '/organization/cards/c1', FakeResponse.ok(cardJson()))
-        ..onBytes('GET', '/cards/c1/qrcode', tinyPng)
+        ..on(
+          'GET',
+          '/organization/cards/c1',
+          FakeResponse.ok(cardJson(extra: {'qrCodeUrl': tinyPngDataUrl})),
+        )
         ..onBytes('GET', '/cards/c1/vcard', tinyVcard);
       await pumpScreen(
         tester,
@@ -243,16 +242,19 @@ void main() {
       expect(share.sharedFiles.single.single.mimeType, 'text/vcard');
     });
 
-    testWidgets('hides vCard when disabled; staff mode uses /staff/card', (
+    testWidgets('hides vCard when disabled; staff mode uses /staff/cards', (
       tester,
     ) async {
       final api = BinaryFakeApi()
         ..on(
           'GET',
-          '/staff/card',
-          FakeResponse.ok(cardJson(extra: {'vcardEnabled': false})),
-        )
-        ..onBytes('GET', '/cards/c1/qrcode', tinyPng);
+          '/staff/cards',
+          FakeResponse.ok([
+            cardJson(
+              extra: {'vcardEnabled': false, 'qrCodeUrl': tinyPngDataUrl},
+            ),
+          ]),
+        );
       await pumpScreen(
         tester,
         const CardShareScreen(staffMode: true),
@@ -271,7 +273,7 @@ void main() {
   group('MyCardScreen', () {
     testWidgets('shows preview and permission-gated actions', (tester) async {
       final api = BinaryFakeApi()
-        ..on('GET', '/staff/card', FakeResponse.ok(cardJson()));
+        ..on('GET', '/staff/cards', FakeResponse.ok([cardJson()]));
       await pumpScreen(
         tester,
         const MyCardScreen(),
@@ -288,7 +290,7 @@ void main() {
 
     testWidgets('no edit button without permissions', (tester) async {
       final api = BinaryFakeApi()
-        ..on('GET', '/staff/card', FakeResponse.ok(cardJson()));
+        ..on('GET', '/staff/cards', FakeResponse.ok([cardJson()]));
       await pumpScreen(
         tester,
         const MyCardScreen(),
@@ -305,7 +307,7 @@ void main() {
 
     testWidgets('empty state when no card assigned', (tester) async {
       final api = BinaryFakeApi()
-        ..on('GET', '/staff/card', FakeResponse.ok(null));
+        ..on('GET', '/staff/cards', FakeResponse.ok([]));
       await pumpScreen(
         tester,
         const MyCardScreen(),

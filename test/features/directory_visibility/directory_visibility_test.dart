@@ -1,3 +1,4 @@
+import 'package:bizzvot/features/cards/domain/card_capabilities.dart';
 import 'package:bizzvot/features/directory_visibility/data/directory_visibility_repository.dart';
 import 'package:bizzvot/features/directory_visibility/presentation/directory_visibility_screen.dart';
 import 'package:bizzvot/shared/models/card.dart';
@@ -120,6 +121,7 @@ void main() {
       tester,
       const DirectoryVisibilityScreen(),
       api: api,
+      capabilities: CardCapabilities.all,
       extra: [
         directoryVisibilityRepositoryProvider.overrideWithValue(
           DirectoryVisibilityRepository(api.client),

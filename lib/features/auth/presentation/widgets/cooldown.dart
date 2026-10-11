@@ -88,6 +88,7 @@ class CooldownSubmitButton extends StatelessWidget {
       builder: (context, _) {
         final waiting = cooldown.active;
         return Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             BusyButton(

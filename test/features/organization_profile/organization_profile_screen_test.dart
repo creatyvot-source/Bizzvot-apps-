@@ -57,6 +57,10 @@ Widget _app(FakeProfileRepository repo) => ProviderScope(
     );
 
 Future<void> _open(WidgetTester tester, FakeProfileRepository repo) async {
+  tester.view
+    ..physicalSize = const Size(800, 2400)
+    ..devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
   await tester.pumpWidget(_app(repo));
   await tester.tap(find.text('open'));
   await tester.pumpAndSettle();

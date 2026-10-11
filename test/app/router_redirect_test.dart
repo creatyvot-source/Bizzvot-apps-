@@ -4,7 +4,6 @@ import 'package:bizzvot/core/auth/auth_user.dart';
 import 'package:bizzvot/core/auth/session_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 
 AuthUser _user(UserRole role, [StaffPermissions p = StaffPermissions.none]) =>
     AuthUser(id: 'u', email: 'u@x.co', role: role, permissions: p);
@@ -72,7 +71,7 @@ void main() {
     final router = container.read(routerProvider);
     String matched(String location) {
       final m = router.configuration.findMatch(Uri.parse(location));
-      return (m.last.route as GoRoute).path;
+      return m.last.route.path;
     }
 
     expect(matched(Routes.ownerCards), Routes.ownerCards);

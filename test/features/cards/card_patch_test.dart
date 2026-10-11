@@ -69,10 +69,9 @@ void main() {
     });
 
     test('manageLinks grants links only; none grants nothing', () {
-      // The backend requires editCard for every staff PATCH.
       expect(
         CardEditSection.forStaff(const StaffPermissions(manageLinks: true)),
-        isEmpty,
+        {CardEditSection.links},
       );
       expect(
         CardEditSection.forStaff(

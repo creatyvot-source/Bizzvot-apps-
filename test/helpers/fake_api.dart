@@ -26,7 +26,11 @@ class FakeResponse {
         status,
         {
           'success': false,
-          'error': {'message': message, if (code != null) 'code': code},
+          'error': {
+            'message': message,
+            // ignore: use_null_aware_elements
+            if (code != null) 'code': code,
+          },
         },
         headers: headers,
       );

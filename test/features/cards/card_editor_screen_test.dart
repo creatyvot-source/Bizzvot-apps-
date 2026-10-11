@@ -1,4 +1,5 @@
 import 'package:bizzvot/core/auth/auth_user.dart';
+import 'package:bizzvot/features/cards/domain/card_capabilities.dart';
 import 'package:bizzvot/features/cards/data/media_picker.dart';
 import 'package:bizzvot/features/cards/presentation/card_editor_screen.dart';
 import 'package:dio/dio.dart';
@@ -25,7 +26,12 @@ void main() {
           '/organization/cards/c1',
           FakeResponse.ok(cardJson(extra: {'title': 'Asha R.'})),
         );
-      await pumpScreen(tester, const CardEditorScreen(cardId: 'c1'), api: api);
+      await pumpScreen(
+        tester,
+        const CardEditorScreen(cardId: 'c1'),
+        api: api,
+        capabilities: CardCapabilities.all,
+      );
 
       // All owner sections are present, private details clearly labelled.
       expect(find.text('Identity'), findsOneWidget);
@@ -124,6 +130,7 @@ void main() {
         const CardEditorScreen(cardId: 'c1'),
         api: api,
         picker: picker,
+        capabilities: CardCapabilities.all,
       );
 
       expect(find.text('4 of 5'), findsOneWidget);
@@ -183,7 +190,12 @@ void main() {
         )
         ..on('PATCH', '/organization/cards/c1', FakeResponse.ok(cardJson()))
         ..on('DELETE', '/cards/c1/library', FakeResponse.ok(null));
-      await pumpScreen(tester, const CardEditorScreen(cardId: 'c1'), api: api);
+      await pumpScreen(
+        tester,
+        const CardEditorScreen(cardId: 'c1'),
+        api: api,
+        capabilities: CardCapabilities.all,
+      );
       await tester.ensureVisible(find.byTooltip('Remove document'));
       await tester.tap(find.byTooltip('Remove document'));
       await tester.pump();
@@ -199,12 +211,12 @@ void main() {
   });
 
   group('staff', () {
-    testWidgets('manageLinks only shows links and PATCHes /staff/card', (
+    testWidgets('manageLinks only shows links and PATCHes /staff/cards/:id', (
       tester,
     ) async {
       final api = BinaryFakeApi()
-        ..on('GET', '/staff/card', FakeResponse.ok(cardJson()))
-        ..on('PATCH', '/staff/card', FakeResponse.ok(cardJson()));
+        ..on('GET', '/staff/cards', FakeResponse.ok([cardJson()]))
+        ..on('PATCH', '/staff/cards/c1', FakeResponse.ok(cardJson()));
       await pumpScreen(
         tester,
         const CardEditorScreen(staffMode: true),
@@ -240,7 +252,7 @@ void main() {
 
       await tapSave(tester);
       final patch = api.requests.firstWhere((r) => r.method == 'PATCH');
-      expect(patch.path, '/staff/card');
+      expect(patch.path, '/staff/cards/c1');
       expect((patch.body as Map).keys, ['socialLinks']);
       expect(
         api.requests.any((r) => r.path.startsWith('/organization')),

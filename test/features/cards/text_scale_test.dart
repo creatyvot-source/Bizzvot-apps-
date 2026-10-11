@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/fake_api.dart';
+import 'package:bizzvot/features/cards/domain/card_capabilities.dart';
 import 'cards_test_harness.dart';
 
 /// Every main screen must lay out at a 360dp phone width with 200% text
@@ -36,12 +37,13 @@ void main() {
   BinaryFakeApi api() => BinaryFakeApi()
     ..on('GET', '/organization/cards', FakeResponse.ok([card]))
     ..on('GET', '/organization/cards/c1', FakeResponse.ok(card))
-    ..on('GET', '/staff/card', FakeResponse.ok(card))
+    ..on('GET', '/staff/cards', FakeResponse.ok([card]))
     ..on(
       'GET',
       '/organization/profile',
       FakeResponse.ok({'_id': 'o', 'name': 'Acme', 'slug': 'acme'}),
     )
+    ..on('POST', '/cards/c1/qrcode', FakeResponse.ok({'qrCodeUrl': tinyPngDataUrl}))
     ..onBytes('GET', '/cards/c1/qrcode', tinyPng);
 
   final screens = <String, (Widget, AuthUser)>{
@@ -66,6 +68,7 @@ void main() {
         screen,
         api: fake,
         user: user,
+        capabilities: CardCapabilities.all,
         size: phone,
         textScale: 2,
         extra: [
