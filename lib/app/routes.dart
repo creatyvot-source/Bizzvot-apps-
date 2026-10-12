@@ -24,6 +24,7 @@ abstract final class Routes {
 
   // Owner tabs
   static const ownerDashboard = '/o/dashboard';
+  static const ownerDirectory = '/o/directory';
   static const ownerCards = '/o/cards';
   static const ownerStaff = '/o/staff';
   static const ownerReviews = '/o/reviews';
@@ -57,6 +58,9 @@ abstract final class Routes {
 
   // Staff tabs
   static const staffCard = '/s/card';
+  static const staffDirectory = '/s/directory';
+  static const staffShop = '/s/shop';
+  static const staffCart = '/s/cart';
   static const staffReviews = '/s/reviews';
   static const staffAnalytics = '/s/analytics';
   static const staffMore = '/s/more';

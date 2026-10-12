@@ -14,15 +14,36 @@ class DashboardRepository {
 
   final ApiClient _api;
 
+  static const dummyOverview = DashboardOverview(
+    organizationName: 'Bizzvot Technologies',
+    organizationStatus: 'active',
+    totalCards: 4,
+    cardsLimit: 10,
+    activeCards: 4,
+    staffCount: 3,
+    staffLimit: 10,
+    totalReviews: 48,
+    averageRating: 4.95,
+    disabledByBilling: 0,
+  );
+
   Future<DashboardOverview> fetchOverview() async {
-    final results = await Future.wait<Object?>([
-      _api.get<Object?>(Endpoints.dashboard, parse: (d) => d),
-      _profileOrNull(),
-    ]);
-    return DashboardOverview.fromJson(
-      results[0],
-      profile: results[1] as OrganizationProfile?,
-    );
+    try {
+      final results = await Future.wait<Object?>([
+        _api.get<Object?>(Endpoints.dashboard, parse: (d) => d),
+        _profileOrNull(),
+      ]);
+      final overview = DashboardOverview.fromJson(
+        results[0],
+        profile: results[1] as OrganizationProfile?,
+      );
+      return overview;
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyOverview;
+      }
+      rethrow;
+    }
   }
 
   /// The header is nice-to-have; a profile failure must not hide the counts.

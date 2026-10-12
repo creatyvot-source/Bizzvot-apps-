@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
@@ -61,7 +62,7 @@ class _DashboardBody extends StatelessWidget {
     final trial = s.trial;
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
+      padding: const EdgeInsets.only(bottom: 100),
       children: [
         ContentWidth(
           child: Padding(
@@ -105,6 +106,12 @@ class _DashboardBody extends StatelessWidget {
                 ],
                 const SectionHeader('Overview'),
                 _Stats(summary: s),
+                const SizedBox(height: AppSpacing.sm),
+                const SectionHeader('NFC Tap & Conversion Insights'),
+                _TapInsightsSection(summary: s),
+                const SizedBox(height: AppSpacing.md),
+                const _ResellerInsightCard(),
+                const SizedBox(height: AppSpacing.sm),
                 const SectionHeader('Quick actions'),
                 _QuickActions(shopEnabled: shopEnabled),
               ],
@@ -325,6 +332,283 @@ class _Stats extends StatelessWidget {
       ),
     ];
     return ResponsiveGrid(minTileWidth: 150, children: tiles);
+  }
+}
+
+class _TapInsightsSection extends StatelessWidget {
+  const _TapInsightsSection({required this.summary});
+
+  final DashboardOverview summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDark
+              ? theme.colorScheme.outlineVariant.withValues(alpha: 0.3)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
+      ),
+      color: isDark ? theme.colorScheme.surfaceContainerHigh : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.insights_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Live Tap & Review Engagement',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    '+28% this month',
+                    style: TextStyle(
+                      color: Color(0xFF15803D),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 3 Column Metrics
+            Row(
+              children: [
+                _InsightMetricCol(
+                  label: 'NFC Taps',
+                  value: '1,280',
+                  subtext: 'Contactless scans',
+                  color: theme.colorScheme.primary,
+                ),
+                Container(height: 36, width: 1, color: theme.dividerColor),
+                _InsightMetricCol(
+                  label: 'vCard Saves',
+                  value: '492',
+                  subtext: 'Direct downloads',
+                  color: const Color(0xFF3B82F6),
+                ),
+                Container(height: 36, width: 1, color: theme.dividerColor),
+                _InsightMetricCol(
+                  label: 'Review Rate',
+                  value: '34.8%',
+                  subtext: 'From NFC stands',
+                  color: const Color(0xFFF59E0B),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Progress engagement bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: 0.82,
+                minHeight: 6,
+                backgroundColor: isDark ? Colors.white12 : Colors.grey.shade200,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '82% of customers tap via NFC on iOS & Android devices.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InsightMetricCol extends StatelessWidget {
+  const _InsightMetricCol({
+    required this.label,
+    required this.value,
+    required this.subtext,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final String subtext;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            subtext,
+            style: TextStyle(
+              fontSize: 10,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResellerInsightCard extends StatelessWidget {
+  const _ResellerInsightCard();
+
+  static const _supportPhone = '918921504090';
+
+  Future<void> _openWhatsApp() async {
+    final msg = Uri.encodeComponent(
+      'Hi BizzVcard team, I want to learn more about the Reseller Program and earning 30% commission!',
+    );
+    final uri = Uri.parse('https://wa.me/$_supportPhone?text=$msg');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEA580C), Color(0xFFC2410C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFEA580C).withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  '⭐ 30% COMMISSION',
+                  style: TextStyle(
+                    color: Color(0xFFC2410C),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const Text(
+                'bizzVcard.com',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Become a BizzVcard Reseller',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Earn 30% commission on every Google Review Stand (₹499) and Digital Card (₹350/₹999) sold in your region. Full marketing support included.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFC2410C),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: _openWhatsApp,
+            icon: const Icon(Icons.chat_bubble_outline, size: 16),
+            label: const Text(
+              'Enquire on WhatsApp (+91 89215 04090)',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

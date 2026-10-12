@@ -114,11 +114,18 @@ class QuoteSummary extends StatelessWidget {
 
 /// Sticky bottom bar: server total + primary action.
 class TotalBar extends StatelessWidget {
-  const TotalBar({super.key, required this.action, this.total, this.caption});
+  const TotalBar({
+    super.key,
+    required this.action,
+    this.total,
+    this.caption,
+    this.bottomPadding = 0.0,
+  });
 
   final Money? total;
   final String? caption;
   final Widget action;
+  final double bottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -129,41 +136,46 @@ class TotalBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.sm + bottomPadding,
           ),
-          child: Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.sm,
+          child: Row(
             children: [
               if (total != null || caption != null)
-                MergeSemantics(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (total != null)
-                        Text('Total', style: theme.textTheme.labelMedium),
-                      if (total != null)
-                        MoneyText(
-                          total,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
+                Expanded(
+                  child: MergeSemantics(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (total != null)
+                          Text('Total', style: theme.textTheme.labelMedium),
+                        if (total != null)
+                          MoneyText(
+                            total,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                      if (caption != null)
-                        Text(
-                          caption!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                        if (caption != null)
+                          Text(
+                            caption!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                )
+              else
+                const Spacer(),
+              const SizedBox(width: AppSpacing.md),
               action,
             ],
           ),

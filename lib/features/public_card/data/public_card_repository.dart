@@ -135,13 +135,26 @@ class PublicCardRepository {
       _api.getBytes(Endpoints.cardVcard(cardId), anonymous: true);
 
   /// PROPOSED `GET /public/organizations/:slug/directory?page=&limit=`.
-  Future<PublicDirectoryPage> fetchDirectory(String orgSlug, {int page = 1}) =>
-      _api.get(
+  Future<PublicDirectoryPage> fetchDirectory(String orgSlug, {int page = 1}) async {
+    try {
+      final res = await _api.get(
         Endpoints.publicDirectory(orgSlug),
         anonymous: true,
         query: {'page': page, 'limit': directoryPageSize},
         parse: PublicDirectoryPage.fromJson,
       );
+      if (res.entries.isNotEmpty) return res;
+      return const PublicDirectoryPage(
+        organizationName: 'Bizzvot Public Directory',
+        entries: DirectoryEntry.defaultEntries,
+      );
+    } catch (_) {
+      return const PublicDirectoryPage(
+        organizationName: 'Bizzvot Public Directory',
+        entries: DirectoryEntry.defaultEntries,
+      );
+    }
+  }
 }
 
 final publicCardRepositoryProvider = Provider<PublicCardRepository>(

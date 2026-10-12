@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../core/auth/session_controller.dart';
 import '../cart_checkout_providers.dart';
 
 /// App-bar cart action with a line-count badge.
@@ -12,12 +13,14 @@ class CartButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(cartCountProvider);
+    final user = ref.watch(currentUserProvider);
+    final isStaff = user?.isStaff ?? false;
     final label = count == 0
         ? 'Cart, empty'
         : 'Cart, $count ${count == 1 ? 'item' : 'items'}';
     return IconButton(
       tooltip: label,
-      onPressed: () => context.push(Routes.ownerCart),
+      onPressed: () => context.go(isStaff ? Routes.staffCart : Routes.ownerCart),
       icon: Badge(
         isLabelVisible: count > 0,
         label: Text(count > 99 ? '99+' : '$count'),

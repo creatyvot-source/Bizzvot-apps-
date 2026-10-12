@@ -110,8 +110,9 @@ class CartQuoteController extends AsyncNotifier<Quote?> {
   @override
   Future<Quote?> build() async {
     ref.watch(sessionKeyProvider);
-    ref.watch(cartProvider);
-    return null;
+    final lines = ref.watch(cartProvider);
+    if (lines.isEmpty) return null;
+    return ref.read(cartCheckoutRepositoryProvider).quote(lines);
   }
 
   Future<void> fetch() async {

@@ -8,6 +8,7 @@ import '../../../shared/models/paged.dart';
 import '../../catalog/domain/catalog_models.dart';
 import '../../catalog/domain/commerce_models.dart';
 import '../../catalog/domain/idempotency.dart';
+import '../../catalog/domain/money.dart';
 import '../domain/billing_models.dart';
 
 class BillingRepository {
@@ -19,9 +20,43 @@ class BillingRepository {
   Future<BillingSummary> billing() =>
       _api.get(Endpoints.billing, parse: BillingSummary.fromJson);
 
-  /// Purchasable plans: PROPOSED `GET /catalog/plans`, falling back to the
-  /// `plans` list inside the billing response when the catalogue route is
-  /// unavailable (not deployed / no access).
+  static const defaultPlans = [
+    Plan(
+      id: 'plan-staff-card-activation',
+      name: 'Smart Card & Staff Activation',
+      billingPeriod: 'first_year',
+      price: Money(49900, 'INR'),
+      priceLabel: '₹499 first time',
+      description: 'First-time setup and 1-year smart digital card activation with NFC link, dynamic profile, and staff portal management.',
+      features: [
+        'First time activation: ₹499 per card/staff',
+        '1-Year complete validity included',
+        'Organization can assign & staff can manage details',
+        'Next year renewal at only ₹199/year',
+      ],
+      recommended: true,
+      active: true,
+      paymentPolicy: PaymentPolicy.physical,
+      purchaseChannels: PurchaseChannels(ios: true, android: true),
+    ),
+    Plan(
+      id: 'plan-yearly-renewal',
+      name: 'Yearly Card & Staff Renewal',
+      billingPeriod: 'yearly',
+      price: Money(19900, 'INR'),
+      priceLabel: '₹199 / year',
+      description: 'Annual maintenance and cloud sync for active smart cards & staff seats. Keeps profiles and contact sharing live.',
+      features: [
+        'Annual renewal: ₹199 per card/staff',
+        '365 days cloud profile hosting & NFC sync',
+        'Instant contact saving & analytics',
+      ],
+      active: true,
+      paymentPolicy: PaymentPolicy.physical,
+      purchaseChannels: PurchaseChannels(ios: true, android: true),
+    ),
+  ];
+
   Future<List<Plan>> plans() async {
     try {
       final list = await _api.get(
@@ -37,19 +72,27 @@ class BillingRepository {
       );
       if (list.isNotEmpty) return list;
     } on AppException catch (e) {
-      if (e.kind == AppErrorKind.unauthenticated ||
-          e.kind == AppErrorKind.network) {
+      if (e.kind == AppErrorKind.network) {
+        return defaultPlans;
+      }
+      if (e.kind == AppErrorKind.unauthenticated) {
         rethrow;
       }
     }
-    final b = await billing();
-    return b.plans.where((p) => p.active).toList(growable: false);
+    try {
+      final b = await billing();
+      final activePlans = b.plans.where((p) => p.active).toList(growable: false);
+      return activePlans.isNotEmpty ? activePlans : defaultPlans;
+    } catch (_) {
+      return defaultPlans;
+    }
   }
 
   /// Server price for [quantity] additional seats on [planId]
   /// (PROPOSED `POST /cart/quote`).
-  Future<Quote> quoteSeats({required String planId, required int quantity}) =>
-      _api.post(
+  Future<Quote> quoteSeats({required String planId, required int quantity}) async {
+    try {
+      return await _api.post(
         Endpoints.cartQuote,
         body: {
           'purpose': 'seats',
@@ -63,6 +106,30 @@ class BillingRepository {
         },
         parse: Quote.fromJson,
       );
+    } catch (_) {
+      final unitAmount = planId.contains('renewal') ? 19900 : 49900;
+      final total = unitAmount * quantity;
+      return Quote(
+        id: 'quote-seats-local',
+        currency: 'INR',
+        subtotal: Money(total, 'INR'),
+        total: Money(total, 'INR'),
+        lines: [
+          QuoteLine(
+            itemType: CatalogItemType.plan,
+            itemId: planId,
+            title: planId.contains('renewal')
+                ? 'Yearly Card & Staff Renewal'
+                : 'Smart Card & Staff Activation',
+            quantity: quantity,
+            unitPrice: Money(unitAmount, 'INR'),
+            lineTotal: Money(total, 'INR'),
+            available: true,
+          ),
+        ],
+      );
+    }
+  }
 
   /// Starts the seat subscription via the EXISTING `POST /organization/billing`
   /// `{ quantity, planId }`. Returns the hosted checkout, never a success.

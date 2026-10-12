@@ -69,6 +69,35 @@ class SessionController extends Notifier<SessionState> {
   Future<void> login(String email, String password) =>
       loginOwner(email, password);
 
+  /// Demo sign-in for testing and exploring all modules without a live backend.
+  void loginDemo() {
+    state = const SignedIn(AuthUser(
+      id: 'usr-demo-1',
+      email: 'muhammed@bizzvot.com',
+      role: UserRole.owner,
+      organizationName: 'Bizzvot Technologies',
+      name: 'Muhammed KC',
+    ));
+  }
+
+  /// Demo staff card member sign-in for testing staff portal and card management.
+  void loginDemoStaff() {
+    state = const SignedIn(AuthUser(
+      id: 'usr-demo-staff-1',
+      email: 'sarah.staff@bizzvot.com',
+      role: UserRole.staff,
+      organizationName: 'Bizzvot Technologies',
+      name: 'Sarah Jenkins',
+      cardId: 'card-1',
+      permissions: StaffPermissions(
+        editCard: true,
+        manageLinks: true,
+        viewReviews: true,
+        replyReviews: true,
+      ),
+    ));
+  }
+
   Future<void> loginOwner(String email, String password) async {
     final user = await _repo.loginOwner(email, password);
     state = SignedIn(user);

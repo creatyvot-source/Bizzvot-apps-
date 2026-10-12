@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
 import '../../../app/theme.dart';
+import '../../../core/auth/session_controller.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/feedback.dart';
 import '../../../shared/widgets/state_views.dart';
@@ -349,7 +350,10 @@ class _CatalogItemScreenState extends ConsumerState<CatalogItemScreen> {
           content: Text('Added ${item.title} to cart'),
           action: SnackBarAction(
             label: 'View cart',
-            onPressed: () => context.push(Routes.ownerCart),
+            onPressed: () {
+              final isStaff = ref.read(currentUserProvider)?.isStaff ?? false;
+              context.go(isStaff ? Routes.staffCart : Routes.ownerCart);
+            },
           ),
         ),
       );

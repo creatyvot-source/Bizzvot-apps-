@@ -43,3 +43,4 @@ flutter:
           weight: 700
   assets:
     - assets/fonts/OFL.txt
+    - assets/images/

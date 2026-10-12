@@ -42,6 +42,15 @@ class LinkLauncher {
     return _launch(Uri(scheme: 'tel', path: cleaned));
   }
 
+  Future<bool> whatsapp(String phone, {String? text}) {
+    final cleaned = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleaned.length < 5) return Future.value(false);
+    final uri = Uri.parse(
+      'https://wa.me/$cleaned${text != null && text.isNotEmpty ? '?text=${Uri.encodeComponent(text)}' : ''}',
+    );
+    return _launch(uri);
+  }
+
   Future<void> shareText(String text, {String? subject}) async {
     await SharePlus.instance.share(ShareParams(text: text, subject: subject));
   }

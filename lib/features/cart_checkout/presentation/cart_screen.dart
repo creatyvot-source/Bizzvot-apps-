@@ -30,11 +30,13 @@ class CartScreen extends ConsumerWidget {
       if (lines.isEmpty) return const SizedBox.shrink();
       if (quote.isLoading) {
         return const TotalBar(
+          bottomPadding: 84.0,
           action: FilledButton(onPressed: null, child: Text('Getting price…')),
         );
       }
       if (q == null) {
         return TotalBar(
+          bottomPadding: 84.0,
           caption: 'Prices, taxes and shipping are confirmed by our server.',
           action: FilledButton.icon(
             onPressed: () => ref.read(cartQuoteProvider.notifier).fetch(),
@@ -46,6 +48,7 @@ class CartScreen extends ConsumerWidget {
       final blocked = !q.canCheckout || personalizationIssue != null;
       return TotalBar(
         total: q.total,
+        bottomPadding: 84.0,
         caption:
             personalizationIssue ??
             (q.hasUnavailable ? 'Remove unavailable items to continue' : null),
@@ -126,6 +129,7 @@ class CartScreen extends ConsumerWidget {
                           quote: q,
                           shippingPending: ref.watch(cartNeedsShippingProvider),
                         ),
+                      const SizedBox(height: 120),
                     ],
                   ),
                 ),

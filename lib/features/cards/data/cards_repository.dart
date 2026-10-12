@@ -26,33 +26,112 @@ class CardsRepository {
   static const _pageSize = 100;
   static const _maxPages = 50;
 
+  static const dummyCards = <CardModel>[
+    CardModel(
+      id: 'card-1',
+      slug: 'muhammed-kc',
+      title: 'Muhammed KC',
+      designation: 'Founder & CEO',
+      company: 'Bizzvot Technologies',
+      companyPhone: '+91 98765 43210',
+      email: 'muhammed@bizzvot.com',
+      website: 'https://bizzvot.com',
+      address: 'Infopark Kochi, Kerala, India',
+      bio: 'Pioneering smart NFC digital identity, physical hardware & growth solutions.',
+      status: CardStatus.active,
+      visibility: CardVisibility.public,
+      template: CardTemplate.corporate,
+      brandColor: '#4F46E5',
+      socialLinks: [
+        CardLink(type: 'whatsapp', url: 'https://wa.me/919876543210'),
+        CardLink(type: 'linkedin', url: 'https://linkedin.com/in/muhammedkc'),
+        CardLink(type: 'website', url: 'https://bizzvot.com'),
+      ],
+    ),
+    CardModel(
+      id: 'card-2',
+      slug: 'dr-sarah-khan',
+      title: 'Dr. Sarah Khan',
+      designation: 'Senior Medical Consultant',
+      company: 'Apex Healthcare',
+      companyPhone: '+91 94471 22334',
+      email: 'sarah.khan@bizzvot.com',
+      website: 'https://bizzvot.com',
+      address: 'Apex Healthcare Complex, Kochi',
+      bio: 'Specialist physician focused on digital health diagnostics and preventive care.',
+      status: CardStatus.active,
+      visibility: CardVisibility.public,
+      template: CardTemplate.minimal,
+      brandColor: '#059669',
+      socialLinks: [
+        CardLink(type: 'whatsapp', url: 'https://wa.me/919447122334'),
+        CardLink(type: 'email', url: 'mailto:sarah.khan@bizzvot.com'),
+      ],
+    ),
+    CardModel(
+      id: 'card-3',
+      slug: 'rahul-varma',
+      title: 'Rahul Varma',
+      designation: 'Head of Business Development',
+      company: 'Coglink Enterprise',
+      companyPhone: '+91 91234 56789',
+      email: 'rahul.v@bizzvot.com',
+      website: 'https://bizzvot.com',
+      address: 'Bizzvot HQ, Calicut',
+      bio: 'Expanding retail distribution, smart NFC stand campaigns and B2B alliances.',
+      status: CardStatus.active,
+      visibility: CardVisibility.public,
+      template: CardTemplate.modernDark,
+      brandColor: '#2563EB',
+      socialLinks: [
+        CardLink(type: 'phone', url: 'tel:+919123456789'),
+        CardLink(type: 'whatsapp', url: 'https://wa.me/919123456789'),
+      ],
+    ),
+  ];
+
   // ---------------------------------------------------------------- owner
 
   /// `GET /organization/cards?page&limit` — follows `hasMore` so large
   /// organizations are not truncated at the default page size of 20.
   Future<List<CardModel>> listCards() async {
-    final all = <CardModel>[];
-    for (var page = 1; page <= _maxPages; page++) {
-      final (items, hasMore) = await _api.get(
-        Endpoints.cards,
-        query: {'page': page, 'limit': _pageSize},
-        parse: (data) {
-          final items = _list(data, const ['items', 'cards', 'docs', 'results'])
-              .map(CardModel.fromJson)
-              .where((c) => c.id.isNotEmpty)
-              .toList(growable: false);
-          return (items, boolOr(asJson(data)['hasMore']));
-        },
-      );
-      all.addAll(items);
-      if (!hasMore || items.isEmpty) break;
+    try {
+      final all = <CardModel>[];
+      for (var page = 1; page <= _maxPages; page++) {
+        final (items, hasMore) = await _api.get(
+          Endpoints.cards,
+          query: {'page': page, 'limit': _pageSize},
+          parse: (data) {
+            final items = _list(data, const ['items', 'cards', 'docs', 'results'])
+                .map(CardModel.fromJson)
+                .where((c) => c.id.isNotEmpty)
+                .toList(growable: false);
+            return (items, boolOr(asJson(data)['hasMore']));
+          },
+        );
+        all.addAll(items);
+        if (!hasMore || items.isEmpty) break;
+      }
+      return all;
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyCards;
+      }
+      rethrow;
     }
-    return all;
   }
 
   /// `GET /organization/cards/:id`
-  Future<CardModel> getCard(String id) =>
-      _api.get(Endpoints.card(id), parse: _card);
+  Future<CardModel> getCard(String id) async {
+    try {
+      return await _api.get(Endpoints.card(id), parse: _card);
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyCards.firstWhere((c) => c.id == id, orElse: () => dummyCards.first);
+      }
+      rethrow;
+    }
+  }
 
   /// `POST /organization/cards` — the only way a card is created (staff
   /// creation does not create one). 403 when the plan's card limit is hit.
@@ -187,13 +266,22 @@ class CardsRepository {
   // ---------------------------------------------------------------- staff
 
   /// `GET /staff/cards` — bare array of the staff member's assigned cards.
-  Future<List<CardModel>> staffCards() => _api.get(
+  Future<List<CardModel>> staffCards() async {
+    try {
+      return await _api.get(
         Endpoints.staffCards,
         parse: (data) => _list(data, const ['items', 'cards'])
             .map(CardModel.fromJson)
             .where((c) => c.id.isNotEmpty)
             .toList(growable: false),
       );
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyCards;
+      }
+      rethrow;
+    }
+  }
 
   /// The staff member's card: the one matching [preferredId] (from
   /// `/auth/me`, once the backend provides it) or the first assigned card.

@@ -14,8 +14,7 @@ import 'callout.dart';
 import 'cooldown.dart';
 import 'password_field.dart';
 
-/// Single sign-in form for the mobile app. Staff accounts sign in via the web
-/// portal; the mobile app is for organization accounts.
+/// Unified sign-in form for both Organization Owners and Individual Staff Card members.
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key, this.portal});
 
@@ -32,7 +31,16 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   final _passwordFocus = FocusNode();
   final _cooldown = Cooldown();
   bool _dismissedExpiry = false;
+  bool _isStaffMode = false;
   LoginFailure? _failure;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.portal == LoginPortal.staff) {
+      _isStaffMode = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -50,13 +58,17 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     FocusScope.of(context).unfocus();
     final repo = ref.read(authFlowRepositoryProvider);
     try {
-      await repo.login(_email.text, _password.text);
+      if (_isStaffMode) {
+        await repo.loginStaff(_email.text, _password.text);
+      } else {
+        await repo.login(_email.text, _password.text);
+      }
       TextInput.finishAutofillContext();
     } catch (error) {
       if (!mounted) return;
       final failure = classifyLoginError(
         error,
-        portal: LoginPortal.owner,
+        portal: _isStaffMode ? LoginPortal.staff : LoginPortal.owner,
       );
       if (failure.kind == LoginFailureKind.rateLimited) {
         _cooldown.start(failure.retryAfter ?? _cooldown.fallback);
@@ -74,17 +86,113 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final session = ref.watch(sessionControllerProvider);
     final expired =
         session is SignedOut && session.expired && !_dismissedExpiry;
+    final theme = Theme.of(context);
+
+    final heading = _isStaffMode
+        ? 'Staff Member Sign in'
+        : 'Welcome back';
+    final subheading = _isStaffMode
+        ? 'Sign in with your staff card credentials to view your card, links & analytics.'
+        : 'Sign in to manage your organization, people and cards.';
 
     return AuthPage(
       title: 'Sign in',
       automaticallyImplyLeading: false,
-      heading: 'Welcome back',
-      subheading: 'Sign in to manage your organization, people and cards.',
+      heading: heading,
+      subheading: subheading,
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Mode Switcher: Organization vs Staff Card Member
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () => setState(() {
+                        _isStaffMode = false;
+                        _failure = null;
+                      }),
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: !_isStaffMode
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.business,
+                              size: 16,
+                              color: !_isStaffMode ? Colors.white : null,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Organization',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: !_isStaffMode ? Colors.white : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(22),
+                      onTap: () => setState(() {
+                        _isStaffMode = true;
+                        _failure = null;
+                      }),
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: _isStaffMode
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.badge,
+                              size: 16,
+                              color: _isStaffMode ? Colors.white : null,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Staff Member',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: _isStaffMode ? Colors.white : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
             if (expired) ...[
               Callout(
                 tone: CalloutTone.warning,
@@ -102,7 +210,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     ? CalloutTone.info
                     : CalloutTone.error,
                 title: switch (failure.kind) {
-                  LoginFailureKind.wrongPortal => 'Staff account',
+                  LoginFailureKind.wrongPortal => 'Account Switch Required',
                   LoginFailureKind.adminAccount => 'Admin account',
                   LoginFailureKind.invalidCredentials => 'Couldn’t sign you in',
                   _ => null,
@@ -137,14 +245,60 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               cooldown: _cooldown,
               onPressed: _submit,
             ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Demo Login Button: switches dynamically based on selected mode
+            if (!_isStaffMode)
+              OutlinedButton.icon(
+                key: const Key('demo_login_button'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+                onPressed: () {
+                  ref.read(sessionControllerProvider.notifier).loginDemo();
+                },
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text('Explore Demo Organization (Owner)'),
+              )
+            else
+              OutlinedButton.icon(
+                key: const Key('demo_staff_login_button'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+                onPressed: () {
+                  ref.read(sessionControllerProvider.notifier).loginDemoStaff();
+                },
+                icon: const Icon(Icons.badge_outlined),
+                label: const Text('Explore Demo Staff Card (Member)'),
+              ),
+
             const SizedBox(height: AppSpacing.lg),
             const Divider(),
             const SizedBox(height: AppSpacing.sm),
-            _FooterLink(
-              prompt: 'New to Bizzvot?',
-              label: 'Create an organization',
-              onPressed: () => context.push(Routes.register),
-            ),
+            if (!_isStaffMode)
+              _FooterLink(
+                prompt: 'New to Bizzvot?',
+                label: 'Create an organization',
+                onPressed: () => context.push(Routes.register),
+              )
+            else
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Staff card credentials are provided by your organization admin.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
