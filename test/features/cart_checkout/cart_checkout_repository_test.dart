@@ -38,8 +38,10 @@ void main() {
 
       expect(quote.currency, 'INR');
       expect(quote.lines.length, 2);
-      // 109900 + (35000 * 2) = 179900
-      expect(quote.total?.minor, 179900);
+      expect(quote.subtotal?.minor, 179900);
+      expect(quote.taxTotal?.minor, 32382);
+      expect(quote.shipping?.minor, 9900);
+      expect(quote.total?.minor, 222182);
     });
 
     test('createOrder falls back to offline simulated order with valid lines', () async {
@@ -68,7 +70,10 @@ void main() {
 
       expect(order.id, startsWith('ord_'));
       expect(order.orderNumber, startsWith('ORD-'));
-      expect(order.total?.minor, 49900);
+      expect(order.subtotal?.minor, 49900);
+      expect(order.taxTotal?.minor, 8982);
+      expect(order.shipping?.minor, 9900);
+      expect(order.total?.minor, 68782);
       expect(order.lines.length, 1);
       expect(order.lines.first.quantity, 1);
       expect(order.fulfilment?.courier, 'Delhivery');
@@ -104,7 +109,8 @@ void main() {
       final fetched = await repo.order(created.id);
 
       expect(fetched.id, created.id);
-      expect(fetched.total?.minor, 99900);
+      expect(fetched.subtotal?.minor, 99900);
+      expect(fetched.total?.minor, 127782);
       expect(fetched.paymentOutcome, PaymentOutcome.paid);
     });
   });

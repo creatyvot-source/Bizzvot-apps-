@@ -154,7 +154,8 @@ class _Selection extends ConsumerWidget {
               children: [
                 const SectionHeader(
                   'Choose a plan',
-                  subtitle: 'Seats add active-card slots to your organization',
+                  subtitle:
+                      'Seats add active-card slots to your organization. 18% GST & courier extra.',
                 ),
                 for (final p in plans) ...[
                   _PlanCard(
@@ -178,7 +179,7 @@ class _Selection extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
-                        'Seats are added on top of your current seats once payment is confirmed.',
+                        'Seats are added on top of your current seats once payment is confirmed. Physical smart cards are dispatched via express courier.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),

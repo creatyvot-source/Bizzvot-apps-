@@ -26,13 +26,16 @@ class BillingRepository {
       name: 'Smart Card & Staff Activation',
       billingPeriod: 'first_year',
       price: Money(49900, 'INR'),
-      priceLabel: '₹499 first time',
-      description: 'First-time setup and 1-year smart digital card activation with NFC link, dynamic profile, and staff portal management.',
+      priceLabel: '₹499 + GST',
+      description:
+          'First-time setup and 1-year smart digital card activation with NFC link, dynamic profile, and staff portal management. (+ 18% GST and ₹99 express courier charge extra for physical smart card delivery).',
       features: [
         'First time activation: ₹499 per card/staff',
+        '+ 18% GST extra applicable',
+        '+ ₹99 express courier charge for PVC card delivery',
         '1-Year complete validity included',
         'Organization can assign & staff can manage details',
-        'Next year renewal at only ₹199/year',
+        'Next year renewal at only ₹199/year (+ GST)',
       ],
       recommended: true,
       active: true,
@@ -44,10 +47,12 @@ class BillingRepository {
       name: 'Yearly Card & Staff Renewal',
       billingPeriod: 'yearly',
       price: Money(19900, 'INR'),
-      priceLabel: '₹199 / year',
-      description: 'Annual maintenance and cloud sync for active smart cards & staff seats. Keeps profiles and contact sharing live.',
+      priceLabel: '₹199 / year + GST',
+      description:
+          'Annual maintenance and cloud sync for active smart cards & staff seats. Keeps profiles and contact sharing live. (+ 18% GST extra).',
       features: [
         'Annual renewal: ₹199 per card/staff',
+        '+ 18% GST extra applicable',
         '365 days cloud profile hosting & NFC sync',
         'Instant contact saving & analytics',
       ],
@@ -108,12 +113,30 @@ class BillingRepository {
       );
     } catch (_) {
       final unitAmount = planId.contains('renewal') ? 19900 : 49900;
-      final total = unitAmount * quantity;
+      final subtotal = unitAmount * quantity;
+      final isPhysical = !planId.contains('renewal');
+      final gstAmount = (subtotal * 18) ~/ 100;
+      final courierAmount = isPhysical ? 9900 : 0;
+      final total = subtotal + gstAmount + courierAmount;
       return Quote(
         id: 'quote-seats-local',
         currency: 'INR',
-        subtotal: Money(total, 'INR'),
+        subtotal: Money(subtotal, 'INR'),
+        taxes: [
+          Adjustment(
+            label: 'GST (18%)',
+            rate: '18%',
+            amount: Money(gstAmount, 'INR'),
+          ),
+        ],
+        taxTotal: Money(gstAmount, 'INR'),
+        shipping: isPhysical ? Money(courierAmount, 'INR') : null,
         total: Money(total, 'INR'),
+        notes: [
+          isPhysical
+              ? 'Includes 18% GST and ₹99 express courier delivery for physical smart NFC cards.'
+              : 'Includes 18% GST. Digital profile renewed instantly.',
+        ],
         lines: [
           QuoteLine(
             itemType: CatalogItemType.plan,
@@ -123,7 +146,7 @@ class BillingRepository {
                 : 'Smart Card & Staff Activation',
             quantity: quantity,
             unitPrice: Money(unitAmount, 'INR'),
-            lineTotal: Money(total, 'INR'),
+            lineTotal: Money(subtotal, 'INR'),
             available: true,
           ),
         ],

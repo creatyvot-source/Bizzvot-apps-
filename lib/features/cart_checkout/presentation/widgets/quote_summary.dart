@@ -74,20 +74,20 @@ class QuoteSummary extends StatelessWidget {
               InfoRow.money('Discount', quote.discountTotal, negative: true),
             if (quote.shipping != null)
               InfoRow(
-                label: 'Shipping',
+                label: 'Courier & Shipping',
                 value: quote.shipping!.isZero
                     ? const Text('Free')
                     : MoneyText(quote.shipping),
               )
             else if (shippingPending)
-              InfoRow.text('Shipping', 'Calculated after address'),
+              InfoRow.text('Courier & Shipping', 'Calculated after address'),
             for (final t in quote.taxes)
               InfoRow.money(
                 t.rate == null ? t.label : '${t.label} (${t.rate})',
                 t.amount,
               ),
             if (quote.taxes.isEmpty && quote.taxTotal != null)
-              InfoRow.money('Tax', quote.taxTotal),
+              InfoRow.money('GST (18%)', quote.taxTotal),
             const Divider(height: AppSpacing.lg),
             InfoRow.money(
               'Total',

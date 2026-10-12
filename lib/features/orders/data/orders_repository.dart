@@ -41,7 +41,17 @@ class OrdersRepository {
             status: OrderStatus.paid,
             paymentStatus: PaymentStatus.paid,
             currency: 'INR',
-            total: const Money(49900, 'INR'),
+            subtotal: const Money(49900, 'INR'),
+            taxTotal: const Money(8982, 'INR'),
+            taxLines: const [
+              TaxLine(
+                label: 'GST (18%)',
+                rate: '18%',
+                amount: Money(8982, 'INR'),
+              ),
+            ],
+            shipping: const Money(9900, 'INR'),
+            total: const Money(68782, 'INR'),
             lines: const [
               OrderLine(
                 title: 'Google Review Stand (Countertop Acrylic)',
@@ -78,6 +88,17 @@ class OrdersRepository {
         status: OrderStatus.paid,
         paymentStatus: PaymentStatus.paid,
         currency: 'INR',
+        subtotal: const Money(49900, 'INR'),
+        taxTotal: const Money(8982, 'INR'),
+        taxLines: const [
+          TaxLine(
+            label: 'GST (18%)',
+            rate: '18%',
+            amount: Money(8982, 'INR'),
+          ),
+        ],
+        shipping: const Money(9900, 'INR'),
+        total: const Money(68782, 'INR'),
         lines: const [
           OrderLine(
             title: 'Google Review Stand (Countertop Acrylic)',
@@ -86,7 +107,6 @@ class OrdersRepository {
             lineTotal: Money(49900, 'INR'),
           ),
         ],
-        total: const Money(49900, 'INR'),
         createdAt: DateTime.now(),
         fulfilment: const Fulfilment(
           current: FulfilmentStep.paid,

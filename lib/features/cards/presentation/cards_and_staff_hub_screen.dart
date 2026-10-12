@@ -410,14 +410,43 @@ Log in to view and share your smart digital business card.
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  '₹499 first-time activation · ₹199/yr renewal per card & staff seat.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white60 : const Color(0xFF475569),
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        '₹499 first-time activation · ₹199/yr renewal per card & staff seat',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white60 : const Color(0xFF475569),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.amber.withValues(alpha: 0.2)
+                            : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isDark ? Colors.amber : const Color(0xFFF59E0B),
+                          width: 0.5,
+                        ),
+                      ),
+                      child: Text(
+                        '+ 18% GST & courier extra',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.amberAccent : const Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => context.push(Routes.ownerStaffPermissions),
                 child: Text(

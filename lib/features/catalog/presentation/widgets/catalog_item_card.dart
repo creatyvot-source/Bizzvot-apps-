@@ -133,6 +133,17 @@ class CatalogItemCard extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                       ),
                     ),
+                    if (item.type == CatalogItemType.product) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '+ 18% GST · Courier extra',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 10,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

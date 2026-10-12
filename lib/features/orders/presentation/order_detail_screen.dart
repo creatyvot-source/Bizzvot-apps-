@@ -161,14 +161,14 @@ class _OrderBody extends StatelessWidget {
                 if (o.subtotal != null) InfoRow.money('Subtotal', o.subtotal),
                 if (o.discountTotal != null && !o.discountTotal!.isZero)
                   InfoRow.money('Discount', o.discountTotal, negative: true),
-                if (o.shipping != null) InfoRow.money('Shipping', o.shipping),
+                if (o.shipping != null) InfoRow.money('Courier & Delivery', o.shipping),
                 for (final t in o.taxLines)
                   InfoRow.money(
                     t.rate == null ? t.label : '${t.label} (${t.rate})',
                     t.amount,
                   ),
                 if (o.taxLines.isEmpty && o.taxTotal != null)
-                  InfoRow.money('Tax', o.taxTotal),
+                  InfoRow.money('GST (18%)', o.taxTotal),
                 InfoRow.money('Total', o.total, emphasize: true),
                 if (o.refundedAmount != null)
                   InfoRow.money('Refunded', o.refundedAmount),

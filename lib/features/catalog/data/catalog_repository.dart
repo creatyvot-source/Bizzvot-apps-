@@ -48,6 +48,7 @@ class CatalogRepository {
         'Dynamic QR Code for non-NFC phones',
         'Direct link to your Google Review page',
         'No apps required for customers',
+        '+ 18% GST & express courier extra',
       ],
       images: [
         'https://images.unsplash.com/photo-1589758438368-0ad531db3366?w=800&auto=format&fit=crop&q=80',
@@ -77,6 +78,7 @@ class CatalogRepository {
         'High-grade acrylic countertop stand',
         'Dual NFC tap + prominent QR code',
         'Zero battery or power needed',
+        '+ 18% GST & express courier extra',
         '30% commission eligible for resellers',
       ],
       images: [
@@ -107,6 +109,7 @@ class CatalogRepository {
         'Executive matte finish NFC card',
         'Live digital profile with 1-tap contact save',
         'WhatsApp direct connect & call buttons',
+        '+ 18% GST & express courier extra',
         'Editable anytime from your mobile dashboard',
       ],
       images: [
@@ -136,6 +139,7 @@ class CatalogRepository {
       features: [
         'Thermal card print with lanyard slot',
         'Staff management from owner portal',
+        '+ 18% GST & express courier extra',
         'Direct contact share & analytics',
       ],
       images: [

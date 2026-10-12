@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
 import '../../../core/providers.dart';
+import '../../catalog/domain/catalog_models.dart';
 import '../../catalog/domain/commerce_models.dart';
 import '../../catalog/domain/idempotency.dart';
 import '../../catalog/domain/money.dart';
@@ -36,8 +37,9 @@ class CartCheckoutRepository {
         parse: Quote.fromJson,
       );
     } catch (_) {
-      int total = 0;
+      int subtotal = 0;
       final qLines = <QuoteLine>[];
+      bool requiresShipping = false;
       for (final l in lines) {
         int unitPrice = 49900;
         final v = l.variantId ?? '';
@@ -52,7 +54,10 @@ class CartCheckoutRepository {
           unitPrice = v.contains('3') ? 89900 : (v.contains('5') ? 119900 : 35000);
         }
         final lineTotal = unitPrice * l.quantity;
-        total += lineTotal;
+        subtotal += lineTotal;
+        if (l.requiresShipping || l.itemType == CatalogItemType.product || !id.contains('serv')) {
+          requiresShipping = true;
+        }
         qLines.add(
           QuoteLine(
             itemType: l.itemType,
@@ -67,12 +72,27 @@ class CartCheckoutRepository {
           ),
         );
       }
+      final gstAmount = (subtotal * 18) ~/ 100;
+      final courierAmount = (shippingAddress != null || requiresShipping) ? 9900 : 0;
+      final total = subtotal + gstAmount + courierAmount;
       return Quote(
         id: 'quote-local',
         currency: 'INR',
-        subtotal: Money(total, 'INR'),
+        subtotal: Money(subtotal, 'INR'),
+        taxes: [
+          Adjustment(
+            label: 'GST',
+            rate: '18%',
+            amount: Money(gstAmount, 'INR'),
+          ),
+        ],
+        taxTotal: Money(gstAmount, 'INR'),
+        shipping: Money(courierAmount, 'INR'),
         total: Money(total, 'INR'),
         lines: qLines,
+        notes: const [
+          'Prices include 18% GST and express courier delivery charges across India.',
+        ],
       );
     }
   }
@@ -105,8 +125,9 @@ class CartCheckoutRepository {
       final now = DateTime.now();
       final orderId = 'ord_${now.millisecondsSinceEpoch}';
       final orderNum = 'ORD-${now.year}${(now.month).toString().padLeft(2, '0')}-${orderId.substring(orderId.length - 4)}';
-      int total = 0;
+      int subtotal = 0;
       final oLines = <OrderLine>[];
+      bool requiresShipping = false;
       for (final l in lines) {
         int unitPrice = 49900;
         final v = l.variantId ?? '';
@@ -121,7 +142,10 @@ class CartCheckoutRepository {
           unitPrice = v.contains('3') ? 89900 : (v.contains('5') ? 119900 : 35000);
         }
         final lt = unitPrice * l.quantity;
-        total += lt;
+        subtotal += lt;
+        if (l.requiresShipping || l.itemType == CatalogItemType.product || !id.contains('serv')) {
+          requiresShipping = true;
+        }
         oLines.add(
           OrderLine(
             title: l.titleSnapshot,
@@ -134,6 +158,9 @@ class CartCheckoutRepository {
           ),
         );
       }
+      final gstAmount = (subtotal * 18) ~/ 100;
+      final courierAmount = (shippingAddress != null || requiresShipping) ? 9900 : 0;
+      final total = subtotal + gstAmount + courierAmount;
       final order = Order(
         id: orderId,
         orderNumber: orderNum,
@@ -141,7 +168,16 @@ class CartCheckoutRepository {
         paymentStatus: PaymentStatus.paid,
         currency: 'INR',
         lines: oLines,
-        subtotal: Money(total, 'INR'),
+        subtotal: Money(subtotal, 'INR'),
+        taxTotal: Money(gstAmount, 'INR'),
+        taxLines: [
+          TaxLine(
+            label: 'GST',
+            rate: '18%',
+            amount: Money(gstAmount, 'INR'),
+          ),
+        ],
+        shipping: Money(courierAmount, 'INR'),
         total: Money(total, 'INR'),
         shippingAddress: shippingAddress,
         gst: gst,
