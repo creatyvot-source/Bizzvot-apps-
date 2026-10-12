@@ -65,9 +65,34 @@ class SessionController extends Notifier<SessionState> {
     await _restore();
   }
 
-  /// Single app sign-in: signs into organization account (staff sign-in is web-only).
-  Future<void> login(String email, String password) =>
-      loginOwner(email, password);
+  /// Unified permission-based sign-in for any account (owner, manager, staff).
+  /// Automatically tries owner credentials and seamlessly tries staff credentials
+  /// if the account is a team member, establishing the session according to permissions.
+  Future<void> login(String email, String password) async {
+    try {
+      await loginOwner(email, password);
+    } catch (e) {
+      final appEx = AppException.from(e);
+      final isStaffHint = appEx.code == 'STAFF_ACCOUNT' ||
+          appEx.code == 'USE_STAFF_LOGIN' ||
+          appEx.code == 'STAFF_LOGIN_REQUIRED' ||
+          appEx.code == 'ROLE_MISMATCH' ||
+          appEx.code == 'WRONG_PORTAL' ||
+          appEx.message.toLowerCase().contains('staff');
+      if (isStaffHint ||
+          appEx.kind == AppErrorKind.forbidden ||
+          appEx.kind == AppErrorKind.unauthenticated ||
+          appEx.kind == AppErrorKind.notFound) {
+        try {
+          await loginStaff(email, password);
+          return;
+        } catch (_) {
+          throw e;
+        }
+      }
+      rethrow;
+    }
+  }
 
   /// Demo sign-in for testing and exploring all modules without a live backend.
   void loginDemo() {

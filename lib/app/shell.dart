@@ -164,10 +164,44 @@ class MoreScreen extends ConsumerWidget {
                   user.displayName,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: Text(
-                  [user.organizationName, owner ? 'Organization Owner' : 'Staff Card Member']
-                      .whereType<String>()
-                      .join(' · '),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      [user.organizationName, owner ? 'Organization Owner' : 'Staff Member']
+                          .whereType<String>()
+                          .join(' · '),
+                    ),
+                    if (!owner) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (user.permissions.editCard)
+                            const _PermissionBadge(
+                              icon: Icons.edit_outlined,
+                              label: 'Edit Card',
+                            ),
+                          if (user.permissions.manageLinks)
+                            const _PermissionBadge(
+                              icon: Icons.link,
+                              label: 'Manage Links',
+                            ),
+                          if (user.permissions.viewReviews)
+                            const _PermissionBadge(
+                              icon: Icons.reviews_outlined,
+                              label: 'Reviews',
+                            ),
+                          if (user.permissions.replyReviews)
+                            const _PermissionBadge(
+                              icon: Icons.reply,
+                              label: 'Reply Reviews',
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
 
@@ -303,10 +337,12 @@ class MoreScreen extends ConsumerWidget {
             ] else ...[
               header('My Card Details'),
               tile(Icons.badge_outlined, 'View My Card', Routes.staffCard),
-              tile(Icons.edit_outlined, 'Edit Card Details', Routes.staffCardEdit,
-                  subtitle: 'Update your links, phone, and profile photo'),
+              if (user?.permissions.editCard ?? false)
+                tile(Icons.edit_outlined, 'Edit Card Details', Routes.staffCardEdit,
+                    subtitle: 'Update your links, phone, and profile photo'),
               tile(Icons.qr_code_2, 'QR & Sharing', Routes.staffCardShare),
-              tile(Icons.reviews_outlined, 'My Reviews', Routes.staffReviews),
+              if (user?.permissions.viewReviews ?? false)
+                tile(Icons.reviews_outlined, 'My Reviews', Routes.staffReviews),
 
               header('Support & Helpline (+91 89215 04090)'),
               ListTile(
@@ -397,6 +433,40 @@ class NotFoundScreen extends StatelessWidget {
           onPressed: () => context.go('/'),
           child: const Text('Go home'),
         ),
+      ),
+    );
+  }
+}
+
+class _PermissionBadge extends StatelessWidget {
+  const _PermissionBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: theme.colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -155,10 +155,10 @@ class _CardsAndStaffHubScreenState extends ConsumerState<CardsAndStaffHubScreen>
   void _copyStaffLogin(StaffEntry staff) {
     final message = '''
 👋 Welcome to Bizzvot!
-Staff Sign-in credentials for ${staff.name}:
+Digital Card & Login credentials for ${staff.name}:
 • Email: ${staff.email}
-• Portal: https://app.bizzvot.com/staff-login
-Log in to view and share your smart digital business card.
+• Portal: https://app.bizzvot.com/login
+Sign in to view, edit, and share your smart digital business card.
 ''';
     Clipboard.setData(ClipboardData(text: message));
     HapticFeedback.lightImpact();

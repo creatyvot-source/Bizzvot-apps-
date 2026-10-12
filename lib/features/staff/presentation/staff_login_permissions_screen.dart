@@ -40,12 +40,12 @@ class _StaffLoginPermissionsScreenState
     final message = '''
 👋 Welcome to $orgName on Bizzvot!
 
-Your staff digital card & credentials are ready:
+Your digital card & staff credentials are ready:
 • Login Email: ${staff.email}
 • Organization: $orgName
-• Portal: https://app.bizzvot.com/staff-login
+• Portal: https://app.bizzvot.com/login
 
-Please open the Bizzvot app, choose "Staff Sign-in", and log in with your credentials.
+Please open the Bizzvot app and sign in with your credentials to access your digital card and features.
 ''';
 
     Clipboard.setData(ClipboardData(text: message));
