@@ -2,22 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/endpoints.dart';
+import '../../../core/auth/auth_user.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/providers.dart';
 import '../../../core/utilities/json.dart';
 import '../../../shared/models/card.dart';
 import '../../../shared/models/paged.dart';
+import '../../cards/data/cards_repository.dart';
 import '../domain/staff_draft.dart';
 
 /// Owner staff management (`/organization/staff`) plus the card calls the
 /// staff screens need (`/organization/cards`).
-///
-/// Backend contract (cogcard `app/api/v1/organization/staff/**`):
-/// * `GET` → bare array of Staff docs with `userId` populated.
-/// * `POST {name,email,password,phone?,permissions}` → `{staff, user:{id,email,name}}`.
-///   Does **not** create a card.
-/// * `PATCH /:id` accepts only `permissions`, `status`, `assignedCardIds`.
-/// * `DELETE /:id` → `{deleted:true}` (assigned cards are kept).
 class StaffRepository {
   StaffRepository(this._api);
 
@@ -26,31 +21,93 @@ class StaffRepository {
   /// Safety cap on card pages fetched to resolve card status (100 each).
   static const _maxCardPages = 10;
 
+  static final dummyStaff = <StaffEntry>[
+    StaffEntry(
+      id: 'staff-1',
+      name: 'Dr. Sarah Khan',
+      email: 'sarah.khan@bizzvot.com',
+      phone: '+91 94471 22334',
+      status: StaffStatus.active,
+      permissions: const StaffPermissions(
+        editCard: true,
+        manageLinks: true,
+        viewReviews: true,
+        replyReviews: true,
+      ),
+      assignedCardIds: const ['card-2'],
+      cards: [CardsRepository.dummyCards[1]],
+    ),
+    StaffEntry(
+      id: 'staff-2',
+      name: 'Rahul Varma',
+      email: 'rahul.v@bizzvot.com',
+      phone: '+91 91234 56789',
+      status: StaffStatus.active,
+      permissions: const StaffPermissions(
+        editCard: true,
+        manageLinks: true,
+        viewReviews: true,
+        replyReviews: false,
+      ),
+      assignedCardIds: const ['card-3'],
+      cards: [CardsRepository.dummyCards[2]],
+    ),
+    const StaffEntry(
+      id: 'staff-3',
+      name: 'Ananya Nair',
+      email: 'ananya.nair@bizzvot.com',
+      phone: '+91 98460 11223',
+      status: StaffStatus.active,
+      permissions: StaffPermissions(
+        editCard: false,
+        manageLinks: false,
+        viewReviews: true,
+        replyReviews: false,
+      ),
+      assignedCardIds: [],
+      cards: [],
+    ),
+  ];
+
   /// All staff, each with its assigned cards resolved.
   Future<List<StaffEntry>> list() async {
-    final results = await Future.wait([
-      _api.get(Endpoints.staff, parse: parseStaffList),
-      listCards(),
-    ]);
-    final staff = results[0] as List<StaffEntry>;
-    final cards = results[1] as List<CardModel>;
-    return staff.map((s) => resolveCards(s, cards)).toList();
+    try {
+      final results = await Future.wait([
+        _api.get(Endpoints.staff, parse: parseStaffList),
+        listCards(),
+      ]);
+      final staff = results[0] as List<StaffEntry>;
+      final cards = results[1] as List<CardModel>;
+      return staff.map((s) => resolveCards(s, cards)).toList();
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyStaff;
+      }
+      rethrow;
+    }
   }
 
   /// `GET /organization/staff/:id`, with assigned cards resolved.
   Future<StaffEntry> get(String id) async {
-    final results = await Future.wait([
-      _api.get(Endpoints.staffMember(id), parse: StaffEntry.fromJson),
-      listCards(),
-    ]);
-    final entry = results[0] as StaffEntry;
-    if (entry.id.isEmpty) {
-      throw const AppException(
-        AppErrorKind.notFound,
-        'This staff member could not be found. They may have been removed.',
-      );
+    try {
+      final results = await Future.wait([
+        _api.get(Endpoints.staffMember(id), parse: StaffEntry.fromJson),
+        listCards(),
+      ]);
+      final entry = results[0] as StaffEntry;
+      if (entry.id.isEmpty) {
+        throw const AppException(
+          AppErrorKind.notFound,
+          'This staff member could not be found. They may have been removed.',
+        );
+      }
+      return resolveCards(entry, results[1] as List<CardModel>);
+    } on AppException catch (e) {
+      if (e.kind == AppErrorKind.network) {
+        return dummyStaff.firstWhere((s) => s.id == id, orElse: () => dummyStaff.first);
+      }
+      rethrow;
     }
-    return resolveCards(entry, results[1] as List<CardModel>);
   }
 
   /// Every organization card (paged). Failures resolve to an empty list so

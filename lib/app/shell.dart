@@ -31,7 +31,7 @@ class RoleShell extends ConsumerWidget {
 
   static const _ownerTabs = [
     _Tab(0, Icons.space_dashboard_outlined, Icons.space_dashboard, 'Dashboard'),
-    _Tab(1, Icons.contact_phone_outlined, Icons.contact_phone, 'Directory'),
+    _Tab(1, Icons.badge_outlined, Icons.badge, 'ID & Staff'),
     _Tab(2, Icons.storefront_outlined, Icons.storefront, 'Shop'),
     _Tab(3, Icons.shopping_cart_outlined, Icons.shopping_cart, 'Cart'),
     _Tab(4, Icons.grid_view_outlined, Icons.grid_view, 'More'),
@@ -257,6 +257,12 @@ class MoreScreen extends ConsumerWidget {
               tile(Icons.business_outlined, 'Organization profile', Routes.ownerProfile),
               tile(Icons.visibility_outlined, 'Public presence & visibility',
                   Routes.ownerVisibility),
+              tile(Icons.admin_panel_settings_outlined, 'Staff Login & Permissions',
+                  Routes.ownerStaffPermissions,
+                  subtitle: 'Configure staff login access and role permissions'),
+              tile(Icons.group_add_outlined, 'Purchase Extra Seats & Cards',
+                  Routes.ownerSeats,
+                  subtitle: 'Add more seats (₹499 setup · ₹199/yr renewal)'),
               if (config.isEnabled(Flags.notifications))
                 tile(Icons.notifications_outlined, 'Notifications',
                     Routes.ownerNotifications),

@@ -435,7 +435,20 @@ class _Gallery extends StatefulWidget {
 }
 
 class _GalleryState extends State<_Gallery> {
+  late final PageController _controller;
   int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -445,55 +458,128 @@ class _GalleryState extends State<_Gallery> {
       CatalogItemType.plan => Icons.workspace_premium_outlined,
       _ => Icons.design_services_outlined,
     };
-    return AspectRatio(
-      aspectRatio: 16 / 10,
-      child: images.length <= 1
-          ? SafeNetworkImage(
-              url: images.firstOrNull,
-              placeholderIcon: icon,
-              semanticLabel: '${widget.title} image',
-            )
-          : Stack(
-              children: [
-                PageView.builder(
-                  itemCount: images.length,
-                  onPageChanged: (p) => setState(() => _page = p),
-                  itemBuilder: (_, i) => SafeNetworkImage(
-                    url: images[i],
-                    placeholderIcon: icon,
-                    semanticLabel:
-                        '${widget.title} image ${i + 1} of ${images.length}',
-                  ),
+
+    if (images.length <= 1) {
+      return AspectRatio(
+        aspectRatio: 16 / 10,
+        child: SafeNetworkImage(
+          url: images.firstOrNull,
+          placeholderIcon: icon,
+          semanticLabel: '${widget.title} image',
+        ),
+      );
+    }
+
+    final theme = Theme.of(context);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 10,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _controller,
+                itemCount: images.length,
+                onPageChanged: (p) => setState(() => _page = p),
+                itemBuilder: (_, i) => SafeNetworkImage(
+                  url: images[i],
+                  placeholderIcon: icon,
+                  semanticLabel:
+                      '${widget.title} image ${i + 1} of ${images.length}',
                 ),
-                Positioned(
-                  bottom: AppSpacing.sm,
-                  left: 0,
-                  right: 0,
-                  child: ExcludeSemantics(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var i = 0; i < images.length; i++)
-                          AnimatedContainer(
+              ),
+              Positioned(
+                bottom: AppSpacing.sm,
+                left: 0,
+                right: 0,
+                child: ExcludeSemantics(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < images.length; i++)
+                        GestureDetector(
+                          onTap: () {
+                            _controller.animateToPage(
+                              i,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: AnimatedContainer(
                             duration: AppMotion.fast,
                             margin: const EdgeInsets.symmetric(horizontal: 3),
-                            width: i == _page ? 18 : 8,
+                            width: i == _page ? 20 : 8,
                             height: 8,
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(
-                                alpha: i == _page ? 1 : 0.6,
+                                alpha: i == _page ? 1 : 0.5,
                               ),
                               borderRadius: BorderRadius.circular(
                                 AppRadius.pill,
                               ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Mini thumbnails strip
+        SizedBox(
+          height: 60,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final isSelected = i == _page;
+              return GestureDetector(
+                onTap: () {
+                  _controller.animateToPage(
+                    i,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.dividerColor,
+                      width: isSelected ? 2.5 : 1,
+                    ),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: SafeNetworkImage(
+                    url: images[i],
+                    placeholderIcon: icon,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

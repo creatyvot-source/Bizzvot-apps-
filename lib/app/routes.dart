@@ -25,6 +25,7 @@ abstract final class Routes {
   // Owner tabs
   static const ownerDashboard = '/o/dashboard';
   static const ownerDirectory = '/o/directory';
+  static const ownerCardsAndStaff = '/o/id-staff';
   static const ownerCards = '/o/cards';
   static const ownerStaff = '/o/staff';
   static const ownerReviews = '/o/reviews';
@@ -37,6 +38,7 @@ abstract final class Routes {
   static String ownerCardAnalytics(String id) => '/o/cards/${_e(id)}/analytics';
   static const ownerStaffNew = '/o/staff/new';
   static String ownerStaffEdit(String id) => '/o/staff/${_e(id)}';
+  static const ownerStaffPermissions = '/o/staff/permissions';
   static const ownerProfile = '/o/profile';
   static const ownerVisibility = '/o/visibility';
   static const ownerBilling = '/o/billing';

@@ -17,6 +17,7 @@ import '../features/billing/presentation/seat_purchase_screen.dart';
 import '../features/cards/presentation/card_detail_screen.dart';
 import '../features/cards/presentation/card_editor_screen.dart';
 import '../features/cards/presentation/card_share_screen.dart';
+import '../features/cards/presentation/cards_and_staff_hub_screen.dart';
 import '../features/cards/presentation/cards_list_screen.dart';
 import '../features/cards/presentation/my_card_screen.dart';
 import '../features/cart_checkout/presentation/cart_screen.dart';
@@ -38,6 +39,7 @@ import '../features/public_card/presentation/write_review_screen.dart';
 import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/staff/presentation/staff_editor_screen.dart';
 import '../features/staff/presentation/staff_list_screen.dart';
+import '../features/staff/presentation/staff_login_permissions_screen.dart';
 import '../features/subscriptions_renewals/presentation/subscription_detail_screen.dart';
 import '../features/subscriptions_renewals/presentation/subscriptions_screen.dart';
 import 'routes.dart';
@@ -145,7 +147,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _, shell) => RoleShell(shell: shell, owner: true),
         branches: [
           _branch(Routes.ownerDashboard, (_) => const DashboardScreen()),
-          _branch(Routes.ownerDirectory, (_) => const PublicDirectoryScreen()),
+          _branch(Routes.ownerDirectory, (_) => const CardsAndStaffHubScreen()),
           _branch(Routes.ownerShop, (_) => const ShopHomeScreen()),
           _branch(Routes.ownerCart, (_) => const CartScreen()),
           _branch(Routes.ownerMore, (_) => const MoreScreen(owner: true)),
@@ -153,8 +155,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Owner screens. Static paths are declared before `:id` patterns.
+      r(Routes.ownerCardsAndStaff, (_) => const CardsAndStaffHubScreen()),
       r(Routes.ownerCards, (_) => const CardsListScreen()),
       r(Routes.ownerStaff, (_) => const StaffListScreen()),
+      r(Routes.ownerStaffPermissions,
+          (_) => const StaffLoginPermissionsScreen()),
       r(Routes.ownerReviews, (_) => const ReviewsScreen()),
       r(Routes.ownerStaffNew, (_) => const StaffEditorScreen()),
       r('/o/staff/:id', (s) => StaffEditorScreen(staffId: p(s, 'id'))),
